@@ -32,7 +32,7 @@ Section NatCase.
   Proof. 
     destruct a; reflexivity.
   (* fmap id *)
-    destruct a; unfold id; simpl; auto.
+    destruct a; unfold id; simpl; auto;
     rewrite <- eta_expansion_dep; reflexivity.
   Defined.  
   
@@ -223,7 +223,7 @@ Section NatCase.
       rewrite <- (P2_Env_length _ _ _ _ _ H1).
       repeat erewrite bF_UP_in_out.
       unfold Names.Exp, evalR.
-      unfold isVI; caseEq (project (proj1_sig (beval V (F _) n0 (exist _ _ n_UP) gamma'))).
+      unfold isVI; caseEq (project (G := NatValue) (proj1_sig (beval V (F _) n0 (exist _ _ n_UP) gamma'))).
       unfold beval, Names.Exp, evalR in H3; rewrite H3.
       destruct n1.
       apply project_inject in H3; auto with typeclass_instances; 
@@ -248,7 +248,7 @@ Section NatCase.
       rewrite project_vi_bot, project_bot_bot; eauto.
       apply inject_i; constructor; reflexivity.
       exact (proj2_sig _).
-      unfold isVI; caseEq (project (proj1_sig (beval V (F _) m (exist _ _ n_UP) gamma))).
+      unfold isVI; caseEq (project (G := NatValue) (proj1_sig (beval V (F _) m (exist _ _ n_UP) gamma))).
       unfold beval, Names.Exp, evalR in H5; rewrite H5.
       destruct n1.
       apply project_inject in H5; auto with typeclass_instances; 
@@ -333,8 +333,8 @@ Section NatCase.
     Global Instance iFun_NatCase_eqv A B : iFunctor (NatCase_eqv A B).
       constructor 1 with (ifmap := NatCase_eqv_ifmap A B).
       destruct a; simpl; intros; reflexivity.
-      destruct a; simpl; intros; unfold id; eauto.
-      rewrite (functional_extensionality_dep _ a1); eauto.
+      destruct a; simpl; intros; unfold id; eauto;
+      rewrite (functional_extensionality_dep _ a1); eauto;
       intros; apply functional_extensionality_dep; eauto.
     Defined.
 
@@ -399,7 +399,7 @@ Section NatCase.
   Context {WFV_proj1_b_WFV :
     iPAlgebra WFV_proj1_b_Name (WFV_proj1_b_P D V WFV) WFV}.
 
-  Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR _) (F (typeofR D))}.
+  Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR D) (F (typeofR D))}.
   Context {WF_typeof_F : forall T, @WF_FAlgebra TypeofName T _ _ _
     (Sub_NatCase_F _) (MAlgebra_typeof_NatCase _) (Typeof_F _)}.
   Context {eval_F' : FAlgebra EvalName (Exp nat) (evalR V) (F nat)}.
@@ -565,7 +565,5 @@ End NatCase.
 (*
 *** Local Variables: ***
 *** coq-prog-args: ("-emacs-U" "-impredicative-set") ***
-
-
 *** End: ***
 *) 

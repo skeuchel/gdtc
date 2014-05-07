@@ -22,7 +22,7 @@ Section Mu.
 
   (** Functor Instance **)
 
-  Definition fmapFix {A} : forall {X Y: Set}, (X -> Y) -> (Fix_ A X -> Fix_ A Y):=
+  Definition fmapFix {A} : forall (X Y: Set), (X -> Y) -> (Fix_ A X -> Fix_ A Y):=
     fun _ _ f e =>
       match e with
        | Mu t g => Mu _ _ t (fun a => f (g a))
@@ -245,15 +245,15 @@ Section Mu.
     Global Instance iFun_Fix_eqv A B : iFunctor (Fix_eqv A B).
       constructor 1 with (ifmap := Fix_eqv_ifmap A B).
       destruct a; simpl; intros; reflexivity.
-      destruct a; simpl; intros; unfold id; eauto.
-      rewrite (functional_extensionality_dep _ a); eauto.
+      destruct a; simpl; intros; unfold id; eauto;
+      rewrite (functional_extensionality_dep _ a); eauto;
       intros; apply functional_extensionality_dep; eauto.
     Defined.
 
     Variable Sub_Fix_eqv_EQV_E : forall A B, 
       Sub_iFunctor (Fix_eqv A B) (EQV_E A B).
 
-    Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR _) (F (typeofR _))}.
+    Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR D) (F (typeofR D))}.
 
      Global Instance EQV_proj1_Fix_eqv : 
        forall A B, iPAlgebra EQV_proj1_Name (EQV_proj1_P F EQV_E A B) (Fix_eqv _ _).

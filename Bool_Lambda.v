@@ -64,7 +64,7 @@ Section PLambda_Arith.
   Variable E : Set -> Set -> Set.
   Context {Fun_E : forall A, Functor (E A)}.
   Context {Sub_Bool_E : forall A, Bool :<: (E A)}.
-  Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR _) (E (typeofR _))}.
+  Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR D) (E (typeofR D))}.
   Variable EQV_E : forall A B, (eqv_i E A B -> Prop) -> eqv_i E A B -> Prop.
   Context {funEQV_E : forall A B, iFunctor (EQV_E A B)}.
 

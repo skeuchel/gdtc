@@ -629,7 +629,7 @@ Section Bool.
       discriminate.
     Defined.
          
-    Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR _) F}.
+    Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR D) F}.
     Context {WF_typeof_F : forall T, @WF_FAlgebra TypeofName T _ _ _
       Sub_Bool_F (MAlgebra_typeof_Bool T) (Typeof_F _)}.
     Context {WF_Value_continous_alg : 
@@ -642,7 +642,7 @@ Section Bool.
       {Fun_E' : Functor E'}
       {Sub_Bool_E' : Bool :<: E'}
       {WF_Fun_E' : WF_Functor _ _ Sub_Bool_E' _ _}
-      {Typeof_E' : forall T, FAlgebra TypeofName T (typeofR _) E'}
+      {Typeof_E' : forall T, FAlgebra TypeofName T (typeofR D) E'}
       {WF_typeof_E' : forall T, @WF_FAlgebra TypeofName T _ _ _
         Sub_Bool_E' (MAlgebra_typeof_Bool T) (Typeof_E' _)}
       (pb : P_bind)

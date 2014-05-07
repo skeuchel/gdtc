@@ -180,7 +180,7 @@ Section Lambda.
 
   (** Functor Instance **)
 
-  Definition fmapLambda {A} : forall {X Y: Set}, (X -> Y) -> (Lambda A X -> Lambda A Y):=
+  Definition fmapLambda {A} : forall (X Y: Set), (X -> Y) -> (Lambda A X -> Lambda A Y):=
     fun _ _ f e =>
       match e with
        | Var a      => Var _ _ a
@@ -633,8 +633,7 @@ Section Lambda.
       repeat rewrite out_in_inverse in H2.
       repeat rewrite wf_functor in H2; simpl in H2.
       apply (f_equal (prj (Sub_Functor := Sub_ClosValue_V))) in H2.
-      repeat rewrite prj_inj in H2; injection H2; intros; 
-        subst.
+      repeat rewrite prj_inj in H2.
       split; intros.
       apply (inject_i (subGF := Sub_SV_Clos_SV)); econstructor; eauto.
       eapply H1; reflexivity.
@@ -644,10 +643,10 @@ Section Lambda.
       exact (proj2_sig v).
       simpl; eauto.
       exists f'; exists env'; repeat split; eauto.
-      rewrite H5 in H4; rewrite out_in_inverse, wf_functor, prj_inj in H4;
-        simpl in H4; injection H4; intros; congruence.
-      rewrite H5 in H4; rewrite out_in_inverse, wf_functor, prj_inj in H4;
-        simpl in H4; injection H4; intros; subst; eauto.
+      rewrite H4 in H2; rewrite out_in_inverse, wf_functor, prj_inj in H2;
+        simpl in H4; injection H2; intros; congruence.
+      rewrite H4 in H2; rewrite out_in_inverse, wf_functor, prj_inj in H2;
+        simpl in H4; injection H2; intros; subst; eauto.
       destruct env''; try discriminate; constructor.
       unfold SV_invertClos_P in H0.
       destruct env''; try discriminate; injection H2; intros; subst; 
@@ -935,15 +934,15 @@ Section Lambda.
     Global Instance iFun_Lambda_eqv A B : iFunctor (Lambda_eqv A B).
       constructor 1 with (ifmap := Lambda_eqv_ifmap A B).
       destruct a; simpl; intros; reflexivity.
-      destruct a; simpl; intros; unfold id; eauto.
-      rewrite (functional_extensionality_dep _ a); eauto.
+      destruct a; simpl; intros; unfold id; eauto;
+      rewrite (functional_extensionality_dep _ a); eauto;
       intros; apply functional_extensionality_dep; eauto.
     Defined.
 
     Variable Sub_Lambda_eqv_EQV_E : forall A B, 
       Sub_iFunctor (Lambda_eqv A B) (EQV_E A B).
 
-    Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR _) (F (typeofR _))}.
+    Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR D) (F (typeofR D))}.
 
      Global Instance EQV_proj1_Lambda_eqv : 
        forall A B, iPAlgebra EQV_proj1_Name (EQV_proj1_P F EQV_E A B) (Lambda_eqv _ _).

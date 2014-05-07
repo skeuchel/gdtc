@@ -23,7 +23,7 @@ Section Folds.
    Definition Fix (F : Set -> Set) : Set := 
     forall (A : Set), MAlgebra F A -> A.
 
-  Definition mfold {F : Set -> Set} : forall {A : Set}
+  Definition mfold {F : Set -> Set} : forall (A : Set)
     (f : MAlgebra F A), Fix F -> A:= fun A f e => e A f.
 
   Class Functor (F : Set -> Set) :=
@@ -71,7 +71,7 @@ Section Folds.
     forall (A : I -> Prop), iMAlgebra F A -> A i.
   
   Definition imfold {I : Set} (F : (I -> Prop) -> I -> Prop) : 
-    forall {A : I -> Prop} (f : iMAlgebra F A) {i : I},
+    forall (A : I -> Prop) (f : iMAlgebra F A) (i : I),
       iFix F i -> A i := fun A f i e => e A f.
   
   Class iFunctor {I : Set} (F : (I -> Prop) -> I -> Prop) :=
@@ -89,7 +89,7 @@ Section Folds.
     fun i F_e A f => f _ _ (imfold _ _ f) F_e.
   
   Definition ifold_ {I : Set} (F : (I -> Prop) -> I -> Prop) {iFun_F : iFunctor F} : 
-    forall {A : I -> Prop} (f : iAlgebra F A) {i : I},
+    forall (A : I -> Prop) (f : iAlgebra F A) (i : I),
       iFix F i -> A i := fun A f i e => imfold _ _ (fun i' r rec fa => f i' (ifmap i' rec fa)) i e.
 
   Definition out_ti {I : Set} {F} {fun_F : iFunctor F} : forall i : I, iFix F i -> F (iFix F) i :=

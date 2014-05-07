@@ -1052,7 +1052,7 @@ Section Arith.
       exact (proj2_sig d0).
     Defined.
          
-    Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR _) F}.
+    Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR D) F}.
     Context {WF_typeof_F : forall T, @WF_FAlgebra TypeofName T _ _ _
       Sub_Arith_F (MAlgebra_typeof_Arith T) (Typeof_F _)}.
     Context {WF_Value_continous_alg : 
@@ -1065,7 +1065,7 @@ Section Arith.
       {Fun_E' : Functor E'}
       {Sub_Arith_E' : Arith :<: E'}
       {WF_Fun_E' : WF_Functor _ _ Sub_Arith_E' _ _}
-      {Typeof_E' : forall T, FAlgebra TypeofName T (typeofR _) E'}
+      {Typeof_E' : forall T, FAlgebra TypeofName T (typeofR D) E'}
       {WF_typeof_E' : forall T, @WF_FAlgebra TypeofName T _ _ _
         Sub_Arith_E' (MAlgebra_typeof_Arith T) (Typeof_E' _)}
       (pb : P_bind)

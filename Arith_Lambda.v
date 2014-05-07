@@ -74,7 +74,7 @@ Section Lambda_Arith.
   Context {Sub_WFV_Bot_WFV : Sub_iFunctor (WFValue_Bot D V) WFV}.
   Context {Dis_Clos_Bot : Distinct_Sub_Functor _ Sub_LType_D Sub_AType_D}.
 
-  Context {Typeof_E : forall T, FAlgebra TypeofName T (typeofR _) (E (typeofR _))}.
+  Context {Typeof_E : forall T, FAlgebra TypeofName T (typeofR D) (E (typeofR D))}.
   Context {WF_typeof_E : forall T, @WF_FAlgebra TypeofName T _ _ _
     (Sub_Arith_E _) (MAlgebra_typeof_Arith _ T) (Typeof_E _)}.
 
