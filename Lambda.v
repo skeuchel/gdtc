@@ -188,7 +188,7 @@ Section Lambda.
        | Lam t g    => Lam _ _ t (fun a => f (g a))
       end.
 
-  Global Instance LambdaFunctor A : Functor (Lambda A) := 
+  Global Instance LambdaFunctor A : Functor (Lambda A) | 5 :=
   {| fmap := fmapLambda
    |}.
   (* fmap fusion *)
@@ -306,7 +306,7 @@ Section Lambda.
         | Clos f' env => Clos _ f' (map f env)
       end.
 
-   Global Instance Clos_Functor : Functor ClosValue :=
+   Global Instance Clos_Functor : Functor ClosValue | 5 :=
      {| fmap := Clos_fmap |}.
      destruct a; simpl.
      assert (map g (map f e0) = map (fun e1 : A => g (f e1)) e0) as eq_map by 

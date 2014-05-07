@@ -28,7 +28,7 @@ Section Mu.
        | Mu t g => Mu _ _ t (fun a => f (g a))
       end.
 
-  Global Instance FixFunctor A : Functor (Fix_ A) := 
+  Global Instance FixFunctor A : Functor (Fix_ A) | 5 :=
   {| fmap := fmapFix
    |}.
   Proof.

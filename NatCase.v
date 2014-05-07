@@ -27,7 +27,7 @@ Section NatCase.
       | Case n z s => Case _ _ (f n) (f z) (fun n' => f (s n'))
     end.
   
-  Global Instance NatCase_Functor A : Functor (NatCase A) :=
+  Global Instance NatCase_Functor A : Functor (NatCase A) | 5 :=
     {| fmap := NatCase_fmap A |}.
   Proof. 
     destruct a; reflexivity.
