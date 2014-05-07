@@ -7,7 +7,7 @@ Require Import Lambda.
 Require Import Arith_Lambda.
 Require Import Bool_Lambda.
 Require Import Functors.
-Require Import Mu. 
+Require Import Mu.
 Require Import NatCase.
 
 Section MiniML.
@@ -18,16 +18,16 @@ Definition D := AType :+: LType :+: BType.
 
 Definition E (A : Set) := Arith :+: (Lambda D A) :+: Bool :+: (Fix_ D A) :+: (NatCase A).
 
-Definition letrec (A : Set) (t : DType D) (def : A -> Exp E A) (body : A -> Exp E A) : 
+Definition letrec (A : Set) (t : DType D) (def : A -> Exp E A) (body : A -> Exp E A) :
   (Exp E A) :=  app' D E (lam' _ _ t body) (mu' _ _ t def).
-  
+
 Instance D_typeof T : FAlgebra TypeofName T (typeofR D) (E (typeofR D)).
   eauto with typeclass_instances.
 Defined.
 
-Global Instance Fun_E : forall (A : Set), 
+Global Instance Fun_E : forall (A : Set),
   Functor (E A).
-Proof. 
+Proof.
   eauto with typeclass_instances.
 Defined.
 
@@ -38,14 +38,14 @@ Defined.
     auto 20 with typeclass_instances.
   Defined.
 
-  Global Instance eq_DType_eq_D : 
+  Global Instance eq_DType_eq_D :
     PAlgebra eq_DType_eqName (sig (UP'_P (eq_DType_eq_P D))) D.
   Proof.
     unfold D.
     eauto 20 with typeclass_instances.
   Defined.
 
-  Definition Eqv (A B : Set) := 
+  Definition Eqv (A B : Set) :=
     (NP_Functor_eqv E Arith A B) ::+:: (NP_Functor_eqv E Bool A B) ::+::
     (Lambda_eqv D E A B) ::+:: (Fix_eqv D E A B) ::+:: (NatCase_eqv E A B).
 
@@ -53,15 +53,15 @@ Defined.
     (WFValue_Bot D V) ::+:: (WFValue_VI D V) ::+:: (WFValue_VB D V).
 
   Definition SV := (SubValue_refl V) ::+:: (SubValue_Bot V) ::+:: (SubValue_Clos E V).
-  
+
   Definition EV_Alg : PAlgebra EC_ExpName (sig (UP'_P (eval_continuous_Exp_P V (E nat) SV))) (E nat).
     eauto 400 with typeclass_instances.
   Defined.
 
   Definition eval_continuous : forall m,
-    forall (e : Exp E nat) (gamma gamma' : Env _), 
+    forall (e : Exp E nat) (gamma gamma' : Env _),
       forall n (Sub_G_G' : Sub_Environment V SV gamma gamma'),
-        m <= n -> 
+        m <= n ->
         SubValueC _ SV (beval _ _ m e gamma) (beval _ _ n e gamma').
     eapply beval_continuous with (eval_continuous_Exp_E := EV_Alg);
       eauto 800 with typeclass_instances.
@@ -78,12 +78,12 @@ Defined.
   Defined.
 
   Theorem soundness : forall n gamma gamma' gamma'' e' e'',
-    E_eqvC _ Eqv gamma gamma' e' e'' -> 
-    forall (WF_gamma : forall n b, lookup gamma' n = Some b -> 
+    E_eqvC _ Eqv gamma gamma' e' e'' ->
+    forall (WF_gamma : forall n b, lookup gamma' n = Some b ->
       exists T, lookup gamma b = Some T)
     (WF_gamma2 : List.length gamma = List.length gamma')
-    (WF_gamma' : forall n b, lookup gamma' n = Some b -> b = n) 
-    (WF_gamma'' : WF_Environment _ _ WFV gamma'' gamma) T, 
+    (WF_gamma' : forall n b, lookup gamma' n = Some b -> b = n)
+    (WF_gamma'' : WF_Environment _ _ WFV gamma'' gamma) T,
     typeof D (E _) (proj1_sig e') = Some T -> WFValueC _ _ WFV (beval _ _ n e'' gamma'') T.
   Proof.
     apply soundness_X with (eval_continuous_Exp_E := EV_Alg);
@@ -98,4 +98,4 @@ End MiniML.
 *** Local Variables: ***
 *** coq-prog-args: ("-emacs-U" "-impredicative-set") ***
 *** End: ***
-*) 
+*)

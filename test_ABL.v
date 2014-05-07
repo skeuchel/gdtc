@@ -11,7 +11,7 @@ Require Import Functors.
 
 Open Scope string_scope.
 
-Section Type_Test_Section. 
+Section Type_Test_Section.
   (* Type Testing, of course. *)
   Definition D := AType :+: LType :+: BType.
 
@@ -21,10 +21,10 @@ Section Type_Test_Section.
   Definition tex3 := proj1_sig tex3'.
   Definition tex4' : DType D := tarrow' _ (tbool' _) tex2'. (* Bool -> Nat *)
   Definition tex4 := proj1_sig tex4'.
-  
+
   Global Instance AType_eqTArrow T : FAlgebra eq_TArrowName T (eq_TArrowR D) AType :=
     {| f_algebra := @Default_eq_TArrow _ _ _ _ _ T |}.
-    
+
   Eval compute in ("Evaluating 'tnat == tnat -> tnat' as an 'TNat :+: TArrow :+: TBool'.").
   Eval compute in (eq_DType D tex2 tex3').
   Eval compute in ("Evaluating 'tnat == tnat' as an 'TNat :+: TArrow :+: TBool'.").
@@ -39,13 +39,13 @@ Section Type_Test_Section.
   Eval compute in ("Evaluating 'tbool == tnat' as an 'TNat :+: TArrow :+: TBool'.").
   Eval compute in (eq_DType D (tbool _) (tnat' _)).
 
-  Global Instance eq_TArrow_eq_D : 
+  Global Instance eq_TArrow_eq_D :
     PAlgebra eq_TArrow_eqName (sig (UP'_P (eq_TArrow_eq_P D))) D.
   Proof.
     eauto 150 with typeclass_instances.
   Defined.
 
-  Global Instance eq_DType_eq_D : 
+  Global Instance eq_DType_eq_D :
     PAlgebra eq_DType_eqName (sig (UP'_P (eq_DType_eq_P D))) D.
     eauto 150 with typeclass_instances.
   Defined.
@@ -56,9 +56,9 @@ Section Test_Section.
 
   Definition E (A : Set) := Arith :+: (Lambda D A) :+: Bool.
 
-  Global Instance Fun_E : forall (A : Set), 
+  Global Instance Fun_E : forall (A : Set),
     Functor (E A).
-  Proof. 
+  Proof.
     eauto with typeclass_instances.
   Defined.
 
@@ -81,19 +81,19 @@ Section Test_Section.
     eauto with typeclass_instances.
   Defined.
 
-  Definition test_typeof e := 
-    match (typeof D (E _) e) with 
+  Definition test_typeof e :=
+    match (typeof D (E _) e) with
       | Some t1 => DTypePrint _ (proj1_sig t1)
       | None => "Type Error"
     end.
-  
+
   Eval compute in ("The type of '(\x:tnat->tnat. x) (\y:tnat.y)' should be tnat->tnat").
   Eval compute in (test_typeof (proj1_sig (ex_1 _ tex3' tex2'))).
   Eval compute in ("The type of '1' as a 'Arith :+: Lambda' should be tnat").
   Eval compute in (test_typeof (proj1_sig (ex_3 _))).
   Eval compute in ("The type of '\x.x+x' as a 'Arith :+: Lambda' should be 'tnat -> tnat'").
   Eval compute in (test_typeof (proj1_sig (ex_4 _))).
-    
+
   Eval compute in (ExpPrint _ (proj1_sig (ex_1 _ tex3' tex2'))).
   Eval compute in (ExpPrint _ (proj1_sig (ex_3 _))).
   Eval compute in (ExpPrint _ (proj1_sig (ex_4 _))).
@@ -120,23 +120,23 @@ Section Test_Section.
   Eval compute in ("Evaluating '\x. x'").
   Eval compute in (ValuePrint V (proj1_sig (beval V _ 5 (ex_id _) nil))).
 
-  Definition Eqv (A B : Set) := 
+  Definition Eqv (A B : Set) :=
     (NP_Functor_eqv E Arith A B) ::+:: (NP_Functor_eqv E Bool A B) ::+::
     (Lambda_eqv D E A B).
 
-  Definition WFV := (WFValue_Clos D E V Eqv ((fun e => typeof _ _ (proj1_sig e)))) ::+:: (WFValue_Bot D V) ::+:: 
+  Definition WFV := (WFValue_Clos D E V Eqv ((fun e => typeof _ _ (proj1_sig e)))) ::+:: (WFValue_Bot D V) ::+::
     (WFValue_VI D V) ::+:: (WFValue_VB D V).
 
   Definition SV := (SubValue_refl V) ::+:: (SubValue_Bot V) ::+:: (SubValue_Clos E V).
-  
+
   Definition EV_Alg : PAlgebra EC_ExpName (sig (UP'_P (eval_continuous_Exp_P V (E nat) SV))) (E nat).
     eauto 200 with typeclass_instances.
   Defined.
 
   Lemma eval_continuous : forall m,
-    forall (e : Exp E nat) (gamma gamma' : Env _), 
+    forall (e : Exp E nat) (gamma gamma' : Env _),
       forall n (Sub_G_G' : Sub_Environment V SV gamma gamma'),
-        m <= n -> 
+        m <= n ->
         SubValueC _ SV (beval _ _ m e gamma) (beval _ _ n e gamma').
     eapply beval_continuous with (eval_continuous_Exp_E := EV_Alg);
       eauto with typeclass_instances.
@@ -155,12 +155,12 @@ Section Test_Section.
   Hint Extern 0 (id _) => unfold id; eauto with typeclass_instaces : typeclass_instances.
 
   Theorem soundness : forall n gamma gamma' gamma'' e' e'',
-    E_eqvC _ Eqv gamma gamma' e' e'' -> 
-    forall (WF_gamma : forall n b, lookup gamma' n = Some b -> 
+    E_eqvC _ Eqv gamma gamma' e' e'' ->
+    forall (WF_gamma : forall n b, lookup gamma' n = Some b ->
       exists T, lookup gamma b = Some T)
     (WF_gamma2 : List.length gamma = List.length gamma')
-    (WF_gamma' : forall n b, lookup gamma' n = Some b -> b = n) 
-    (WF_gamma'' : WF_Environment _ _ WFV gamma'' gamma) T, 
+    (WF_gamma' : forall n b, lookup gamma' n = Some b -> b = n)
+    (WF_gamma'' : WF_Environment _ _ WFV gamma'' gamma) T,
     typeof D (E _) (proj1_sig e') = Some T -> WFValueC _ _ WFV (beval _ _ n e'' gamma'') T.
   Proof.
     apply soundness_X with (eval_continuous_Exp_E := EV_Alg);
@@ -175,4 +175,4 @@ End Test_Section.
 *** Local Variables: ***
 *** coq-prog-args: ("-emacs-U" "-impredicative-set") ***
 *** End: ***
-*) 
+*)

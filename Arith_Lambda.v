@@ -19,7 +19,7 @@ Section Lambda_Arith.
   Context {eq_DType_D : forall T, FAlgebra eq_DTypeName T (eq_DTypeR D) D}.
   Context {eq_TArrow_D : forall T, FAlgebra eq_TArrowName T (eq_TArrowR D) D}.
 
-  Definition AType_eq_TArrow (R : Set) (rec : R -> eq_TArrowR D) 
+  Definition AType_eq_TArrow (R : Set) (rec : R -> eq_TArrowR D)
     (e : AType R) : eq_TArrowR D := (fun _ _ => false, tnat' D).
 
   Global Instance MAlgebra_eq_TArrow_AType T:
@@ -27,7 +27,7 @@ Section Lambda_Arith.
       {| f_algebra := AType_eq_TArrow T|}.
 
   Context {WF_TArrow_eq_DT : forall T, @WF_FAlgebra eq_TArrowName T _ _ _
-    Sub_AType_D (MAlgebra_eq_TArrow_AType T) (eq_TArrow_D _)}. 
+    Sub_AType_D (MAlgebra_eq_TArrow_AType T) (eq_TArrow_D _)}.
 
   Global Instance PAlgebra_eq_TArrow_eq_AType :
     PAlgebra eq_TArrow_eqName (sig (UP'_P (eq_TArrow_eq_P D))) AType.
@@ -37,14 +37,14 @@ Section Lambda_Arith.
     unfold UP'_P; econstructor.
     unfold eq_TArrow_eq_P; intros.
     unfold eq_DType, mfold, tnat, tnat', inject' in H; simpl in H;
-      repeat rewrite wf_functor in H; simpl in H; unfold in_t in H. 
+      repeat rewrite wf_functor in H; simpl in H; unfold in_t in H.
     simpl.
     unfold eq_TArrow, mfold, tnat; simpl; rewrite wf_functor; simpl;
       unfold in_t at 1; simpl; unfold AType_fmap.
     rewrite (wf_algebra (WF_FAlgebra := WF_TArrow_eq_DT _)); simpl.
     rewrite wf_functor; simpl; unfold AType_fmap; split; auto.
     simpl; intros.
-    unfold in_t in H0; rewrite (wf_algebra (WF_FAlgebra := WF_TArrow_eq_DT _)) in H0; 
+    unfold in_t in H0; rewrite (wf_algebra (WF_FAlgebra := WF_TArrow_eq_DT _)) in H0;
       simpl in H0; discriminate.
     exact H.
   Defined.
@@ -78,7 +78,7 @@ Section Lambda_Arith.
   Context {WF_typeof_E : forall T, @WF_FAlgebra TypeofName T _ _ _
     (Sub_Arith_E _) (MAlgebra_typeof_Arith _ T) (Typeof_E _)}.
 
-  Global Instance PAlgebra_WF_invertClos_VI typeof_rec : 
+  Global Instance PAlgebra_WF_invertClos_VI typeof_rec :
     iPAlgebra WF_invertClos_Name (WF_invertClos_P D E V EQV_E WFV typeof_rec) (WFValue_VI D V).
   Proof.
     econstructor; intros.
@@ -87,10 +87,10 @@ Section Lambda_Arith.
     split.
     apply (inject_i (subGF := Sub_WFV_VI_WFV)); econstructor; eauto.
     intros; rewrite H2 in H1.
-    elimtype False; apply (inject_discriminate _ _ _ H1).    
+    elimtype False; apply (inject_discriminate _ _ _ H1).
   Defined.
 
-  Global Instance PAlgebra_WF_invertClos'_VI typeof_rec : 
+  Global Instance PAlgebra_WF_invertClos'_VI typeof_rec :
     iPAlgebra WF_invertClos'_Name (WF_invertClos'_P D E V EQV_E WFV typeof_rec) (WFValue_VI D V).
   Proof.
     econstructor; intros.
@@ -99,7 +99,7 @@ Section Lambda_Arith.
     split.
     apply (inject_i (subGF := Sub_WFV_VI_WFV)); econstructor; eauto.
     simpl in *|-*; intros; rewrite H2 in H0.
-    elimtype False; apply sym_eq in H0. apply (inject_discriminate _ _ _ H0).    
+    elimtype False; apply sym_eq in H0. apply (inject_discriminate _ _ _ H0).
   Defined.
 
   (* ============================================== *)
@@ -107,18 +107,18 @@ Section Lambda_Arith.
   (* ============================================== *)
 
     Inductive Arith_eqv (A B : Set) (C : eqv_i E A B -> Prop) : eqv_i E A B -> Prop :=
-    | Lit_eqv : forall (gamma : Env _) gamma' n e e', 
-      proj1_sig e = lit (E A) n -> 
-      proj1_sig e' = lit (E B) n -> 
+    | Lit_eqv : forall (gamma : Env _) gamma' n e e',
+      proj1_sig e = lit (E A) n ->
+      proj1_sig e' = lit (E B) n ->
       Arith_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e')
     | Add_eqv : forall (gamma : Env _) gamma' a b a' b' e e',
-      C (mk_eqv_i _ _ _ gamma gamma' a a') -> 
-      C (mk_eqv_i _ _ _ gamma gamma' b b') -> 
-      proj1_sig e = proj1_sig (add' (E _) a b) ->  
-      proj1_sig e' = proj1_sig (add' (E _) a' b') -> 
-      Arith_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e'). 
+      C (mk_eqv_i _ _ _ gamma gamma' a a') ->
+      C (mk_eqv_i _ _ _ gamma gamma' b b') ->
+      proj1_sig e = proj1_sig (add' (E _) a b) ->
+      proj1_sig e' = proj1_sig (add' (E _) a' b') ->
+      Arith_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e').
 
-    Lemma Arith_eqv_impl_NP_eqv : forall A B C i, 
+    Lemma Arith_eqv_impl_NP_eqv : forall A B C i,
       Arith_eqv A B C i -> NP_Functor_eqv E  Arith A B C i.
       intros; destruct H.
       unfold lit in *; simpl in *.
@@ -135,4 +135,4 @@ End Lambda_Arith.
 *** Local Variables: ***
 *** coq-prog-args: ("-emacs-U" "-impredicative-set") ***
 *** End: ***
-*) 
+*)
