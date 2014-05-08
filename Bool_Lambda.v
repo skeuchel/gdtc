@@ -79,9 +79,9 @@ Section PLambda_Arith.
 
   Context {Sub_WFV_VB_WFV : Sub_iFunctor (WFValue_VB D V) WFV}.
   Context {Sub_WFV_Bot_WFV : Sub_iFunctor (WFValue_Bot D V) WFV}.
-  Context {Dis_Clos_Bot : Distinct_Sub_Functor _ Sub_LType_D Sub_BType_D}.
+  Context {Dis_Clos_Bot : Distinct_Sub_Functor LType BType D}.
 
-  Context {Dis_VB_Clos : Distinct_Sub_Functor Fun_V Sub_BoolValue_V Sub_ClosValue_V}.
+  Context {Dis_VB_Clos : Distinct_Sub_Functor BoolValue (ClosValue E) V}.
   Context {WF_Sub_ClosValue_V : WF_Functor (ClosValue E) V Sub_ClosValue_V}.
   Context {WF_Sub_BoolValue_V : WF_Functor BoolValue V Sub_BoolValue_V}.
 

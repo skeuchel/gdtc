@@ -355,7 +355,7 @@ Section Bool.
   Context {SV : (SubValue_i V -> Prop) -> SubValue_i V -> Prop}.
   Context {Sub_SV_refl_SV : Sub_iFunctor (SubValue_refl V) SV}.
 
-  Context {Dis_VB_Bot : Distinct_Sub_Functor _ Sub_BoolValue_V Sub_BotValue_V}.
+  Context {Dis_VB_Bot : Distinct_Sub_Functor BoolValue BotValue V}.
 
   (* Inversion principles for natural number SubValues. *)
   Definition SV_invertVB_P (i : SubValue_i V) :=
@@ -381,7 +381,7 @@ Section Bool.
     (WF_V' : WF_Functor V' V sub_V'_V),
     (forall (i : SubValue_i V) (H : SV' SV_invertVB_P i),
       exists v', proj1_sig (sv_a _ i) = inject v') ->
-    Distinct_Sub_Functor _ Sub_BoolValue_V sub_V'_V ->
+    Distinct_Sub_Functor BoolValue V' V ->
     iPAlgebra SV_invertVB_Name SV_invertVB_P SV'.
   Proof.
     econstructor; intros.

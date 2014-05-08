@@ -373,7 +373,7 @@ Section Arith.
 
   (* Add case. *)
 
-  Context {Dis_VI_Bot : Distinct_Sub_Functor _ Sub_NatValue_V Sub_BotValue_V}.
+  Context {Dis_VI_Bot : Distinct_Sub_Functor NatValue BotValue V}.
 
   (* Inversion principles for natural number SubValues. *)
   Definition SV_invertVI_P (i : SubValue_i V) :=
@@ -399,7 +399,7 @@ Section Arith.
     (WF_V' : WF_Functor V' V sub_V'_V),
     (forall (i : SubValue_i V) (H : SV' SV_invertVI_P i),
       exists v', proj1_sig (sv_a _ i) = inject v') ->
-    Distinct_Sub_Functor _ Sub_NatValue_V sub_V'_V ->
+    Distinct_Sub_Functor NatValue V' V ->
     iPAlgebra SV_invertVI_Name SV_invertVI_P SV'.
   Proof.
     econstructor; intros.

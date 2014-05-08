@@ -545,7 +545,7 @@ Section Lambda.
 
   (* App case. *)
 
-  Context {Dis_Clos_Bot : Distinct_Sub_Functor _ Sub_ClosValue_V Sub_BotValue_V}.
+  Context {Dis_Clos_Bot : Distinct_Sub_Functor ClosValue BotValue V}.
   Context {iFun_SV : iFunctor SV}.
 
   Global Instance SV_proj1_b_Clos :

@@ -494,10 +494,10 @@ Section Folds.
     reflexivity.
   Qed.
 
-  Class Distinct_Sub_Functor {F G H : Set -> Set}
-    (Fun_H : Functor H)
-    (sub_F_H : F :<: H)
-    (sub_G_H : G :<: H)
+  Class Distinct_Sub_Functor (F G H : Set -> Set)
+    {Fun_H : Functor H}
+    {sub_F_H : F :<: H}
+    {sub_G_H : G :<: H}
     : Set :=
     { inj_discriminate :
         forall A f g,
@@ -512,7 +512,7 @@ Section Folds.
     (sub_F_G : F :<: G)
     (sub_H_I : H :<: I)
     :
-    @Distinct_Sub_Functor F H (G :+: I) _ _ _.
+    Distinct_Sub_Functor F H (G :+: I).
   Proof.
     econstructor; intros.
     unfold not; simpl; unfold id; intros.
@@ -526,7 +526,7 @@ Section Folds.
     (sub_F_G : F :<: G)
     (sub_H_I : H :<: I)
     :
-    @Distinct_Sub_Functor F H (I :+: G) _ _ _.
+    Distinct_Sub_Functor F H (I :+: G).
   Proof.
     econstructor; intros.
     unfold not; simpl; unfold id; intros.
@@ -539,9 +539,9 @@ Section Folds.
     (Fun_I : Functor I)
     (sub_F_G : F :<: G)
     (sub_H_G : H :<: G)
-    (Dist_inl : @Distinct_Sub_Functor F H G Fun_G sub_F_G sub_H_G)
+    (Dist_inl : Distinct_Sub_Functor F H G)
     :
-    @Distinct_Sub_Functor F H (G :+: I) _ _ _.
+    Distinct_Sub_Functor F H (G :+: I).
   Proof.
     econstructor; intros.
     unfold not; intros.
@@ -555,9 +555,9 @@ Section Folds.
     (Fun_I : Functor I)
     (sub_F_G : F :<: G)
     (sub_H_G : H :<: G)
-    (Dist_inl : @Distinct_Sub_Functor F H G Fun_G sub_F_G sub_H_G)
+    (Dist_inl : Distinct_Sub_Functor F H G)
     :
-    @Distinct_Sub_Functor F H (I :+: G) _ _ _.
+    Distinct_Sub_Functor F H (I :+: G).
   Proof.
     econstructor; intros.
     unfold not; intros.
@@ -573,7 +573,7 @@ Section Folds.
     {sub_G_H : G :<: H}
     {WF_F : WF_Functor _ _ sub_F_H}
     {WF_G : WF_Functor _ _ sub_G_H},
-    Distinct_Sub_Functor Fun_H sub_F_H sub_G_H ->
+    Distinct_Sub_Functor F G H ->
     forall f g, inject (subGF := sub_F_H) f <> inject (subGF := sub_G_H) g.
   Proof.
     unfold inject; simpl; intros.

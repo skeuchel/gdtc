@@ -186,7 +186,7 @@ Section NatCase.
     iPAlgebra SV_invertVI_Name (SV_invertVI_P V) SV}.
   Context {SV_invertVI'_SV :
     iPAlgebra SV_invertVI'_Name (SV_invertVI'_P V) SV}.
-  Context {Dis_VI_Bot : Distinct_Sub_Functor _ Sub_NatValue_V Sub_BotValue_V}.
+  Context {Dis_VI_Bot : Distinct_Sub_Functor NatValue BotValue V}.
   Context {SV_invertBot_SV :
     iPAlgebra SV_invertBot_Name (SV_invertBot_P V) SV}.
 
