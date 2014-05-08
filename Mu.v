@@ -49,7 +49,7 @@ Section Mu.
 
   (* Constructors + Universal Property. *)
 
-  Context {WF_Sub_Fix_F : forall A, WF_Functor _ _ (Sub_Fix_F A) _ _}.
+  Context {WF_Sub_Fix_F : forall A, WF_Functor _ _ (Sub_Fix_F A)}.
 
   Definition mu' {A : Set}
     (t1 : DType D)
@@ -160,7 +160,7 @@ Section Mu.
 
   (* Continuity of Evaluation. *)
   Context {SV : (SubValue_i V -> Prop) -> SubValue_i V -> Prop}.
-  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V Bot_Functor Fun_V}.
+  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V}.
   Context {Sub_SV_refl_SV : Sub_iFunctor (SubValue_refl V) SV}.
 
   (* Mu case. *)

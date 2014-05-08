@@ -31,7 +31,7 @@ Section Arith.
   Context {Sub_AType_D  : AType :<: D}.
 
   (* Constructor + Universal Property. *)
-  Context {WF_Sub_AType_D : WF_Functor _ _ Sub_AType_D _ _}.
+  Context {WF_Sub_AType_D : WF_Functor _ _ Sub_AType_D}.
 
   Definition tnat' : DType := inject' (TNat _).
   Definition tnat : Fix D := proj1_sig tnat'.
@@ -139,7 +139,7 @@ Section Arith.
   Context {Sub_Arith_F : Arith :<: F}.
 
   (* Constructor + Universal Property. *)
-  Context {WF_Sub_Arith_F : WF_Functor _ _ Sub_Arith_F _ _}.
+  Context {WF_Sub_Arith_F : WF_Functor _ _ Sub_Arith_F}.
   Definition lit' (n : nat) : Exp := inject' (Lit _ n).
   Definition lit  (n : nat) : Fix F := proj1_sig (lit' n).
   Global Instance UP'_lit {n : nat} :
@@ -254,7 +254,7 @@ Section Arith.
   Context {Sub_NatValue_V : NatValue :<: V}.
 
   (* Constructor + Universal Property. *)
-  Context {WF_Sub_NatValue_F : WF_Functor _ _ Sub_NatValue_V _ _}.
+  Context {WF_Sub_NatValue_F : WF_Functor _ _ Sub_NatValue_V}.
 
   Definition vi' (n : nat) : Value := inject' (VI _ n).
   Definition vi (n : nat) : Fix V := proj1_sig (vi' n).
@@ -347,7 +347,7 @@ Section Arith.
 
   (* Continuity of Evaluation. *)
 
-  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V Bot_Functor Fun_V}.
+  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V}.
   Context {SV : (SubValue_i V -> Prop) -> SubValue_i V -> Prop}.
   Context {Sub_SV_refl_SV : Sub_iFunctor (SubValue_refl V) SV}.
 
@@ -396,7 +396,7 @@ Section Arith.
     (Fun_V' : Functor V')
     (SV' : (SubValue_i V -> Prop) -> SubValue_i V -> Prop)
     (sub_V'_V : V' :<: V)
-    (WF_V' : WF_Functor V' V sub_V'_V Fun_V' Fun_V),
+    (WF_V' : WF_Functor V' V sub_V'_V),
     (forall (i : SubValue_i V) (H : SV' SV_invertVI_P i),
       exists v', proj1_sig (sv_a _ i) = inject v') ->
     Distinct_Sub_Functor _ Sub_NatValue_V sub_V'_V ->
@@ -1098,7 +1098,7 @@ Section Arith.
     (E' : Set -> Set)
     {Fun_E' : Functor E'}
     {Sub_Arith_E' : Arith :<: E'}
-    {WF_Fun_E' : WF_Functor _ _ Sub_Arith_E' _ _}
+    {WF_Fun_E' : WF_Functor _ _ Sub_Arith_E'}
     {Typeof_E' : forall T, FAlgebra TypeofName T (typeofR D) E'}
     {WF_typeof_E' : forall T, @WF_FAlgebra TypeofName T _ _ _
       Sub_Arith_E' (MAlgebra_typeof_Arith T) (Typeof_E' _)}

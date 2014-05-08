@@ -14,8 +14,8 @@ Section Lambda_Arith.
   Definition DType := DType D.
   Context {Sub_AType_D : AType :<: D}.
   Context {Sub_LType_D : LType :<: D}.
-  Context {WF_Sub_AType_D : WF_Functor _ _ Sub_AType_D _ _}.
-  Context {WF_Sub_LType_D : WF_Functor _ _ Sub_LType_D _ _}.
+  Context {WF_Sub_AType_D : WF_Functor _ _ Sub_AType_D}.
+  Context {WF_Sub_LType_D : WF_Functor _ _ Sub_LType_D}.
   Context {eq_DType_D : forall T, FAlgebra eq_DTypeName T (eq_DTypeR D) D}.
   Context {eq_TArrow_D : forall T, FAlgebra eq_TArrowName T (eq_TArrowR D) D}.
 
@@ -52,7 +52,7 @@ Section Lambda_Arith.
   Variable E : Set -> Set -> Set.
   Context {Fun_E : forall A, Functor (E A)}.
   Context {Sub_Arith_E : forall A, Arith :<: (E A)}.
-  Context {WF_Sub_Arith_E : forall A, WF_Functor _ _ (Sub_Arith_E A) _ _}.
+  Context {WF_Sub_Arith_E : forall A, WF_Functor _ _ (Sub_Arith_E A)}.
 
   Variable EQV_E : forall A B, (eqv_i E A B -> Prop) -> eqv_i E A B -> Prop.
   Context {funEQV_E : forall A B, iFunctor (EQV_E A B)}.
@@ -67,8 +67,8 @@ Section Lambda_Arith.
   Context {funWFV : iFunctor WFV}.
 
   Context {Dis_VI_Clos : Distinct_Sub_Functor Fun_V Sub_NatValue_V Sub_ClosValue_V}.
-  Context {WF_Sub_ClosValue_V : WF_Functor (ClosValue E) V Sub_ClosValue_V _ Fun_V}.
-  Context {WF_Sub_NatValue_V : WF_Functor NatValue V Sub_NatValue_V _ Fun_V}.
+  Context {WF_Sub_ClosValue_V : WF_Functor (ClosValue E) V Sub_ClosValue_V}.
+  Context {WF_Sub_NatValue_V : WF_Functor NatValue V Sub_NatValue_V}.
 
   Context {Sub_WFV_VI_WFV : Sub_iFunctor (WFValue_VI D V) WFV}.
   Context {Sub_WFV_Bot_WFV : Sub_iFunctor (WFValue_Bot D V) WFV}.

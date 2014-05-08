@@ -70,7 +70,7 @@ Section Names.
   Defined.
 
   (* Constructor + Universal Property. *)
-  Context {WF_SubStuckValue_V : WF_Functor _ _ Sub_StuckValue_V _ _}.
+  Context {WF_SubStuckValue_V : WF_Functor _ _ Sub_StuckValue_V}.
 
   Definition stuck' (n : nat) : Value := inject' (Stuck _ n).
   Definition stuck (n : nat) : Fix V := proj1_sig (stuck' n).
@@ -109,7 +109,7 @@ Section Names.
   Defined.
 
   (* Constructor + Universal Property. *)
-  Context {WF_SubBotValue_V : WF_Functor _ _ Sub_BotValue_V _ _}.
+  Context {WF_SubBotValue_V : WF_Functor _ _ Sub_BotValue_V}.
 
   Definition bot' : Value := inject' (Bot _).
   Definition bot : Fix V := proj1_sig bot'.

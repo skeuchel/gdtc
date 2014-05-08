@@ -14,8 +14,8 @@ Section PLambda_Arith.
   Definition DType := DType D.
   Context {Sub_BType_D : BType :<: D}.
   Context {Sub_LType_D : LType :<: D}.
-  Context {WF_Sub_BType_D : WF_Functor _ _ Sub_BType_D _ _}.
-  Context {WF_Sub_LType_D : WF_Functor _ _ Sub_LType_D _ _}.
+  Context {WF_Sub_BType_D : WF_Functor _ _ Sub_BType_D}.
+  Context {WF_Sub_LType_D : WF_Functor _ _ Sub_LType_D}.
   Context {eq_DType_D : forall T, FAlgebra eq_DTypeName T (eq_DTypeR D) D}.
   Context {eq_TArrow_D : forall T, FAlgebra eq_TArrowName T (eq_TArrowR D) D}.
 
@@ -82,8 +82,8 @@ Section PLambda_Arith.
   Context {Dis_Clos_Bot : Distinct_Sub_Functor _ Sub_LType_D Sub_BType_D}.
 
   Context {Dis_VB_Clos : Distinct_Sub_Functor Fun_V Sub_BoolValue_V Sub_ClosValue_V}.
-  Context {WF_Sub_ClosValue_V : WF_Functor (ClosValue E) V Sub_ClosValue_V _ Fun_V}.
-  Context {WF_Sub_BoolValue_V : WF_Functor BoolValue V Sub_BoolValue_V _ Fun_V}.
+  Context {WF_Sub_ClosValue_V : WF_Functor (ClosValue E) V Sub_ClosValue_V}.
+  Context {WF_Sub_BoolValue_V : WF_Functor BoolValue V Sub_BoolValue_V}.
 
   Global Instance PAlgebra_WF_invertClos_VB typeof_rec :
     iPAlgebra WF_invertClos_Name (WF_invertClos_P D E V EQV_E WFV typeof_rec) (WFValue_VB D V).

@@ -24,9 +24,9 @@ Section PNames.
   Context {Fun_V : Functor V}.
 
   Context {Sub_StuckValue_V : StuckValue :<: V}.
-  Context {WF_SubStuckValue_V : WF_Functor _ _ Sub_StuckValue_V _ _}.
+  Context {WF_SubStuckValue_V : WF_Functor _ _ Sub_StuckValue_V}.
   Context {Sub_BotValue_V : BotValue :<: V}.
-  Context {WF_SubBotValue_V : WF_Functor _ _ Sub_BotValue_V _ _}.
+  Context {WF_SubBotValue_V : WF_Functor _ _ Sub_BotValue_V}.
 
   (* ============================================== *)
   (* EXPRESSIONS                                    *)
@@ -299,7 +299,7 @@ Section PNames.
     Variable (NP : Set -> Set).
     Context {Fun_NP : Functor NP}.
     Context {sub_NP_F : forall A, NP :<: E A}.
-    Context {WF_sub_NP_F_V : forall A, WF_Functor _ _ (sub_NP_F A) _ _}.
+    Context {WF_sub_NP_F_V : forall A, WF_Functor _ _ (sub_NP_F A)}.
 
     Variable Sub_NP_Functor_eqv_EQV_E : forall A B,
       Sub_iFunctor (NP_Functor_eqv NP A B) (EQV_E A B).

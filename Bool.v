@@ -31,7 +31,7 @@ Section Bool.
   Context {Sub_BType_D  : BType :<: D}.
 
    (* Constructor + Universal Property. *)
-  Context {WF_Sub_BType_D : WF_Functor _ _ Sub_BType_D _ _}.
+  Context {WF_Sub_BType_D : WF_Functor _ _ Sub_BType_D}.
 
   Definition tbool' : DType := inject' (TBool _).
   Definition tbool : Fix D := proj1_sig tbool'.
@@ -133,7 +133,7 @@ Section Bool.
   Context {Sub_Bool_F : Bool :<: F}.
 
   (* Constructor + Universal Property. *)
-   Context {WF_Sub_Bool_F : WF_Functor _ _ Sub_Bool_F _ _}.
+   Context {WF_Sub_Bool_F : WF_Functor _ _ Sub_Bool_F}.
   Definition blit' (b : bool) : Exp :=
     inject' (BLit _ b).
   Definition blit (b : bool) : Fix F := proj1_sig (blit' b).
@@ -260,7 +260,7 @@ Section Bool.
   Context {Sub_BoolValue_V : BoolValue :<: V}.
 
   (* Constructor + Universal Property. *)
-  Context {WF_Sub_BoolValue_F : WF_Functor _ _ Sub_BoolValue_V _ _}.
+  Context {WF_Sub_BoolValue_F : WF_Functor _ _ Sub_BoolValue_V}.
 
   Definition vb' (b : bool) : Value := inject' (VB _ b).
   Definition vb (b : bool) : Fix V := proj1_sig (vb' b).
@@ -351,7 +351,7 @@ Section Bool.
   Context {WF_eval_F : @WF_FAlgebra EvalName _ _ (Bool) (F)
     (Sub_Bool_F) (MAlgebra_eval_Bool (Exp)) eval_F}.
 
-  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V Bot_Functor Fun_V}.
+  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V}.
   Context {SV : (SubValue_i V -> Prop) -> SubValue_i V -> Prop}.
   Context {Sub_SV_refl_SV : Sub_iFunctor (SubValue_refl V) SV}.
 
@@ -378,7 +378,7 @@ Section Bool.
     (Fun_V' : Functor V')
     (SV' : (SubValue_i V -> Prop) -> SubValue_i V -> Prop)
     (sub_V'_V : V' :<: V)
-    (WF_V' : WF_Functor V' V sub_V'_V Fun_V' Fun_V),
+    (WF_V' : WF_Functor V' V sub_V'_V),
     (forall (i : SubValue_i V) (H : SV' SV_invertVB_P i),
       exists v', proj1_sig (sv_a _ i) = inject v') ->
     Distinct_Sub_Functor _ Sub_BoolValue_V sub_V'_V ->
@@ -659,7 +659,7 @@ Section Bool.
     (E' : Set -> Set)
     {Fun_E' : Functor E'}
     {Sub_Bool_E' : Bool :<: E'}
-    {WF_Fun_E' : WF_Functor _ _ Sub_Bool_E' _ _}
+    {WF_Fun_E' : WF_Functor _ _ Sub_Bool_E'}
     {Typeof_E' : forall T, FAlgebra TypeofName T (typeofR D) E'}
     {WF_typeof_E' : forall T, @WF_FAlgebra TypeofName T _ _ _
       Sub_Bool_E' (MAlgebra_typeof_Bool T) (Typeof_E' _)}

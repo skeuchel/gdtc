@@ -37,7 +37,7 @@ Section Lambda.
   Definition DType := DType D.
 
   (* Constructor + Universal Property. *)
-  Context {WF_Sub_LType_D : WF_Functor _ _ Sub_LType_D _ _}.
+  Context {WF_Sub_LType_D : WF_Functor _ _ Sub_LType_D}.
 
   Definition tarrow' (t1 t2 : DType) := inject' (TArrow _ t1 t2).
   Definition tarrow (t1 t2 : Fix D)
@@ -211,7 +211,7 @@ Section Lambda.
 
   (* Constructors + Universal Property. *)
 
-  Context {WF_Sub_Lambda_F : forall A, WF_Functor _ _ (Sub_Lambda_F A) _ _}.
+  Context {WF_Sub_Lambda_F : forall A, WF_Functor _ _ (Sub_Lambda_F A)}.
 
   Definition var' {A : Set} (a : A) : Exp A := inject' (Var _ _ a).
   Definition var {A : Set} (a : A) : Fix (F A) := proj1_sig (var' a).
@@ -326,7 +326,7 @@ Section Lambda.
   Definition Value := Value V.
 
   (* Constructor + Universal Property. *)
-  Context {WF_Sub_ClosValue_V : WF_Functor _ _ (Sub_ClosValue_V) _ _}.
+  Context {WF_Sub_ClosValue_V : WF_Functor _ _ (Sub_ClosValue_V)}.
 
   Definition closure' f env : Value := inject' (Clos _ f env).
   Definition closure
@@ -503,7 +503,7 @@ Section Lambda.
 
   (* Continuity of Evaluation. *)
 
-  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V Bot_Functor Fun_V}.
+  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V}.
   Context {Sub_SV_refl_SV : Sub_iFunctor (SubValue_refl V) SV}.
   Context {Sub_SV_Clos_SV : Sub_iFunctor SubValue_Clos SV}.
 

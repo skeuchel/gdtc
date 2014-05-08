@@ -405,15 +405,15 @@ Section Folds.
 
   Class WF_Functor (F G: Set -> Set)
     (subfg: F :<: G)
-    (Fun_F: Functor F)
-    (Fun_G: Functor G): Set :=
+    {Fun_F: Functor F}
+    {Fun_G: Functor G} : Set :=
     { wf_functor :
         forall (A B : Set) (f : A -> B) (fa: F A) ,
           fmap f (inj fa) (F := G) = inj (fmap f fa)
     }.
 
   Global Instance WF_Functor_id {F : Set -> Set} {Fun_F : Functor F} :
-    WF_Functor F F Sub_Functor_id _ _.
+    WF_Functor F F Sub_Functor_id.
   Proof.
     econstructor; intros; reflexivity.
   Defined.
@@ -423,9 +423,9 @@ Section Folds.
     {Fun_G : Functor G}
     {Fun_H : Functor H}
     {subfg : F :<: G}
-    {WF_Fun_F : WF_Functor F _ subfg Fun_F Fun_G}
+    {WF_Fun_F : WF_Functor F _ subfg}
     :
-    WF_Functor F (G :+: H) (Sub_Functor_inl F G H _ ) _ (Functor_Plus G H).
+    WF_Functor F (G :+: H) (Sub_Functor_inl F G H _).
   Proof.
     econstructor; intros.
     simpl; rewrite wf_functor; reflexivity.
@@ -436,9 +436,9 @@ Section Folds.
     {Fun_G : Functor G}
     {Fun_H : Functor H}
     {subfh : F :<: H}
-    {WF_Fun_F : WF_Functor F _ subfh Fun_F Fun_H}
+    {WF_Fun_F : WF_Functor F _ subfh}
     :
-    WF_Functor F (G :+: H) (Sub_Functor_inr F G H _ ) _ (Functor_Plus G H).
+    WF_Functor F (G :+: H) (Sub_Functor_inr F G H _ ).
   Proof.
     econstructor; intros.
     simpl; rewrite wf_functor; reflexivity.
@@ -571,8 +571,8 @@ Section Folds.
     {Fun_H : Functor H}
     {sub_F_H : F :<: H}
     {sub_G_H : G :<: H}
-    {WF_F : WF_Functor _ _ sub_F_H Fun_F Fun_H}
-    {WF_G : WF_Functor _ _ sub_G_H Fun_G Fun_H},
+    {WF_F : WF_Functor _ _ sub_F_H}
+    {WF_G : WF_Functor _ _ sub_G_H},
     Distinct_Sub_Functor Fun_H sub_F_H sub_G_H ->
     forall f g, inject (subGF := sub_F_H) f <> inject (subGF := sub_G_H) g.
   Proof.

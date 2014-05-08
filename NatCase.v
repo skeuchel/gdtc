@@ -43,7 +43,7 @@ Section NatCase.
   Context {Sub_NatCase_F : forall A, NatCase A :<: F A}.
 
   (* Constructor + Universal Property. *)
-  Context {WF_Sub_NatCase_F : forall A, WF_Functor _ _ (Sub_NatCase_F A) _ _}.
+  Context {WF_Sub_NatCase_F : forall A, WF_Functor _ _ (Sub_NatCase_F A)}.
 
   Definition nvar' {A : Set} n : Exp A := inject' (NVar _ _ n).
   Definition nvar {A : Set} n : Fix (F A) := proj1_sig (nvar' n).
@@ -118,11 +118,11 @@ Section NatCase.
   Context {Fun_V : Functor V}.
   Definition Value := Value V.
   Context {Sub_NatValue_V : NatValue :<: V}.
-  Context {WF_SubNatValue_V : WF_Functor NatValue V Sub_NatValue_V _ _}.
+  Context {WF_SubNatValue_V : WF_Functor NatValue V Sub_NatValue_V}.
   Context {Sub_StuckValue_V : StuckValue :<: V}.
   Definition stuck' : nat -> Value := stuck' _.
   Context {Sub_BotValue_V : BotValue :<: V}.
-  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V _ _}.
+  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V}.
   Definition bot' : Value := bot' _.
 
   Definition NatCase_eval R : Mixin R (NatCase nat) (evalR V) :=
