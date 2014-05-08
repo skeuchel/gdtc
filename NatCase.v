@@ -30,8 +30,9 @@ Section NatCase.
   Global Instance NatCase_Functor A : Functor (NatCase A) | 5 :=
     {| fmap := NatCase_fmap A |}.
   Proof.
+    (* fmap fusion *)
     destruct a; reflexivity.
-  (* fmap id *)
+    (* fmap id *)
     destruct a; unfold id; simpl; auto;
     rewrite <- eta_expansion_dep; reflexivity.
   Defined.
@@ -77,9 +78,9 @@ Section NatCase.
           (proj2_sig n) (proj2_sig z) (fun n' => proj2_sig (s n')))
     end.
 
-(* ============================================== *)
-(* TYPING                                         *)
-(* ============================================== *)
+  (* ============================================== *)
+  (* TYPING                                         *)
+  (* ============================================== *)
 
   Context {eq_DType_DT : forall T, FAlgebra eq_DTypeName T (eq_DTypeR D) D}.
 
@@ -126,19 +127,21 @@ Section NatCase.
 
   Definition NatCase_eval R : Mixin R (NatCase nat) (evalR V) :=
     fun rec e =>
-     match e with
-       | NVar n => fun env => match (lookup env n) with
-                                | Some v => v
-                                | _ => stuck' 146
-                              end
-       | Case n z s => fun env =>
-         let reced := rec n env in
-           match isVI V (proj1_sig reced) with
-             | Some 0 => rec z env
-             | Some (S n') => rec (s (Datatypes.length env)) (insert _ (vi' _ n') env)
-             | _ => if isBot _ (proj1_sig reced) then bot' else stuck' 145
-           end
-     end.
+      match e with
+        | NVar n =>
+          fun env => match (lookup env n) with
+                       | Some v => v
+                       | _ => stuck' 146
+                     end
+        | Case n z s =>
+          fun env =>
+            let reced := rec n env in
+            match isVI V (proj1_sig reced) with
+              | Some 0 => rec z env
+              | Some (S n') => rec (s (Datatypes.length env)) (insert _ (vi' _ n') env)
+              | _ => if isBot _ (proj1_sig reced) then bot' else stuck' 145
+            end
+      end.
 
   Global Instance MAlgebra_eval_NatCase T :
     FAlgebra EvalName T (evalR V) (NatCase _) :=
@@ -169,195 +172,200 @@ Section NatCase.
   (* TYPE SOUNDNESS                                 *)
   (* ============================================== *)
 
-    Context {eval_F : FAlgebra EvalName (Exp nat) (evalR V) (F nat)}.
-    Context {WF_eval_F : @WF_FAlgebra EvalName _ _ (NatCase _)
-      (F _) (Sub_NatCase_F _) (MAlgebra_eval_NatCase _) (eval_F)}.
+  Context {eval_F : FAlgebra EvalName (Exp nat) (evalR V) (F nat)}.
+  Context {WF_eval_F : @WF_FAlgebra EvalName _ _ (NatCase _)
+    (F _) (Sub_NatCase_F _) (MAlgebra_eval_NatCase _) (eval_F)}.
 
-   (* Continuity of Evaluation. *)
+  (* Continuity of Evaluation. *)
 
-    Context {SV : (SubValue_i V -> Prop) -> SubValue_i V -> Prop}.
-    Context {iFun_SV : iFunctor SV}.
-    Context {Sub_SV_refl_SV : Sub_iFunctor (SubValue_refl V) SV}.
-    Context {Sub_SV_Bot_SV : Sub_iFunctor (SubValue_Bot V) SV}.
-    Context {SV_invertVI_SV :
-      iPAlgebra SV_invertVI_Name (SV_invertVI_P V) SV}.
-    Context {SV_invertVI'_SV :
-      iPAlgebra SV_invertVI'_Name (SV_invertVI'_P V) SV}.
-    Context {Dis_VI_Bot : Distinct_Sub_Functor _ Sub_NatValue_V Sub_BotValue_V}.
-    Context {SV_invertBot_SV :
-      iPAlgebra SV_invertBot_Name (SV_invertBot_P V) SV}.
+  Context {SV : (SubValue_i V -> Prop) -> SubValue_i V -> Prop}.
+  Context {iFun_SV : iFunctor SV}.
+  Context {Sub_SV_refl_SV : Sub_iFunctor (SubValue_refl V) SV}.
+  Context {Sub_SV_Bot_SV : Sub_iFunctor (SubValue_Bot V) SV}.
+  Context {SV_invertVI_SV :
+    iPAlgebra SV_invertVI_Name (SV_invertVI_P V) SV}.
+  Context {SV_invertVI'_SV :
+    iPAlgebra SV_invertVI'_Name (SV_invertVI'_P V) SV}.
+  Context {Dis_VI_Bot : Distinct_Sub_Functor _ Sub_NatValue_V Sub_BotValue_V}.
+  Context {SV_invertBot_SV :
+    iPAlgebra SV_invertBot_Name (SV_invertBot_P V) SV}.
 
-    Context {SV_proj1_b_SV :
-      iPAlgebra SV_proj1_b_Name (SV_proj1_b_P _ SV) SV}.
-    Context {SV_proj1_a_SV :
-      iPAlgebra SV_proj1_a_Name (SV_proj1_a_P _ SV) SV}.
+  Context {SV_proj1_b_SV :
+    iPAlgebra SV_proj1_b_Name (SV_proj1_b_P _ SV) SV}.
+  Context {SV_proj1_a_SV :
+    iPAlgebra SV_proj1_a_Name (SV_proj1_a_P _ SV) SV}.
 
-    Global Instance NatCase_eval_continuous_Exp  :
-      PAlgebra EC_ExpName (sig (UP'_P (eval_continuous_Exp_P V (F _) SV))) (NatCase nat).
-    Proof.
-      constructor; unfold Algebra; intros.
-      eapply ind_alg_NatCase; try assumption; intros.
+  Global Instance NatCase_eval_continuous_Exp  :
+    PAlgebra EC_ExpName (sig (UP'_P (eval_continuous_Exp_P V (F _) SV))) (NatCase nat).
+  Proof.
+    constructor; unfold Algebra; intros.
+    eapply ind_alg_NatCase; try assumption; intros.
     (* NVar case. *)
-      unfold eval_continuous_Exp_P; econstructor; simpl; intros;
-        eauto with typeclass_instances.
-      instantiate (1 := nvar_UP' n).
-      unfold beval, mfold, nvar; simpl; repeat rewrite wf_functor; simpl.
-      repeat rewrite out_in_fmap; rewrite wf_functor; simpl.
-      repeat rewrite (wf_algebra (WF_FAlgebra := WF_eval_F)); simpl.
-      caseEq (@lookup _ gamma n); unfold Value in *|-*.
-      destruct (P2_Env_lookup _ _ _ _ _ H1 _ _ H3) as [v' [lookup_v' Sub_v_v']].
-      unfold Value; rewrite lookup_v'; eauto.
-      unfold Value; rewrite (P2_Env_Nlookup _ _ _ _ _ H1 _ H3).
-      apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; eauto.
+    unfold eval_continuous_Exp_P; econstructor; simpl; intros;
+      eauto with typeclass_instances.
+    instantiate (1 := nvar_UP' n).
+    unfold beval, mfold, nvar; simpl; repeat rewrite wf_functor; simpl.
+    repeat rewrite out_in_fmap; rewrite wf_functor; simpl.
+    repeat rewrite (wf_algebra (WF_FAlgebra := WF_eval_F)); simpl.
+    caseEq (@lookup _ gamma n); unfold Value in *|-*.
+    destruct (P2_Env_lookup _ _ _ _ _ H1 _ _ H3) as [v' [lookup_v' Sub_v_v']].
+    unfold Value; rewrite lookup_v'; eauto.
+    unfold Value; rewrite (P2_Env_Nlookup _ _ _ _ _ H1 _ H3).
+    apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; eauto.
     (* Case case. *)
-      destruct IHn as [n_UP IHn].
-      destruct IHz as [z_UP IHz].
-      unfold eval_continuous_Exp_P; econstructor; simpl; intros;
-        eauto with typeclass_instances.
-      instantiate (1 := Ncase_UP' _ _ _).
-      destruct (IHs (Datatypes.length gamma)) as [s'_UP IHs'].
-      generalize (H0 (exist _ _ n_UP) _ _ _ H1 H2); intro SV_n_n.
-      unfold beval, mfold, Ncase; simpl; repeat rewrite wf_functor; simpl.
-      repeat rewrite out_in_fmap; rewrite wf_functor; simpl.
-      repeat rewrite (wf_algebra (WF_FAlgebra := WF_eval_F)); simpl.
-      rewrite <- (P2_Env_length _ _ _ _ _ H1).
-      repeat erewrite bF_UP_in_out.
-      unfold Names.Exp, evalR.
-      unfold isVI; caseEq (project (G := NatValue) (proj1_sig (beval V (F _) n0 (exist _ _ n_UP) gamma'))).
-      unfold beval, Names.Exp, evalR in H3; rewrite H3.
-      destruct n1.
-      apply project_inject in H3; auto with typeclass_instances;
-        unfold inject, evalR, Names.Value in H3; simpl in H3.
-      destruct (SV_invertVI' V _ SV_n_n _ H3) as [beval_m | beval_m];
-        simpl in beval_m; unfold beval, Names.Exp, evalR in *|-*; rewrite beval_m.
-      rewrite project_vi_vi; eauto; destruct n1; apply H0; auto.
-      (eapply P2_Env_insert;
-        [assumption | apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; eauto]).
-      rewrite project_vi_bot; eauto.
-      unfold isBot; rewrite project_bot_bot; eauto.
-      apply inject_i; constructor; reflexivity.
-      exact (proj2_sig _).
-      unfold isBot; caseEq (project (G := BotValue)
-        (proj1_sig (beval V (F _) n0 (exist _ _ n_UP) gamma'))).
-      unfold beval, Names.Exp, evalR in H4; rewrite H4.
-      destruct b.
-      apply project_inject in H4; auto with typeclass_instances;
-        unfold inject, evalR, Names.Value in H4; simpl in H4.
-      generalize (SV_invertBot V _ _ _ SV_n_n H4) as beval_m; intro;
-        simpl in beval_m; unfold beval, Names.Exp, evalR in *|-*; rewrite beval_m.
-      rewrite project_vi_bot, project_bot_bot; eauto.
-      apply inject_i; constructor; reflexivity.
-      exact (proj2_sig _).
-      unfold isVI; caseEq (project (G := NatValue) (proj1_sig (beval V (F _) m (exist _ _ n_UP) gamma))).
-      unfold beval, Names.Exp, evalR in H5; rewrite H5.
-      destruct n1.
-      apply project_inject in H5; auto with typeclass_instances;
-        unfold inject, evalR, Names.Value in H5; simpl in H5.
-      generalize (SV_invertVI V _ SV_n_n _ H5) as beval_m; intro;
-        simpl in beval_m; unfold Names.Exp, evalR in *|-*; rewrite beval_m in H3.
-      rewrite project_vi_vi in H3; eauto; discriminate.
-      exact (proj2_sig _).
-      unfold beval, Names.Exp, evalR in H5; rewrite H5.
-      caseEq (project (G := BotValue)
-        (proj1_sig (beval V (F _) m (exist _ _ n_UP) gamma))).
-      unfold beval, Names.Exp, evalR in H6; rewrite H6.
-      destruct b.
-      apply inject_i; constructor; reflexivity.
-      unfold beval, Names.Exp, evalR in H6; rewrite H6.
-      unfold beval, Names.Exp, evalR in H3; rewrite H3.
-      unfold beval, Names.Exp, evalR in H4; rewrite H4.
-      apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; reflexivity.
-    Defined.
+    destruct IHn as [n_UP IHn].
+    destruct IHz as [z_UP IHz].
+    unfold eval_continuous_Exp_P; econstructor; simpl; intros;
+      eauto with typeclass_instances.
+    instantiate (1 := Ncase_UP' _ _ _).
+    destruct (IHs (Datatypes.length gamma)) as [s'_UP IHs'].
+    generalize (H0 (exist _ _ n_UP) _ _ _ H1 H2); intro SV_n_n.
+    unfold beval, mfold, Ncase; simpl; repeat rewrite wf_functor; simpl.
+    repeat rewrite out_in_fmap; rewrite wf_functor; simpl.
+    repeat rewrite (wf_algebra (WF_FAlgebra := WF_eval_F)); simpl.
+    rewrite <- (P2_Env_length _ _ _ _ _ H1).
+    repeat erewrite bF_UP_in_out.
+    unfold Names.Exp, evalR.
+    unfold isVI; caseEq (project (G := NatValue) (proj1_sig (beval V (F _) n0 (exist _ _ n_UP) gamma'))).
+    unfold beval, Names.Exp, evalR in H3; rewrite H3.
+    destruct n1.
+    apply project_inject in H3; auto with typeclass_instances;
+      unfold inject, evalR, Names.Value in H3; simpl in H3.
+    destruct (SV_invertVI' V _ SV_n_n _ H3) as [beval_m | beval_m];
+      simpl in beval_m; unfold beval, Names.Exp, evalR in *|-*; rewrite beval_m.
+    rewrite project_vi_vi; eauto; destruct n1; apply H0; auto.
+    (eapply P2_Env_insert;
+      [assumption | apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; eauto]).
+    rewrite project_vi_bot; eauto.
+    unfold isBot; rewrite project_bot_bot; eauto.
+    apply inject_i; constructor; reflexivity.
+    exact (proj2_sig _).
+    unfold isBot; caseEq (project (G := BotValue)
+      (proj1_sig (beval V (F _) n0 (exist _ _ n_UP) gamma'))).
+    unfold beval, Names.Exp, evalR in H4; rewrite H4.
+    destruct b.
+    apply project_inject in H4; auto with typeclass_instances;
+      unfold inject, evalR, Names.Value in H4; simpl in H4.
+    generalize (SV_invertBot V _ _ _ SV_n_n H4) as beval_m; intro;
+      simpl in beval_m; unfold beval, Names.Exp, evalR in *|-*; rewrite beval_m.
+    rewrite project_vi_bot, project_bot_bot; eauto.
+    apply inject_i; constructor; reflexivity.
+    exact (proj2_sig _).
+    unfold isVI; caseEq (project (G := NatValue) (proj1_sig (beval V (F _) m (exist _ _ n_UP) gamma))).
+    unfold beval, Names.Exp, evalR in H5; rewrite H5.
+    destruct n1.
+    apply project_inject in H5; auto with typeclass_instances;
+      unfold inject, evalR, Names.Value in H5; simpl in H5.
+    generalize (SV_invertVI V _ SV_n_n _ H5) as beval_m; intro;
+      simpl in beval_m; unfold Names.Exp, evalR in *|-*; rewrite beval_m in H3.
+    rewrite project_vi_vi in H3; eauto; discriminate.
+    exact (proj2_sig _).
+    unfold beval, Names.Exp, evalR in H5; rewrite H5.
+    caseEq (project (G := BotValue)
+      (proj1_sig (beval V (F _) m (exist _ _ n_UP) gamma))).
+    unfold beval, Names.Exp, evalR in H6; rewrite H6.
+    destruct b.
+    apply inject_i; constructor; reflexivity.
+    unfold beval, Names.Exp, evalR in H6; rewrite H6.
+    unfold beval, Names.Exp, evalR in H3; rewrite H3.
+    unfold beval, Names.Exp, evalR in H4; rewrite H4.
+    apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; reflexivity.
+  Defined.
 
-    Variable WFV : (WFValue_i D V -> Prop) -> WFValue_i D V -> Prop.
-    Variable funWFV : iFunctor WFV.
-    Variable EQV_E : forall A B, (eqv_i F A B -> Prop) -> eqv_i F A B -> Prop.
-    Definition E_eqv A B := iFix (EQV_E A B).
-    Definition E_eqvC {A B : Set} gamma gamma' e e' :=
-      E_eqv _ _ (mk_eqv_i _ A B gamma gamma' e e').
-    Variable funEQV_E : forall A B, iFunctor (EQV_E A B).
+  Variable WFV : (WFValue_i D V -> Prop) -> WFValue_i D V -> Prop.
+  Variable funWFV : iFunctor WFV.
+  Variable EQV_E : forall A B, (eqv_i F A B -> Prop) -> eqv_i F A B -> Prop.
+  Definition E_eqv A B := iFix (EQV_E A B).
+  Definition E_eqvC {A B : Set} gamma gamma' e e' :=
+    E_eqv _ _ (mk_eqv_i _ A B gamma gamma' e e').
+  Variable funEQV_E : forall A B, iFunctor (EQV_E A B).
 
-    (* Projection doesn't affect Equivalence Relation.*)
+  (* Projection doesn't affect Equivalence Relation.*)
 
-    Inductive NatCase_eqv (A B : Set) (E : eqv_i F A B -> Prop) : eqv_i F A B -> Prop :=
-    | NVar_eqv : forall (gamma : Env _) gamma' n a b e e',
-      lookup gamma n = Some a -> lookup gamma' n = Some b ->
-      proj1_sig e = nvar a ->
-      proj1_sig e' = nvar b ->
-      NatCase_eqv A B E (mk_eqv_i _ _ _ gamma gamma' e e')
-    | Case_eqv : forall (gamma : Env _) gamma' n n' z z' s s' e e',
-      E (mk_eqv_i _ _ _ gamma gamma' n n') ->
-      E (mk_eqv_i _ _ _ gamma gamma' z z') ->
-      (forall (n : A) (n' : B),
-        E (mk_eqv_i _ _ _ (insert _ n gamma) (insert _ n' gamma') (s n) (s' n'))) ->
-      proj1_sig e = proj1_sig (case' n z s) ->
-      proj1_sig e' = proj1_sig (case' n' z' s') ->
-      NatCase_eqv _ _ E (mk_eqv_i _ _ _ gamma gamma' e e').
+  Inductive NatCase_eqv (A B : Set) (E : eqv_i F A B -> Prop) : eqv_i F A B -> Prop :=
+  | NVar_eqv : forall (gamma : Env _) gamma' n a b e e',
+    lookup gamma n = Some a -> lookup gamma' n = Some b ->
+    proj1_sig e = nvar a ->
+    proj1_sig e' = nvar b ->
+    NatCase_eqv A B E (mk_eqv_i _ _ _ gamma gamma' e e')
+  | Case_eqv : forall (gamma : Env _) gamma' n n' z z' s s' e e',
+    E (mk_eqv_i _ _ _ gamma gamma' n n') ->
+    E (mk_eqv_i _ _ _ gamma gamma' z z') ->
+    (forall (n : A) (n' : B),
+      E (mk_eqv_i _ _ _ (insert _ n gamma) (insert _ n' gamma') (s n) (s' n'))) ->
+    proj1_sig e = proj1_sig (case' n z s) ->
+    proj1_sig e' = proj1_sig (case' n' z' s') ->
+    NatCase_eqv _ _ E (mk_eqv_i _ _ _ gamma gamma' e e').
 
-    Definition ind_alg_NatCase_eqv
-      (A B : Set)
-      (P : eqv_i F A B -> Prop)
-      (H : forall gamma gamma' n a b e e' lookup_a lookup_b e_eq e'_eq,
-        P (mk_eqv_i _ _ _ gamma gamma' e e'))
-      (H0 : forall gamma gamma' n n' z z' s s' e e'
-        (IHn : P (mk_eqv_i _ _ _ gamma gamma' n n'))
-        (IHz : P (mk_eqv_i _ _ _ gamma gamma' z z'))
-        (IHs : forall n n',
-          P (mk_eqv_i _ _ _ (insert _ n gamma) (insert _ n' gamma') (s n) (s' n')))
-        e_eq e'_eq,
+  Definition ind_alg_NatCase_eqv
+    (A B : Set)
+    (P : eqv_i F A B -> Prop)
+    (H : forall gamma gamma' n a b e e' lookup_a lookup_b e_eq e'_eq,
       P (mk_eqv_i _ _ _ gamma gamma' e e'))
-      i (e : NatCase_eqv A B P i) : P i :=
-      match e in NatCase_eqv _ _ _ i return P i with
-        | NVar_eqv gamma gamma' n a b e e' lookup_a lookup_b e_eq e'_eq =>
-          H gamma gamma' n a b e e' lookup_a lookup_b e_eq e'_eq
-        | Case_eqv gamma gamma' n n' z z' s s' e e'
-          eqv_n_n' eqv_z_z' eqv_s_s' e_eq e'_eq =>
-          H0 gamma gamma' n n' z z' s s' e e' eqv_n_n'
-          eqv_z_z' eqv_s_s' e_eq e'_eq
-      end.
+    (H0 : forall gamma gamma' n n' z z' s s' e e'
+      (IHn : P (mk_eqv_i _ _ _ gamma gamma' n n'))
+      (IHz : P (mk_eqv_i _ _ _ gamma gamma' z z'))
+      (IHs : forall n n',
+        P (mk_eqv_i _ _ _ (insert _ n gamma) (insert _ n' gamma') (s n) (s' n')))
+      e_eq e'_eq,
+    P (mk_eqv_i _ _ _ gamma gamma' e e'))
+    i (e : NatCase_eqv A B P i) : P i :=
+    match e in NatCase_eqv _ _ _ i return P i with
+      | NVar_eqv gamma gamma' n a b e e' lookup_a lookup_b e_eq e'_eq =>
+        H gamma gamma' n a b e e' lookup_a lookup_b e_eq e'_eq
+      | Case_eqv gamma gamma' n n' z z' s s' e e'
+        eqv_n_n' eqv_z_z' eqv_s_s' e_eq e'_eq =>
+        H0 gamma gamma' n n' z z' s s' e e' eqv_n_n'
+        eqv_z_z' eqv_s_s' e_eq e'_eq
+    end.
 
-    Definition NatCase_eqv_ifmap (A B : Set)
-      (A' B' : eqv_i F A B -> Prop) i (f : forall i, A' i -> B' i)
-      (eqv_a : NatCase_eqv A B A' i) : NatCase_eqv A B B' i :=
-      match eqv_a in NatCase_eqv _ _ _ i return NatCase_eqv _ _ _ i with
-        | NVar_eqv gamma gamma' n a b e e' lookup_a lookup_b e_eq e'_eq =>
-          NVar_eqv _ _ _ gamma gamma' n a b e e' lookup_a lookup_b e_eq e'_eq
-        | Case_eqv gamma gamma' n n' z z' s s' e e'
-          eqv_n_n' eqv_z_z' eqv_s_s' e_eq e'_eq =>
-          Case_eqv _ _ _ gamma gamma' n n' z z' s s' e e'
-          (f _ eqv_n_n') (f _ eqv_z_z')
-          (fun a b => f _ (eqv_s_s' a b))
-          e_eq e'_eq
-      end.
+  Definition NatCase_eqv_ifmap (A B : Set)
+    (A' B' : eqv_i F A B -> Prop) i (f : forall i, A' i -> B' i)
+    (eqv_a : NatCase_eqv A B A' i) : NatCase_eqv A B B' i :=
+    match eqv_a in NatCase_eqv _ _ _ i return NatCase_eqv _ _ _ i with
+      | NVar_eqv gamma gamma' n a b e e' lookup_a lookup_b e_eq e'_eq =>
+        NVar_eqv _ _ _ gamma gamma' n a b e e' lookup_a lookup_b e_eq e'_eq
+      | Case_eqv gamma gamma' n n' z z' s s' e e'
+        eqv_n_n' eqv_z_z' eqv_s_s' e_eq e'_eq =>
+        Case_eqv _ _ _ gamma gamma' n n' z z' s s' e e'
+        (f _ eqv_n_n') (f _ eqv_z_z')
+        (fun a b => f _ (eqv_s_s' a b))
+        e_eq e'_eq
+    end.
 
-    Global Instance iFun_NatCase_eqv A B : iFunctor (NatCase_eqv A B).
-      constructor 1 with (ifmap := NatCase_eqv_ifmap A B).
-      destruct a; simpl; intros; reflexivity.
-      destruct a; simpl; intros; unfold id; eauto;
-      rewrite (functional_extensionality_dep _ a1); eauto;
-      intros; apply functional_extensionality_dep; eauto.
-    Defined.
+  Global Instance iFun_NatCase_eqv A B :
+    iFunctor (NatCase_eqv A B).
+  Proof.
+    constructor 1 with (ifmap := NatCase_eqv_ifmap A B).
+    destruct a; simpl; intros; reflexivity.
+    destruct a; simpl; intros; unfold id; eauto;
+    rewrite (functional_extensionality_dep _ a1); eauto;
+    intros; apply functional_extensionality_dep; eauto.
+  Defined.
 
-    Variable Sub_NatCase_eqv_EQV_E : forall A B,
-      Sub_iFunctor (NatCase_eqv A B) (EQV_E A B).
+  Variable Sub_NatCase_eqv_EQV_E : forall A B,
+    Sub_iFunctor (NatCase_eqv A B) (EQV_E A B).
 
-     Global Instance EQV_proj1_NatCase_eqv :
-       forall A B, iPAlgebra EQV_proj1_Name (EQV_proj1_P F EQV_E A B) (NatCase_eqv _ _).
-       econstructor; intros.
-       unfold iAlgebra; intros; apply ind_alg_NatCase_eqv;
-         unfold EQV_proj1_P; simpl; intros; subst.
-       apply (inject_i (subGF := Sub_NatCase_eqv_EQV_E A B)); econstructor; simpl; eauto.
-       apply (inject_i (subGF := Sub_NatCase_eqv_EQV_E A B)); econstructor 2; simpl; eauto.
-       destruct n; destruct n'; eapply IHn; eauto.
-       destruct z; destruct z'; eapply IHz; eauto.
-       intros; caseEq (s n0); caseEq (s' n'0); apply IHs; eauto.
-       rewrite H2; simpl; eauto.
-       rewrite H3; simpl; eauto.
-       apply H.
-     Qed.
+  Global Instance EQV_proj1_NatCase_eqv :
+    forall A B, iPAlgebra EQV_proj1_Name (EQV_proj1_P F EQV_E A B) (NatCase_eqv _ _).
+  Proof.
+    econstructor; intros.
+    unfold iAlgebra; intros; apply ind_alg_NatCase_eqv;
+      unfold EQV_proj1_P; simpl; intros; subst.
+    apply (inject_i (subGF := Sub_NatCase_eqv_EQV_E A B)); econstructor; simpl; eauto.
+    apply (inject_i (subGF := Sub_NatCase_eqv_EQV_E A B)); econstructor 2; simpl; eauto.
+    destruct n; destruct n'; eapply IHn; eauto.
+    destruct z; destruct z'; eapply IHz; eauto.
+    intros; caseEq (s n0); caseEq (s' n'0); apply IHs; eauto.
+    rewrite H2; simpl; eauto.
+    rewrite H3; simpl; eauto.
+    apply H.
+  Qed.
 
-  Lemma isTNat_tnat : forall T : DType,
-    isTNat _ (proj1_sig T) = true -> proj1_sig T = tnat _.
+  Lemma isTNat_tnat :
+    forall (T : DType),
+      isTNat _ (proj1_sig T) = true -> proj1_sig T = tnat _.
+  Proof.
     unfold isTNat; intros; caseEq (project (G := AType) (proj1_sig T));
       rewrite H0 in H; try discriminate.
     destruct a; unfold project in H0; apply inj_prj in H0.
@@ -368,14 +376,18 @@ Section NatCase.
     exact (proj2_sig _).
   Defined.
 
-  Lemma isVI_vi : forall n,
-    isVI _ (vi _ n) = Some n.
+  Lemma isVI_vi :
+    forall n,
+      isVI _ (vi _ n) = Some n.
+  Proof.
     intros; unfold isVI, vi, vi', project; simpl; rewrite wf_functor.
     rewrite out_in_fmap; rewrite wf_functor; simpl.
     rewrite prj_inj; reflexivity.
   Qed.
 
-  Lemma isVI_bot : isVI _ (bot _) = None.
+  Lemma isVI_bot :
+    isVI _ (bot _) = None.
+  Proof.
     intros; unfold isVI, bot, bot', project; simpl; rewrite wf_functor.
     rewrite out_in_fmap; rewrite wf_functor; simpl; unfold Bot_fmap.
     caseEq (prj (sub_F := NatValue) (inj (Bot (sig (@Universal_Property'_fold V _))))); auto.
@@ -385,7 +397,9 @@ Section NatCase.
     unfold inject; erewrite H; reflexivity.
   Qed.
 
-  Lemma isBot_bot : isBot _ (bot _) = true.
+  Lemma isBot_bot :
+    isBot _ (bot _) = true.
+  Proof.
     intros; unfold isBot, bot, bot', project; simpl; rewrite wf_functor.
     rewrite out_in_fmap; rewrite wf_functor; simpl; unfold Bot_fmap.
     rewrite prj_inj; reflexivity.

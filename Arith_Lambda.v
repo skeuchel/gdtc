@@ -106,27 +106,27 @@ Section Lambda_Arith.
   (* EQUIVALENCE OF ARITHMETIC EXPRESSIONS          *)
   (* ============================================== *)
 
-    Inductive Arith_eqv (A B : Set) (C : eqv_i E A B -> Prop) : eqv_i E A B -> Prop :=
-    | Lit_eqv : forall (gamma : Env _) gamma' n e e',
-      proj1_sig e = lit (E A) n ->
-      proj1_sig e' = lit (E B) n ->
-      Arith_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e')
-    | Add_eqv : forall (gamma : Env _) gamma' a b a' b' e e',
-      C (mk_eqv_i _ _ _ gamma gamma' a a') ->
-      C (mk_eqv_i _ _ _ gamma gamma' b b') ->
-      proj1_sig e = proj1_sig (add' (E _) a b) ->
-      proj1_sig e' = proj1_sig (add' (E _) a' b') ->
-      Arith_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e').
+  Inductive Arith_eqv (A B : Set) (C : eqv_i E A B -> Prop) : eqv_i E A B -> Prop :=
+  | Lit_eqv : forall (gamma : Env _) gamma' n e e',
+    proj1_sig e = lit (E A) n ->
+    proj1_sig e' = lit (E B) n ->
+    Arith_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e')
+  | Add_eqv : forall (gamma : Env _) gamma' a b a' b' e e',
+    C (mk_eqv_i _ _ _ gamma gamma' a a') ->
+    C (mk_eqv_i _ _ _ gamma gamma' b b') ->
+    proj1_sig e = proj1_sig (add' (E _) a b) ->
+    proj1_sig e' = proj1_sig (add' (E _) a' b') ->
+    Arith_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e').
 
-    Lemma Arith_eqv_impl_NP_eqv : forall A B C i,
-      Arith_eqv A B C i -> NP_Functor_eqv E  Arith A B C i.
-      intros; destruct H.
-      unfold lit in *; simpl in *.
-      constructor 1 with (np := fun D => Lit D n); auto.
-      econstructor 3 with (np := fun D => Add D); eauto.
-      simpl; congruence.
-    Defined.
-
+  Lemma Arith_eqv_impl_NP_eqv : forall A B C i,
+    Arith_eqv A B C i -> NP_Functor_eqv E  Arith A B C i.
+  Proof.
+    intros; destruct H.
+    unfold lit in *; simpl in *.
+    constructor 1 with (np := fun D => Lit D n); auto.
+    econstructor 3 with (np := fun D => Add D); eauto.
+    simpl; congruence.
+  Defined.
 
 End Lambda_Arith.
 

@@ -113,27 +113,28 @@ Section PLambda_Arith.
   (* EQUIVALENCE OF BOOLEAN EXPRESSIONS             *)
   (* ============================================== *)
 
-    Inductive Bool_eqv (A B : Set) (C : eqv_i E A B -> Prop) : eqv_i E A B -> Prop :=
-    | BLit_eqv : forall (gamma : Env _) gamma' n e e',
-      proj1_sig e = blit (E A) n ->
-      proj1_sig e' = blit (E B) n ->
-      Bool_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e')
-    | If_eqv : forall (gamma : Env _) gamma' i t el i' t' el' e e',
-      C (mk_eqv_i _ _ _ gamma gamma' i i') ->
-      C (mk_eqv_i _ _ _ gamma gamma' t t') ->
-      C (mk_eqv_i _ _ _ gamma gamma' el el') ->
-      proj1_sig e = proj1_sig (cond' _ i t el) ->
-      proj1_sig e' = proj1_sig (cond' _ i' t' el') ->
-      Bool_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e').
+  Inductive Bool_eqv (A B : Set) (C : eqv_i E A B -> Prop) : eqv_i E A B -> Prop :=
+  | BLit_eqv : forall (gamma : Env _) gamma' n e e',
+    proj1_sig e = blit (E A) n ->
+    proj1_sig e' = blit (E B) n ->
+    Bool_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e')
+  | If_eqv : forall (gamma : Env _) gamma' i t el i' t' el' e e',
+    C (mk_eqv_i _ _ _ gamma gamma' i i') ->
+    C (mk_eqv_i _ _ _ gamma gamma' t t') ->
+    C (mk_eqv_i _ _ _ gamma gamma' el el') ->
+    proj1_sig e = proj1_sig (cond' _ i t el) ->
+    proj1_sig e' = proj1_sig (cond' _ i' t' el') ->
+    Bool_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e').
 
-    Lemma Bool_eqv_impl_NP_eqv : forall A B C i,
-      Bool_eqv A B C i -> NP_Functor_eqv E Bool A B C i.
-      intros; destruct H.
-      unfold blit, blit in *; simpl in *.
-      constructor 1 with (np := fun D => BLit D n); auto.
-      econstructor 4 with (np := fun D => If D); eauto.
-      simpl; congruence.
-    Defined.
+  Lemma Bool_eqv_impl_NP_eqv : forall A B C i,
+    Bool_eqv A B C i -> NP_Functor_eqv E Bool A B C i.
+  Proof.
+    intros; destruct H.
+    unfold blit, blit in *; simpl in *.
+    constructor 1 with (np := fun D => BLit D n); auto.
+    econstructor 4 with (np := fun D => If D); eauto.
+    simpl; congruence.
+  Defined.
 
 
 End PLambda_Arith.

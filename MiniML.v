@@ -12,24 +12,24 @@ Require Import NatCase.
 
 Section MiniML.
 
-Open Scope string_scope.
+  Open Scope string_scope.
 
-Definition D := AType :+: LType :+: BType.
+  Definition D := AType :+: LType :+: BType.
 
-Definition E (A : Set) := Arith :+: (Lambda D A) :+: Bool :+: (Fix_ D A) :+: (NatCase A).
+  Definition E (A : Set) := Arith :+: (Lambda D A) :+: Bool :+: (Fix_ D A) :+: (NatCase A).
 
-Definition letrec (A : Set) (t : DType D) (def : A -> Exp E A) (body : A -> Exp E A) :
-  (Exp E A) :=  app' D E (lam' _ _ t body) (mu' _ _ t def).
+  Definition letrec (A : Set) (t : DType D) (def : A -> Exp E A) (body : A -> Exp E A) :
+    (Exp E A) :=  app' D E (lam' _ _ t body) (mu' _ _ t def).
 
-Instance D_typeof T : FAlgebra TypeofName T (typeofR D) (E (typeofR D)).
-  eauto with typeclass_instances.
-Defined.
+  Instance D_typeof T : FAlgebra TypeofName T (typeofR D) (E (typeofR D)).
+    eauto with typeclass_instances.
+  Defined.
 
-Global Instance Fun_E : forall (A : Set),
-  Functor (E A).
-Proof.
-  eauto with typeclass_instances.
-Defined.
+  Global Instance Fun_E : forall (A : Set),
+    Functor (E A).
+  Proof.
+    eauto with typeclass_instances.
+  Defined.
 
   Definition V := StuckValue :+: BotValue :+: NatValue :+: (ClosValue E) :+: (BoolValue).
 
@@ -63,6 +63,7 @@ Defined.
       forall n (Sub_G_G' : Sub_Environment V SV gamma gamma'),
         m <= n ->
         SubValueC _ SV (beval _ _ m e gamma) (beval _ _ n e gamma').
+  Proof.
     eapply beval_continuous with (eval_continuous_Exp_E := EV_Alg);
       eauto 800 with typeclass_instances.
   Qed.
@@ -74,7 +75,8 @@ Defined.
     (sig (UP'_P2 (eval_alg_Soundness_P D V (E nat) WFV P_bind P
       (E (typeofR D)) (Fun_E (typeofR D)) pb typeof_rec
       eval_rec f_algebra f_algebra))) Bool.
-  eauto 250 with typeclass_instances.
+  Proof.
+    eauto 250 with typeclass_instances.
   Defined.
 
   Theorem soundness : forall n gamma gamma' gamma'' e' e'',

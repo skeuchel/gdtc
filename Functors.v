@@ -20,15 +20,16 @@ Section Folds.
   Definition MAlgebra (F: Set -> Set) (A : Set) :=
     forall (R : Set), Mixin R F A.
 
-   Definition Fix (F : Set -> Set) : Set :=
+  Definition Fix (F : Set -> Set) : Set :=
     forall (A : Set), MAlgebra F A -> A.
 
-  Definition mfold {F : Set -> Set} : forall (A : Set)
-    (f : MAlgebra F A), Fix F -> A:= fun A f e => e A f.
+  Definition mfold {F : Set -> Set} :
+    forall (A : Set) (f : MAlgebra F A),
+      Fix F -> A:= fun A f e => e A f.
 
   Class Functor (F : Set -> Set) :=
-    {fmap :
-      forall {A B : Set} (f : A -> B), F A -> F B;
+    { fmap :
+        forall {A B : Set} (f : A -> B), F A -> F B;
       fmap_fusion :
         forall (A B C: Set) (f : A -> B) (g : B -> C) (a : F A),
           fmap g (fmap f a) = fmap (fun e => g (f e)) a;
@@ -42,7 +43,7 @@ Section Folds.
 
   Definition fold_ {F : Set -> Set} {functor : Functor F} :
     forall (A : Set) (f : Algebra F A), Fix F -> A :=
-      fun A f e => mfold _ (fun r rec fa => f (fmap rec fa)) e.
+      fun A f => mfold _ (fun r rec fa => f (fmap rec fa)).
 
   Definition out_t {F : Set -> Set} {fun_F : Functor F} : Fix F -> F (Fix F) :=
     @fold_ F fun_F _ (fmap in_t).
@@ -59,11 +60,11 @@ Section Folds.
       | S n => fM (boundedFix n fM default) (out_t e)
     end.
 
-    (* Indexed Algebra *)
+  (* Indexed Algebra *)
   Definition iAlgebra {I : Set} (F : (I -> Prop) -> I -> Prop) (A : I -> Prop) :=
     forall i, F A i -> A i.
 
-    (* Indexed Mendler Algebra *)
+  (* Indexed Mendler Algebra *)
   Definition iMAlgebra {I : Set} (F : (I -> Prop) -> I -> Prop) (A : I -> Prop) :=
     forall i (R : I -> Prop), (forall i, R i -> A i) -> F R i -> A i.
 
@@ -75,8 +76,8 @@ Section Folds.
       iFix F i -> A i := fun A f i e => e A f.
 
   Class iFunctor {I : Set} (F : (I -> Prop) -> I -> Prop) :=
-    {ifmap :
-      forall {A B : I -> Prop} i (f : forall i, A i -> B i), F A i -> F B i;
+    { ifmap :
+        forall {A B : I -> Prop} i (f : forall i, A i -> B i), F A i -> F B i;
       ifmap_fusion :
         forall (A B C: I -> Prop) i (f : forall i, A i -> B i) (g : forall i, B i -> C i) (a : F A i),
           ifmap i g (ifmap i f a) = ifmap i (fun i e => g _ (f i e)) a;
@@ -97,20 +98,19 @@ Section Folds.
 
   (* Universal Property of Mendler Folds *)
 
-  Lemma Universal_Property (F : Set -> Set) (A : Set)
-    (f : MAlgebra F A) :
-      forall (h : Fix F -> A),
-        h = mfold _ f -> forall e, h (in_t e) = f _ h e.
+  Lemma Universal_Property (F : Set -> Set) (A : Set) (f : MAlgebra F A) :
+    forall (h : Fix F -> A),
+      h = mfold _ f -> forall e, h (in_t e) = f _ h e.
   Proof.
     intros; rewrite H. unfold in_t. unfold mfold.
     reflexivity.
   Qed.
 
   Class Universal_Property' {F} {Fun_F : Functor F} (e : Fix F) :=
-    {E_UP' : forall (A : Set) (f : MAlgebra F A)
-      (h : Fix F -> A),
-      (forall e, h (in_t e) = f _ h e) ->
-      h e = mfold _ f e}.
+    { E_UP' : forall (A : Set) (f : MAlgebra F A) (h : Fix F -> A),
+                (forall e, h (in_t e) = f _ h e) ->
+                h e = mfold _ f e
+    }.
 
   Lemma Fix_id F {fun_F : Functor F} e {UP' : Universal_Property' e} :
     mfold _ (fun _ rec x => in_t (fmap rec x)) e = e.
@@ -133,17 +133,19 @@ Section Folds.
   Lemma Universal_Property_fold (F : Set -> Set) {fun_F : Functor F} (B : Set)
     (f : Algebra F B) : forall (h : Fix F -> B), h = fold_ _ f ->
       forall e, h (in_t e) = f (fmap h e).
+  Proof.
     intros; rewrite H; reflexivity.
   Qed.
 
   Class Universal_Property'_fold {F} {fun_F : Functor F} (e : Fix F) :=
-    {E_fUP' : forall (B : Set) (f : Algebra F B) (h : Fix F -> B),
-      (forall e, h (in_t e) = f (fmap h e)) ->
-      h e = fold_ _ f e
+    { E_fUP' : forall (B : Set) (f : Algebra F B) (h : Fix F -> B),
+                 (forall e, h (in_t e) = f (fmap h e)) ->
+                 h e = fold_ _ f e
     }.
 
   Lemma Fix_id_fold F {fun_F : Functor F} e {UP' : Universal_Property'_fold e} :
     fold_ _ (@in_t F) e = e.
+  Proof.
     intros; apply sym_eq.
     fold (id e); unfold id at 2; apply (E_fUP'); intros.
     rewrite fmap_id.
@@ -155,15 +157,17 @@ Section Folds.
     forall (A B : Set) (h : A -> B) (f : Algebra F A) (g : Algebra F B),
       (forall a, h (f a) = g (fmap h a)) ->
       (fun e' => h (fold_ _ f e')) e = fold_ _ g e.
+  Proof.
     intros; eapply E_fUP'; try eassumption; intros.
     rewrite (Universal_Property_fold F _ f _ (refl_equal _)).
     rewrite H.
     rewrite fmap_fusion; reflexivity.
   Qed.
 
-  Lemma in_out_inverse : forall (F : Set -> Set) (Fun_F : Functor F) (e : Fix F)
-    {fUP' : Universal_Property'_fold e},
-    in_t (out_t e) = e.
+  Lemma in_out_inverse (F : Set -> Set) (Fun_F : Functor F) :
+    forall (e : Fix F) {fUP' : Universal_Property'_fold e},
+      in_t (out_t e) = e.
+  Proof.
     intros.
     rewrite <- (@Fix_id_fold _ _ e fUP') at -1.
     eapply E_fUP' with (h := fun e => in_t (out_t e)).
@@ -186,12 +190,12 @@ Section Folds.
     rewrite fmap_fusion; reflexivity.
   Qed.
 
-  Definition in_t_UP' : forall (F : Set -> Set)
-    (Fun_F : Functor F),
+  Definition in_t_UP' (F : Set -> Set) (Fun_F : Functor F) :
     F (sig (@Universal_Property'_fold F Fun_F)) ->
     sig (@Universal_Property'_fold F Fun_F).
-    intros F Fun_F e.
-    intros; constructor 1 with (x := in_t (fmap (@proj1_sig _ _) e)).
+  Proof.
+    intro e; intros.
+    constructor 1 with (x := in_t (fmap (@proj1_sig _ _) e)).
     constructor; intros.
     rewrite H.
     unfold fold_, mfold.
@@ -206,11 +210,10 @@ Section Folds.
     rewrite H0; reflexivity.
   Defined.
 
-  Definition out_t_UP' :
-    forall (F : Set -> Set)
-      (Fun_F : Functor F)
-      (e : Fix F),
+  Definition out_t_UP' (F : Set -> Set) (Fun_F : Functor F) :
+    forall (e : Fix F),
       F (sig (@Universal_Property'_fold F Fun_F)).
+  Proof.
     intros.
     eapply fold_; try assumption.
     unfold Algebra; intros.
@@ -219,10 +222,10 @@ Section Folds.
     assumption.
   Defined.
 
-  Lemma out_in_inverse : forall (F : Set -> Set)
-    (Fun_F : Functor F)
-    (e : F (sig (@Universal_Property'_fold F Fun_F))),
-    out_t (in_t (fmap (@proj1_sig _ _) e)) = fmap (@proj1_sig _ _) e.
+  Lemma out_in_inverse (F : Set -> Set) (Fun_F : Functor F) :
+    forall (e : F (sig (@Universal_Property'_fold F Fun_F))),
+      out_t (in_t (fmap (@proj1_sig _ _) e)) = fmap (@proj1_sig _ _) e.
+  Proof.
     intros.
     unfold out_t.
     erewrite Universal_Property_fold; try reflexivity.
@@ -237,20 +240,20 @@ Section Folds.
     rewrite H; reflexivity.
   Qed.
 
-  Lemma in_t_UP'_inject : forall (F : Set -> Set)
-    (Fun_F : Functor F)
-    (e e' : F (sig (@Universal_Property'_fold F Fun_F))),
-    in_t (fmap (@proj1_sig _ _) e) = in_t (fmap (@proj1_sig _ _) e') ->
-    fmap (@proj1_sig _ _) e = fmap (@proj1_sig _ _) e'.
+  Lemma in_t_UP'_inject (F : Set -> Set) (Fun_F : Functor F) :
+    forall (e e' : F (sig (@Universal_Property'_fold F Fun_F))),
+      in_t (fmap (@proj1_sig _ _) e) = in_t (fmap (@proj1_sig _ _) e') ->
+      fmap (@proj1_sig _ _) e = fmap (@proj1_sig _ _) e'.
+  Proof.
     intros; apply (f_equal out_t) in H;
       repeat rewrite out_in_inverse in H; eauto.
   Qed.
 
-  Lemma in_out_UP'_inverse : forall (H : Set -> Set)
-    (Fun_H : Functor H)
-    (h : Fix H),
-    Universal_Property'_fold h ->
-    proj1_sig (in_t_UP' H Fun_H (out_t_UP' H Fun_H h)) = h.
+  Lemma in_out_UP'_inverse (H : Set -> Set) (Fun_H : Functor H) :
+    forall (h : Fix H),
+      Universal_Property'_fold h ->
+      proj1_sig (in_t_UP' H Fun_H (out_t_UP' H Fun_H h)) = h.
+  Proof.
     intros; simpl.
     assert ((fmap (@proj1_sig _ _) (out_t_UP' H Fun_H h)) = out_t h).
     unfold out_t.
@@ -258,7 +261,7 @@ Section Folds.
     intros.
     rewrite fmap_fusion.
     assert (out_t_UP' H Fun_H (in_t e) =
-      fmap (fun e => in_t_UP' _ _ (out_t_UP' _ _ e)) e).
+            fmap (fun e => in_t_UP' _ _ (out_t_UP' _ _ e)) e).
     unfold out_t_UP' at 1.
     erewrite Universal_Property_fold with
       (f := (fun H2 : H (H (sig Universal_Property'_fold)) =>
@@ -269,11 +272,11 @@ Section Folds.
     rewrite in_out_inverse; unfold mfold; eauto.
   Qed.
 
-  Lemma out_in_fmap : forall (F : Set -> Set)
-    (Fun_F : Functor F)
-    (e : F (Fix F)),
-    out_t_UP' F _ (in_t e) =
-    fmap (fun e => in_t_UP' _ _ (out_t_UP' _ _ e)) e.
+  Lemma out_in_fmap (F : Set -> Set) (Fun_F : Functor F) :
+    forall (e : F (Fix F)),
+      out_t_UP' F _ (in_t e) =
+      fmap (fun e => in_t_UP' _ _ (out_t_UP' _ _ e)) e.
+  Proof.
     intros; unfold out_t_UP' at 1.
     erewrite Universal_Property_fold with
     (f := (fun H2 : F (F (sig Universal_Property'_fold)) =>
@@ -329,13 +332,16 @@ Section Folds.
 
   Notation "A :+: B"  := (@inj_Functor A B) (at level 80, right associativity).
 
-  Global Instance Functor_Plus G H {fun_G : Functor G} {fun_H : Functor H} : Functor (G :+: H).
-    econstructor 1 with (fmap :=
-      fun (A B : Set) (f : A -> B) (a : (G :+: H) A) =>
-        match a with
-          | inl G' => inl _ (fmap f G')
-          | inr H' => inr _ (fmap f H')
-        end).
+  Global Instance Functor_Plus G H {fun_G : Functor G} {fun_H : Functor H} :
+    Functor (G :+: H) :=
+    {| fmap :=
+         fun (A B : Set) (f : A -> B) (a : (G :+: H) A) =>
+           match a with
+             | inl G' => inl _ (fmap f G')
+             | inr H' => inr _ (fmap f H')
+           end
+    |}.
+  Proof.
     (* fmap_fusion *)
     intros; destruct a;
     rewrite fmap_fusion; reflexivity.
@@ -348,9 +354,9 @@ Section Folds.
     { inj : forall {A : Set}, sub_F A -> sub_G A;
       prj : forall {A : Set}, sub_G A -> option (sub_F A);
       inj_prj : forall {A : Set} (ga : sub_G A) (fa : sub_F A),
-        prj ga = Some fa -> ga = inj fa;
+                  prj ga = Some fa -> ga = inj fa;
       prj_inj : forall {A : Set} (fa : sub_F A),
-        prj (inj fa) = Some fa
+                  prj (inj fa) = Some fa
     }.
 
   Notation "A :<: B"  := (Sub_Functor A B) (at level 80, right associativity).
@@ -358,13 +364,14 @@ Section Folds.
   (* Need the 'Global' modifier so that the instance survives the Section.*)
   Global Instance Sub_Functor_inl (F G H : Set -> Set) (sub_F_G : F :<: G) :
     F :<: (G :+: H) :=
-    {| inj :=  (fun (A : Set) (e : F A) => inl _ (@inj F G sub_F_G _ e));
+    {| inj := fun (A : Set) (e : F A) => inl _ (@inj F G sub_F_G _ e);
        prj := fun (A: Set) (e : (G :+: H) A) =>
-        match e with
-         | inl e' => prj e'
-         | inr _  => None
-        end
-     |}.
+                match e with
+                  | inl e' => prj e'
+                  | inr _  => None
+                end
+    |}.
+  Proof.
     intros; destruct ga; [rewrite (inj_prj _ _ H0); reflexivity | discriminate].
     intros; simpl; rewrite prj_inj; reflexivity.
   Defined.
@@ -373,18 +380,21 @@ Section Folds.
     F :<: (G :+: H) :=
     {| inj := fun (A : Set) (e : F A) => inr _ (@inj F H sub_F_H _ e);
        prj := fun (A : Set) (e : (G :+: H) A) =>
-        match e with
-         | inl _  => None
-         | inr e' => prj e'
-        end
-     |}.
+                match e with
+                  | inl _  => None
+                  | inr e' => prj e'
+                end
+    |}.
+  Proof.
     intros; destruct ga; [discriminate | rewrite (inj_prj _ _ H0); reflexivity ].
     intros; simpl; rewrite prj_inj; reflexivity.
   Defined.
 
   Global Instance Sub_Functor_id {F : Set -> Set} : F :<: F :=
     {| inj := fun A => @id (F A);
-       prj := fun A => @Some (F A) |}.
+       prj := fun A => @Some (F A)
+    |}.
+  Proof.
     unfold id; congruence.
     reflexivity.
   Defined.
@@ -398,11 +408,13 @@ Section Folds.
     (Fun_F: Functor F)
     (Fun_G: Functor G): Set :=
     { wf_functor :
-      forall (A B : Set) (f : A -> B) (fa: F A) ,
-        fmap f (inj fa) (F := G) = inj (fmap f fa) }.
+        forall (A B : Set) (f : A -> B) (fa: F A) ,
+          fmap f (inj fa) (F := G) = inj (fmap f fa)
+    }.
 
   Global Instance WF_Functor_id {F : Set -> Set} {Fun_F : Functor F} :
     WF_Functor F F Sub_Functor_id _ _.
+  Proof.
     econstructor; intros; reflexivity.
   Defined.
 
@@ -414,6 +426,7 @@ Section Folds.
     {WF_Fun_F : WF_Functor F _ subfg Fun_F Fun_G}
     :
     WF_Functor F (G :+: H) (Sub_Functor_inl F G H _ ) _ (Functor_Plus G H).
+  Proof.
     econstructor; intros.
     simpl; rewrite wf_functor; reflexivity.
   Defined.
@@ -426,6 +439,7 @@ Section Folds.
     {WF_Fun_F : WF_Functor F _ subfh Fun_F Fun_H}
     :
     WF_Functor F (G :+: H) (Sub_Functor_inr F G H _ ) _ (Functor_Plus G H).
+  Proof.
     econstructor; intros.
     simpl; rewrite wf_functor; reflexivity.
   Defined.
@@ -433,7 +447,6 @@ Section Folds.
   (* ============================================== *)
   (* INJECTION + PROJECTION                         *)
   (* ============================================== *)
-
 
   Definition inject' {F G: Set -> Set} {Fun_F : Functor F} {subGF: G :<: F} :
     G (sig (@Universal_Property'_fold F Fun_F)) -> (sig (@Universal_Property'_fold F Fun_F)) :=
@@ -454,6 +467,7 @@ Section Folds.
     (h : Fix H) (g : G (sig (@Universal_Property'_fold H Fun_H))),
     Universal_Property'_fold h ->
     project h = Some g -> h = inject g.
+  Proof.
     intros.
     apply inj_prj in H1.
     unfold inject; rewrite <- H1.
@@ -467,6 +481,7 @@ Section Folds.
     (g : G (sig (@Universal_Property'_fold F Fun_F))),
     fmap (@proj1_sig _ _) (out_t_UP' _ _ (inject g)) =
     (fmap (@proj1_sig _ _) (inj g)).
+  Proof.
     unfold inject; intros; simpl.
     rewrite out_in_fmap.
     rewrite fmap_fusion.
@@ -484,8 +499,11 @@ Section Folds.
     (sub_F_H : F :<: H)
     (sub_G_H : G :<: H)
     : Set :=
-    {inj_discriminate : forall A f g,
-      inj (Sub_Functor := sub_F_H) (A := A) f <> inj (Sub_Functor := sub_G_H) (A := A) g}.
+    { inj_discriminate :
+        forall A f g,
+          inj (Sub_Functor := sub_F_H) (A := A) f
+          <> inj (Sub_Functor := sub_G_H) (A := A) g
+    }.
 
   Global Instance Distinct_Sub_Functor_plus
     (F G H I : Set -> Set)
@@ -495,6 +513,7 @@ Section Folds.
     (sub_H_I : H :<: I)
     :
     @Distinct_Sub_Functor F H (G :+: I) _ _ _.
+  Proof.
     econstructor; intros.
     unfold not; simpl; unfold id; intros.
     discriminate.
@@ -508,6 +527,7 @@ Section Folds.
     (sub_H_I : H :<: I)
     :
     @Distinct_Sub_Functor F H (I :+: G) _ _ _.
+  Proof.
     econstructor; intros.
     unfold not; simpl; unfold id; intros.
     discriminate.
@@ -522,6 +542,7 @@ Section Folds.
     (Dist_inl : @Distinct_Sub_Functor F H G Fun_G sub_F_G sub_H_G)
     :
     @Distinct_Sub_Functor F H (G :+: I) _ _ _.
+  Proof.
     econstructor; intros.
     unfold not; intros.
     simpl in H0; injection H0; intros.
@@ -537,6 +558,7 @@ Section Folds.
     (Dist_inl : @Distinct_Sub_Functor F H G Fun_G sub_F_G sub_H_G)
     :
     @Distinct_Sub_Functor F H (I :+: G) _ _ _.
+  Proof.
     econstructor; intros.
     unfold not; intros.
     simpl in H0; injection H0; intros.
@@ -553,6 +575,7 @@ Section Folds.
     {WF_G : WF_Functor _ _ sub_G_H Fun_G Fun_H},
     Distinct_Sub_Functor Fun_H sub_F_H sub_G_H ->
     forall f g, inject (subGF := sub_F_H) f <> inject (subGF := sub_G_H) g.
+  Proof.
     unfold inject; simpl; intros.
     unfold not; intros H3; apply in_t_UP'_inject in H3.
     repeat rewrite wf_functor in H3.
@@ -569,13 +592,15 @@ Section Folds.
   Notation "A ::+:: B"  := (@inj_iFunctor _ A B) (at level 80, right associativity).
 
   Global Instance iFunctor_Plus {I : Set} (G H : (I -> Prop) -> I -> Prop)
-    {fun_G : iFunctor G} {fun_H : iFunctor H} : iFunctor (G ::+:: H).
-    econstructor 1 with (ifmap :=
-      fun (A B : I -> Prop) (i : I) (f : forall i, A i -> B i) (a : (G ::+:: H) A i) =>
-        match a with
-          | or_introl G' => or_introl _ (ifmap i f G')
-          | or_intror H' => or_intror _ (ifmap i f H')
-        end).
+    {fun_G : iFunctor G} {fun_H : iFunctor H} : iFunctor (G ::+:: H) :=
+    {| ifmap :=
+         fun (A B : I -> Prop) (i : I) (f : forall i, A i -> B i) (a : (G ::+:: H) A i) =>
+           match a with
+             | or_introl G' => or_introl _ (ifmap i f G')
+             | or_intror H' => or_intror _ (ifmap i f H')
+           end
+    |}.
+  Proof.
     (* ifmap_fusion *)
     intros; destruct a;
     rewrite ifmap_fusion; reflexivity.
@@ -595,29 +620,30 @@ Section Folds.
 
   Global Instance Sub_iFunctor_inl {I' : Set} (F G H : (I' -> Prop) -> I' -> Prop) (sub_F_G : F ::<:: G) :
     F ::<:: (G ::+:: H) :=
-    {| inj_i :=  (fun (A : I' -> Prop) i (e : F A i) =>
-      or_introl _ (@inj_i _ F G sub_F_G _ _ e));
-    prj_i := fun (A: I' -> Prop) i (e : (G ::+:: H) A i) =>
-      match e with
-        | or_introl e' => prj_i _ e'
-        | or_intror _  => or_intror _ I
-      end
+    {| inj_i := fun (A : I' -> Prop) i (e : F A i) =>
+                  or_introl _ (@inj_i _ F G sub_F_G _ _ e);
+       prj_i := fun (A: I' -> Prop) i (e : (G ::+:: H) A i) =>
+                  match e with
+                    | or_introl e' => prj_i _ e'
+                    | or_intror _  => or_intror _ I
+                  end
     |}.
 
   Global Instance Sub_iFunctor_inr {I' : Set} (F G H : (I' -> Prop) -> I' -> Prop) (sub_F_H : F ::<:: H) :
     F ::<:: (G ::+:: H) :=
-    {| inj_i :=  (fun (A : I' -> Prop) i (e : F A i) =>
-      or_intror _ (@inj_i _ F H sub_F_H _ _ e));
-    prj_i := fun (A: I' -> Prop) i (e : (G ::+:: H) A i) =>
-      match e with
-        | or_intror e' => prj_i _ e'
-        | or_introl _  => or_intror _ I
-      end
+    {| inj_i := fun (A : I' -> Prop) i (e : F A i) =>
+                    or_intror _ (@inj_i _ F H sub_F_H _ _ e);
+       prj_i := fun (A: I' -> Prop) i (e : (G ::+:: H) A i) =>
+                  match e with
+                    | or_intror e' => prj_i _ e'
+                    | or_introl _  => or_intror _ I
+                  end
     |}.
 
   Global Instance Sub_iFunctor_id {I : Set} {F : (I -> Prop) -> I -> Prop} : F ::<:: F :=
     {| inj_i := fun A i e => e;
-       prj_i := fun A i e => or_introl _ e |}.
+       prj_i := fun A i e => or_introl _ e
+    |}.
 
   Definition inject_i {I : Set} {F G: (I -> Prop) -> I -> Prop} {subGF: Sub_iFunctor G F} :
     forall i, G (iFix F) i -> iFix F i:=
@@ -660,11 +686,12 @@ Section FAlgebra.
   Global Instance FAlgebra_Plus (Name: Set) (T: Set) (A : Set) (F G : Set -> Set)
     {falg: FAlgebra Name T A F} {galg: FAlgebra Name T A G} :
     FAlgebra Name T A (F :+: G) | 6 :=
-    {| f_algebra := fun f fga=>
-         (match fga with
-           | inl fa => f_algebra f fa
-           | inr ga => f_algebra f ga
-          end) |}.
+    {| f_algebra := fun f fga =>
+                      match fga with
+                        | inl fa => f_algebra f fa
+                        | inr ga => f_algebra f ga
+                      end
+    |}.
 
   (* The | 6 gives the generated Hint a priority of 6. If this is
      less than that of other instances for FAlgebra, the
@@ -676,16 +703,19 @@ Section FAlgebra.
     (falg: FAlgebra Name T A F)
     (galg: FAlgebra Name T A G): Set :=
     { wf_algebra :
-      forall rec (fa: F T),
-        @f_algebra Name T A G galg rec (@inj F G subfg T fa) = @f_algebra Name T A F falg rec fa }.
+        forall rec (fa: F T),
+          @f_algebra Name T A G galg rec (@inj F G subfg T fa)
+          = @f_algebra Name T A F falg rec fa
+    }.
 
   Global Instance WF_FAlgebra_id {Name T A : Set} {F} {falg: FAlgebra Name T A F}:
     WF_FAlgebra Name T A F F Sub_Functor_id falg falg.
-      econstructor. intros.
-      unfold inj.
-      unfold Sub_Functor_id.
-      unfold id.
-      reflexivity.
+  Proof.
+    econstructor. intros.
+    unfold inj.
+    unfold Sub_Functor_id.
+    unfold id.
+    reflexivity.
   Defined.
 
   Global Instance WF_FAlgebra_inl
@@ -698,11 +728,12 @@ Section FAlgebra.
     {wf_F_G: WF_FAlgebra Name T A F G sub_F_G falg galg}
     :
     WF_FAlgebra Name T A F (G :+: H) (Sub_Functor_inl F G H sub_F_G) falg (@FAlgebra_Plus Name T A G H galg halg).
-      econstructor. intros.
-      unfold inj. unfold Sub_Functor_inl.
-      simpl.
-      rewrite (wf_algebra rec fa).
-      reflexivity.
+  Proof.
+    econstructor. intros.
+    unfold inj. unfold Sub_Functor_inl.
+    simpl.
+    rewrite (wf_algebra rec fa).
+    reflexivity.
   Defined.
 
   Global Instance WF_FAlgebra_inr
@@ -715,13 +746,14 @@ Section FAlgebra.
     {wf_G_H: WF_FAlgebra Name T A F H sub_F_H falg halg}
     :
     WF_FAlgebra Name T A F (G :+: H) (Sub_Functor_inr F G H sub_F_H) falg (@FAlgebra_Plus Name T A G H galg halg).
-      econstructor. intros.
-      unfold inj.
-      unfold Sub_Functor_inr.
-      simpl.
-      rewrite (wf_algebra rec fa).
-      reflexivity.
-    Defined.
+  Proof.
+    econstructor. intros.
+    unfold inj.
+    unfold Sub_Functor_inr.
+    simpl.
+    rewrite (wf_algebra rec fa).
+    reflexivity.
+  Defined.
 
 End FAlgebra.
 
@@ -748,42 +780,48 @@ Section WF_Ind_FAlgebras.
     {falg: PAlgebra Name A F} {galg: PAlgebra Name A G} :
     PAlgebra Name A (F :+: G) | 6 :=
     {| p_algebra := fun fga =>
-         (match fga with
-           | inl fa => p_algebra fa
-           | inr ga => p_algebra ga
-          end) |}.
+                      match fga with
+                        | inl fa => p_algebra fa
+                        | inr ga => p_algebra ga
+                      end
+    |}.
 
   Class WF_Ind {E F: Set -> Set} {Name : Set} {Fun_E : Functor E} {Fun_F : Functor F}
     {P : Fix E -> Prop} {sub_F_E : F :<: E}
     (F_Alg : PAlgebra Name (sig P) F) :=
-    {proj_eq : forall e, proj1_sig (p_algebra (PAlgebra := F_Alg) e) =
-      in_t (inj (Sub_Functor := sub_F_E) (fmap (@proj1_sig _ _) e))}.
+    { proj_eq :
+        forall e,
+          proj1_sig (p_algebra (PAlgebra := F_Alg) e) =
+          in_t (inj (Sub_Functor := sub_F_E) (fmap (@proj1_sig _ _) e))
+    }.
 
-  Definition Sub_Functor_inl' (F G H : Set -> Set) (sub_F_G : (F :+: G) :<: H) :
-    F :<: H.
-    econstructor 1 with
-      (inj := fun (A : Set) (e : F A) => (@inj _ _ sub_F_G A (inl _ e)))
-      (prj := fun (A : Set) (ha : H A) =>
-        match @prj _ _ sub_F_G A ha with
-          | Some (inl f) => Some f
-          | Some (inr g) => None
-          | None => None
-        end).
+  Instance Sub_Functor_inl' (F G H : Set -> Set) (sub_F_G : (F :+: G) :<: H) :
+    F :<: H :=
+    {| inj := fun (A : Set) (e : F A) => @inj _ _ sub_F_G A (inl _ e);
+       prj := fun (A : Set) (ha : H A) =>
+                match @prj _ _ sub_F_G A ha with
+                  | Some (inl f) => Some f
+                  | Some (inr g) => None
+                  | None => None
+                end
+    |}.
+  Proof.
     intros until fa; caseEq (prj ga);
       [rewrite (inj_prj _ _ H0); destruct i; congruence | discriminate].
     intros; rewrite prj_inj; reflexivity.
   Defined.
 
-  Definition Sub_Functor_inr' (F G H : Set -> Set) (sub_F_G : (F :+: G) :<: H) :
-    G :<: H.
-    econstructor 1 with
-      (inj := fun (A : Set) (e : G A) => (@inj _ _ sub_F_G A (inr _ e)))
-      (prj := fun (A : Set) (H0 : H A) =>
-          match @prj _ _ sub_F_G A H0 with
-            | Some (inl f) => None
-            | Some (inr g) => Some g
-            | None => None
-          end).
+  Instance Sub_Functor_inr' (F G H : Set -> Set) (sub_F_G : (F :+: G) :<: H) :
+    G :<: H :=
+    {| inj := fun (A : Set) (e : G A) => (@inj _ _ sub_F_G A (inr _ e));
+       prj := fun (A : Set) (H0 : H A) =>
+                match @prj _ _ sub_F_G A H0 with
+                  | Some (inl f) => None
+                  | Some (inr g) => Some g
+                  | None => None
+                end
+    |}.
+  Proof.
     intros until fa; caseEq (prj ga);
       [rewrite (inj_prj _ _ H0); destruct i; congruence | discriminate].
     intros; rewrite prj_inj; reflexivity.
@@ -804,45 +842,51 @@ Section WF_Ind_FAlgebras.
       G_Alg)
     :
     @WF_Ind H (F :+: G) _ _ _ P _ (PAlgebra_Plus Name _ F G) | 0.
-      econstructor; intros.
-      destruct e; simpl.
-      rewrite (proj_eq (sub_F_E := Sub_Functor_inl' _ _ _ sub_F_G_H)); simpl;
-        reflexivity.
-      rewrite (proj_eq (sub_F_E := Sub_Functor_inr' _ _ _ sub_F_G_H)); simpl;
-        reflexivity.
-    Defined.
+  Proof.
+    econstructor; intros.
+    destruct e; simpl.
+    rewrite (proj_eq (sub_F_E := Sub_Functor_inl' _ _ _ sub_F_G_H)); simpl;
+    reflexivity.
+    rewrite (proj_eq (sub_F_E := Sub_Functor_inr' _ _ _ sub_F_G_H)); simpl;
+    reflexivity.
+  Defined.
 
-    (* The key reasoning lemma. *)
-    Lemma Ind {F : Set -> Set}
-      {Fun_F : Functor F}
-      {P : Fix F -> Prop}
-      {N : Set}
-      {Ind_Alg : PAlgebra N (sig P) F}
-      {WF_Ind_Alg : WF_Ind Ind_Alg}
-      :
-      forall (f : Fix F)
-        (fUP' : Universal_Property'_fold f),
-        P f.
-      intros.
-      cut (proj1_sig (fold_ _(@p_algebra _ _ _ Ind_Alg) f) = id f).
-      unfold id.
-      intro f_eq; rewrite <- f_eq.
-      eapply (proj2_sig (fold_ _ (@p_algebra _ _ _ Ind_Alg) f)).
-      erewrite (@Fusion _ Fun_F f fUP' _ _ (@proj1_sig (Fix F) P)
-        (@p_algebra _ _ _ Ind_Alg) in_t).
-      eapply Fix_id_fold; unfold id; assumption.
-      intros; rewrite (proj_eq (WF_Ind := WF_Ind_Alg)).
-      simpl; unfold id; reflexivity.
-    Defined.
+  (* The key reasoning lemma. *)
+  Lemma Ind {F : Set -> Set}
+    {Fun_F : Functor F}
+    {P : Fix F -> Prop}
+    {N : Set}
+    {Ind_Alg : PAlgebra N (sig P) F}
+    {WF_Ind_Alg : WF_Ind Ind_Alg}
+    :
+    forall (f : Fix F)
+      (fUP' : Universal_Property'_fold f),
+      P f.
+  Proof.
+    intros.
+    cut (proj1_sig (fold_ _(@p_algebra _ _ _ Ind_Alg) f) = id f).
+    unfold id.
+    intro f_eq; rewrite <- f_eq.
+    eapply (proj2_sig (fold_ _ (@p_algebra _ _ _ Ind_Alg) f)).
+    erewrite (@Fusion _ Fun_F f fUP' _ _ (@proj1_sig (Fix F) P)
+                      (@p_algebra _ _ _ Ind_Alg) in_t).
+    eapply Fix_id_fold; unfold id; assumption.
+    intros; rewrite (proj_eq (WF_Ind := WF_Ind_Alg)).
+    simpl; unfold id; reflexivity.
+  Defined.
 
   Class WF_Ind2 {E E' F: Set -> Set} {Name : Set}
     {Fun_E : Functor E} {Fun_E : Functor E'} {Fun_F : Functor F}
     {P : (Fix E) * (Fix E') -> Prop} {sub_F_E : F :<: E} {sub_F_E' : F :<: E'}
     (F_Alg : PAlgebra Name (sig P) F) :=
-    {proj1_eq : forall e, fst (proj1_sig (p_algebra (PAlgebra := F_Alg) e)) =
-      in_t (inj (Sub_Functor := sub_F_E) (fmap (fun e => fst (proj1_sig e)) e));
-      proj2_eq : forall e, snd (proj1_sig (p_algebra (PAlgebra := F_Alg) e)) =
-        in_t (inj (Sub_Functor := sub_F_E') (fmap (fun e => snd (proj1_sig e)) e))
+    { proj1_eq :
+        forall e,
+          fst (proj1_sig (p_algebra (PAlgebra := F_Alg) e)) =
+          in_t (inj (Sub_Functor := sub_F_E) (fmap (fun e => fst (proj1_sig e)) e));
+      proj2_eq :
+        forall e,
+          snd (proj1_sig (p_algebra (PAlgebra := F_Alg) e)) =
+          in_t (inj (Sub_Functor := sub_F_E') (fmap (fun e => snd (proj1_sig e)) e))
     }.
 
   Global Instance WF_Ind2_Plus_split {F G H H'}
@@ -864,105 +908,114 @@ Section WF_Ind_FAlgebras.
       G_Alg)
     :
     @WF_Ind2 H H' (F :+: G) _ _ _ _ P _ _ (PAlgebra_Plus Name _ F G) | 0.
-      econstructor; intros; destruct e; simpl.
-      rewrite (proj1_eq (sub_F_E := Sub_Functor_inl' _ _ _ sub_F_G_H)
-        (sub_F_E' := Sub_Functor_inl' _ _ _ sub_F_G_H')); simpl;
-        reflexivity.
-      rewrite (proj1_eq (sub_F_E := Sub_Functor_inr' _ _ _ sub_F_G_H)
-        (sub_F_E' := Sub_Functor_inr' _ _ _ sub_F_G_H')); simpl;
-        reflexivity.
-      rewrite (proj2_eq (sub_F_E := Sub_Functor_inl' _ _ _ sub_F_G_H)
-        (sub_F_E' := Sub_Functor_inl' _ _ _ sub_F_G_H')); simpl;
-        reflexivity.
-      rewrite (proj2_eq (sub_F_E := Sub_Functor_inr' _ _ _ sub_F_G_H)
-        (sub_F_E' := Sub_Functor_inr' _ _ _ sub_F_G_H')); simpl;
-        reflexivity.
-    Defined.
+  Proof.
+    econstructor; intros; destruct e; simpl.
+    rewrite (proj1_eq (sub_F_E := Sub_Functor_inl' _ _ _ sub_F_G_H)
+                      (sub_F_E' := Sub_Functor_inl' _ _ _ sub_F_G_H')); simpl;
+    reflexivity.
+    rewrite (proj1_eq (sub_F_E := Sub_Functor_inr' _ _ _ sub_F_G_H)
+                      (sub_F_E' := Sub_Functor_inr' _ _ _ sub_F_G_H')); simpl;
+    reflexivity.
+    rewrite (proj2_eq (sub_F_E := Sub_Functor_inl' _ _ _ sub_F_G_H)
+                      (sub_F_E' := Sub_Functor_inl' _ _ _ sub_F_G_H')); simpl;
+    reflexivity.
+    rewrite (proj2_eq (sub_F_E := Sub_Functor_inr' _ _ _ sub_F_G_H)
+                      (sub_F_E' := Sub_Functor_inr' _ _ _ sub_F_G_H')); simpl;
+    reflexivity.
+  Defined.
 
-    Lemma Ind2 {F : Set -> Set}
-      {Fun_F : Functor F}
-      {P : (Fix F) * (Fix F) -> Prop}
-      {N : Set}
-      {Ind_Alg : PAlgebra N (sig P) F}
-      {WF_Ind_Alg : WF_Ind2 Ind_Alg}
-      :
-      forall (f : Fix F)
-        (fUP' : Universal_Property'_fold f),
-        P (f, f).
-      intros.
-      cut (fst (proj1_sig (fold_ _(@p_algebra _ _ _ Ind_Alg) f)) = f).
-      cut (snd (proj1_sig (fold_ _(@p_algebra _ _ _ Ind_Alg) f)) = f).
-      intros f2_eq f1_eq; rewrite <- f1_eq at 1; rewrite <- f2_eq at -1.
-      generalize (proj2_sig (fold_ _ (@p_algebra _ _ _ Ind_Alg) f)).
-      destruct (proj1_sig (fold_ (sig P) p_algebra f)); simpl; auto.
-      erewrite (@Fusion _ Fun_F f fUP' _ _ (fun e => snd (proj1_sig e))
-        (@p_algebra _ _ _ Ind_Alg) in_t).
-      eapply Fix_id_fold; unfold id; assumption.
-      intros; rewrite (proj2_eq (WF_Ind2 := WF_Ind_Alg)).
-      simpl; unfold id; reflexivity.
-      erewrite (@Fusion _ Fun_F f fUP' _ _ (fun e => fst (proj1_sig e))
-        (@p_algebra _ _ _ Ind_Alg) in_t).
-      eapply Fix_id_fold; unfold id; assumption.
-      intros; rewrite (proj1_eq (WF_Ind2 := WF_Ind_Alg)).
-      simpl; unfold id; reflexivity.
-    Defined.
+  Lemma Ind2 {F : Set -> Set}
+    {Fun_F : Functor F}
+    {P : (Fix F) * (Fix F) -> Prop}
+    {N : Set}
+    {Ind_Alg : PAlgebra N (sig P) F}
+    {WF_Ind_Alg : WF_Ind2 Ind_Alg}
+    :
+    forall (f : Fix F)
+      (fUP' : Universal_Property'_fold f),
+      P (f, f).
+  Proof.
+    intros.
+    cut (fst (proj1_sig (fold_ _(@p_algebra _ _ _ Ind_Alg) f)) = f).
+    cut (snd (proj1_sig (fold_ _(@p_algebra _ _ _ Ind_Alg) f)) = f).
+    intros f2_eq f1_eq; rewrite <- f1_eq at 1; rewrite <- f2_eq at -1.
+    generalize (proj2_sig (fold_ _ (@p_algebra _ _ _ Ind_Alg) f)).
+    destruct (proj1_sig (fold_ (sig P) p_algebra f)); simpl; auto.
+    erewrite (@Fusion _ Fun_F f fUP' _ _ (fun e => snd (proj1_sig e))
+      (@p_algebra _ _ _ Ind_Alg) in_t).
+    eapply Fix_id_fold; unfold id; assumption.
+    intros; rewrite (proj2_eq (WF_Ind2 := WF_Ind_Alg)).
+    simpl; unfold id; reflexivity.
+    erewrite (@Fusion _ Fun_F f fUP' _ _ (fun e => fst (proj1_sig e))
+      (@p_algebra _ _ _ Ind_Alg) in_t).
+    eapply Fix_id_fold; unfold id; assumption.
+    intros; rewrite (proj1_eq (WF_Ind2 := WF_Ind_Alg)).
+    simpl; unfold id; reflexivity.
+  Defined.
 
-    Class iPAlgebra (Name : Set) {I : Set} (A : I -> Prop) (F: (I -> Prop) -> I -> Prop) : Prop :=
+  Class iPAlgebra (Name : Set) {I : Set} (A : I -> Prop) (F: (I -> Prop) -> I -> Prop) : Prop :=
     { ip_algebra : iAlgebra F A}.
 
-    (* Definition iPAlgebra_Plus (Name: Set) {I : Set} (A : I -> Prop)
-      (F G : (I -> Prop) -> I -> Prop)
-      {falg: iPAlgebra Name A F} {galg: iPAlgebra Name A G} :
-      iPAlgebra Name A (F ::+:: G) :=
-        Build_iPAlgebra Name _ A _
-        (fun f fga =>
-          (match fga with
-             | or_introl fa => ip_algebra f fa
-             | or_intror ga => ip_algebra f ga
-           end)). *)
+  (* Definition iPAlgebra_Plus (Name: Set) {I : Set} (A : I -> Prop)
+    (F G : (I -> Prop) -> I -> Prop)
+    {falg: iPAlgebra Name A F} {galg: iPAlgebra Name A G} :
+    iPAlgebra Name A (F ::+:: G) :=
+      Build_iPAlgebra Name _ A _
+      (fun f fga =>
+        (match fga with
+           | or_introl fa => ip_algebra f fa
+           | or_intror ga => ip_algebra f ga
+         end)). *)
 
-    Global Instance iPAlgebra_Plus (Name: Set) {I : Set} (A : I -> Prop)
-      (F G : (I -> Prop) -> I -> Prop)
-      {falg: iPAlgebra Name A F} {galg: iPAlgebra Name A G} :
-      iPAlgebra Name A (F ::+:: G) | 6 :=
-        {| ip_algebra := fun f fga =>
-          (match fga with
-             | or_introl fa => ip_algebra f fa
-             | or_intror ga => ip_algebra f ga
-           end) |}.
+  Global Instance iPAlgebra_Plus (Name: Set) {I : Set} (A : I -> Prop)
+    (F G : (I -> Prop) -> I -> Prop)
+    {falg: iPAlgebra Name A F} {galg: iPAlgebra Name A G} :
+    iPAlgebra Name A (F ::+:: G) | 6 :=
+    {| ip_algebra := fun f fga =>
+                       match fga with
+                         | or_introl fa => ip_algebra f fa
+                         | or_intror ga => ip_algebra f ga
+                       end
+    |}.
 
   Class iWF_Ind {I : Set} {E F: (I -> Prop) -> I -> Prop} {Name : Set}
     {Fun_E : iFunctor E} {Fun_F : iFunctor F}
     {P : forall i, iFix E i -> Prop} {sub_F_E : Sub_iFunctor F E}
     (F_Alg : iPAlgebra Name (fun i => sig (P i)) F) :=
-    {iproj_eq : forall i e, proj1_sig (ip_algebra (iPAlgebra := F_Alg) i e) =
-      in_ti i (inj_i (Sub_iFunctor := sub_F_E) i (ifmap i (fun i => proj1_sig (P := P i)) e))}.
+    { iproj_eq :
+        forall i e,
+          proj1_sig (ip_algebra (iPAlgebra := F_Alg) i e) =
+          in_ti i (inj_i (Sub_iFunctor := sub_F_E) i
+                         (ifmap i (fun i => proj1_sig (P := P i)) e))
+    }.
 
   Definition Sub_iFunctor_inl' {I' : Set} (F G H : (I' -> Prop) -> I' -> Prop)
     (isub_F_G : Sub_iFunctor (F ::+:: G) H) :
     Sub_iFunctor F H :=
     {| inj_i := fun (A : I' -> Prop) (i : I') (fai : F A i) =>
-      @inj_i _ _ _ isub_F_G _ _ (or_introl (G A i) fai);
-      prj_i := fun (A : I' -> Prop) (i : I') (hai : H A i) =>
-        let o := prj_i i hai in
-          match o with
-            | or_introl (or_introl H2) => or_introl True H2
-            | or_introl (or_intror _) => or_intror (F A i) I
-            | or_intror H1 => or_intror (F A i) H1
-          end |}.
+                  @inj_i _ _ _ isub_F_G _ _ (or_introl (G A i) fai);
+       prj_i := fun (A : I' -> Prop) (i : I') (hai : H A i) =>
+                  let o := prj_i i hai in
+                  match o with
+                    | or_introl (or_introl H2) => or_introl True H2
+                    | or_introl (or_intror _) => or_intror (F A i) I
+                    | or_intror H1 => or_intror (F A i) H1
+                  end
+    |}.
 
   Definition Sub_iFunctor_inr' {I' : Set} (F G H : (I' -> Prop) -> I' -> Prop)
     (isub_F_G : Sub_iFunctor (F ::+:: G) H) :
     Sub_iFunctor G H :=
     {| inj_i := fun (A : I' -> Prop) (i : I') (gai : G A i) =>
-      @inj_i _ _ _ isub_F_G _ _ (or_intror _ gai);
-      prj_i := fun (A : I' -> Prop) (i : I') (hai : H A i) =>
-        let o := prj_i i hai in
-          match o with
-            | or_introl (or_intror H2) => or_introl True H2
-            | or_introl (or_introl _) => or_intror _ I
-            | or_intror H1 => or_intror _ H1
-          end |}.
+                  @inj_i _ _ _ isub_F_G _ _ (or_intror _ gai);
+       prj_i := fun (A : I' -> Prop) (i : I') (hai : H A i) =>
+                  let o := prj_i i hai in
+                  match o with
+                    | or_introl (or_intror H2) => or_introl True H2
+                    | or_introl (or_introl _) => or_intror _ I
+                    | or_intror H1 => or_intror _ H1
+                  end
+    |}.
 
   Global Instance iWF_Ind_Plus_split {I : Set}
     {F G H : (I -> Prop) -> I -> Prop}
@@ -980,13 +1033,14 @@ Section WF_Ind_FAlgebras.
       G_Alg}
     :
     @iWF_Ind _ H (F ::+:: G) _ _ _ P _ (iPAlgebra_Plus Name _ F G) | 0.
-      econstructor; intros.
-      destruct e; simpl.
-      rewrite (iproj_eq (sub_F_E := @Sub_iFunctor_inl' _ _ _ _ sub_F_G_H)); simpl;
-        reflexivity.
-      rewrite (iproj_eq (sub_F_E := @Sub_iFunctor_inr' _ _ _ _ sub_F_G_H)); simpl;
-        reflexivity.
-    Defined.
+  Proof.
+    econstructor; intros.
+    destruct e; simpl.
+    rewrite (iproj_eq (sub_F_E := @Sub_iFunctor_inl' _ _ _ _ sub_F_G_H)); simpl;
+    reflexivity.
+    rewrite (iproj_eq (sub_F_E := @Sub_iFunctor_inr' _ _ _ _ sub_F_G_H)); simpl;
+    reflexivity.
+  Defined.
 
 End WF_Ind_FAlgebras.
 
@@ -998,9 +1052,11 @@ Section WF_MAlgebras.
 
   Class WF_MAlgebra {Name : Set} {F : Set -> Set} {A : Set}
     {Fun_F : Functor F}(MAlg : forall R, FAlgebra Name R A F) :=
-    {wf_malgebra : forall (T T' : Set) (f : T' -> T) (rec : T -> A) (ft : F T'),
-      f_algebra (FAlgebra := MAlg T) rec (fmap f ft) =
-      f_algebra (FAlgebra := MAlg T') (fun ft' => rec (f ft')) ft}.
+    { wf_malgebra :
+        forall (T T' : Set) (f : T' -> T) (rec : T -> A) (ft : F T'),
+          f_algebra (FAlgebra := MAlg T) rec (fmap f ft) =
+          f_algebra (FAlgebra := MAlg T') (fun ft' => rec (f ft')) ft
+    }.
 
   Global Instance WF_MAlgebra_Plus {Name : Set} {F G : Set -> Set} {A : Set}
     {Fun_F : Functor F}

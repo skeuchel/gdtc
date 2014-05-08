@@ -171,130 +171,130 @@ Section PNames.
 
     (* Projection doesn't affect Equivalence Relation.*)
 
-     Definition EQV_proj1_P A B (i : eqv_i A B) :=
-      forall a' b' H H0, a' = proj1_sig (eqv_a _ _ i) ->
-        b' = proj1_sig (eqv_b _ _ i) ->
-        E_eqvC (env_A _ _ i) (env_B _ _ i) (exist _ a' H) (exist _ b' H0).
+    Definition EQV_proj1_P A B (i : eqv_i A B) :=
+     forall a' b' H H0, a' = proj1_sig (eqv_a _ _ i) ->
+       b' = proj1_sig (eqv_b _ _ i) ->
+       E_eqvC (env_A _ _ i) (env_B _ _ i) (exist _ a' H) (exist _ b' H0).
 
-     Inductive EQV_proj1_Name := eqv_proj1_name.
-     Context {EQV_proj1_EQV : forall A B,
-       iPAlgebra EQV_proj1_Name (@EQV_proj1_P A B) (EQV_E A B)}.
-     Context {Fun_EQV_E : forall A B, iFunctor (EQV_E A B)}.
+    Inductive EQV_proj1_Name := eqv_proj1_name.
+    Context {EQV_proj1_EQV : forall A B,
+      iPAlgebra EQV_proj1_Name (@EQV_proj1_P A B) (EQV_E A B)}.
+    Context {Fun_EQV_E : forall A B, iFunctor (EQV_E A B)}.
 
-     Definition EQV_proj1 A B:=
-       ifold_ (EQV_E A B) _ (ip_algebra (iPAlgebra := EQV_proj1_EQV A B)).
+    Definition EQV_proj1 A B:=
+      ifold_ (EQV_E A B) _ (ip_algebra (iPAlgebra := EQV_proj1_EQV A B)).
 
     Variable Sub_NP_Functor_eqv_EQV_E : forall A B,
       Sub_iFunctor (NP_Functor_eqv A B) (EQV_E A B).
 
-     Global Instance EQV_proj1_NP_Functor_eqv :
-       forall A B,
-         iPAlgebra EQV_proj1_Name (EQV_proj1_P A B) (NP_Functor_eqv _ _).
-     Proof.
-       intros; econstructor; unfold iAlgebra; intros.
-       eapply ind_alg_NP_Functor_eqv; unfold EQV_proj1_P; simpl; intros.
-       apply inject_i; econstructor; simpl; eauto.
-       rewrite H2; rewrite e_eq; eauto.
-       rewrite H3; rewrite e'_eq; eauto.
-       apply inject_i; econstructor 2; simpl; eauto.
-       rewrite H2; rewrite e_eq; eauto.
-       rewrite H3; rewrite e'_eq; eauto.
-       destruct a; destruct a'; apply IHa; auto.
-       apply inject_i; econstructor 3; simpl; eauto.
-       rewrite H2; rewrite e_eq; eauto.
-       rewrite H3; rewrite e'_eq; eauto.
-       destruct a; destruct a'; apply IHa; auto.
-       destruct b; destruct b'; apply IHb; auto.
-       apply inject_i; econstructor 4; simpl; eauto.
-       rewrite H2; rewrite e_eq; eauto.
-       rewrite H3; rewrite e'_eq; eauto.
-       destruct a; destruct a'; apply IHa; auto.
-       destruct b; destruct b'; apply IHb; auto.
-       destruct c; destruct c'; apply IHc; auto.
-       assumption.
-     Defined.
-
-   End eqv_Section.
-
-   Variable EQV_E : forall A B, (@eqv_i A B -> Prop) -> eqv_i A B -> Prop.
-   Context {Fun_EQV_E : forall A B, iFunctor (EQV_E A B)}.
-   Variable WFV : (WFValue_i D V -> Prop) -> WFValue_i D V -> Prop.
-   Context {funWFV : iFunctor WFV}.
-
-   Definition WF_eqv_environment_P (env_A_B : Env (typeofR D) * Env nat) gamma'' :=
-     (forall m b : nat,
-       lookup (snd env_A_B) m = Some b ->
-       exists T, lookup (fst env_A_B) b = Some T) /\
-     Datatypes.length (fst env_A_B) = Datatypes.length (snd env_A_B) /\
-     (forall m b : nat, lookup (snd env_A_B) m = Some b -> b = m) /\
-     WF_Environment _ _ WFV gamma'' (fst env_A_B).
-
-    Definition eqv_eval_alg_Soundness'_P
-      (typeof_rec : Exp (E (typeofR D)) -> typeofR D)
-      (eval_rec : Exp (E nat) -> evalR V)
-      (typeof_F : Mixin (Exp (E (typeofR D))) (E (typeofR D)) (typeofR D))
-      (eval_F : Mixin (Exp (E nat)) (E nat) (evalR V))
-      i :=
-      E_eqv EQV_E _ _ i /\
-      eval_alg_Soundness_P D V (E nat) WFV
-      _ WF_eqv_environment_P
-      (E (typeofR D)) _ (env_A _ _ i, env_B _ _ i) typeof_rec eval_rec
-      typeof_F eval_F
-      (proj1_sig (eqv_a _ _ i), proj1_sig (eqv_b _ _ i))
-      (conj (proj2_sig (eqv_a _ _ i)) (proj2_sig (eqv_b _ _ i))).
-
-    Lemma WF_eqv_environment_P_insert : forall gamma gamma' gamma'' v T,
-      WF_eqv_environment_P (gamma, gamma') gamma'' ->
-      WFValueC _ _ WFV v T ->
-      WF_eqv_environment_P (insert _ (Some T) gamma, insert _ (Datatypes.length gamma') gamma')
-      (insert _ v gamma'').
+    Global Instance EQV_proj1_NP_Functor_eqv :
+      forall A B,
+        iPAlgebra EQV_proj1_Name (EQV_proj1_P A B) (NP_Functor_eqv _ _).
     Proof.
-      intros; destruct H as [WF_gamma [WF_gamma2 [WF_gamma' WF_gamma'']]].
-      unfold WF_eqv_environment_P; simpl in *|-*; repeat split.
-      rewrite <- WF_gamma2.
-      revert WF_gamma; clear; simpl; induction gamma';
-        destruct m; simpl; intros; try discriminate.
-      injection H; intros; subst.
-      clear; induction gamma; simpl; eauto; eexists.
-      injection H; intros; subst.
-      generalize b (WF_gamma 0 _ (eq_refl _)); clear; induction gamma; simpl; intros b H;
-        destruct H as [T' lookup_T']; try discriminate.
-      destruct b; eauto.
-      eapply IHgamma'.
-      intros n0 b0 H0; eapply (WF_gamma (S n0) _ H0).
-      eassumption.
-      assert (exists m', Datatypes.length gamma' = m') as m'_eq
-        by (eexists _; reflexivity); destruct m'_eq as [m' m'_eq].
-      rewrite m'_eq; generalize m' gamma' WF_gamma2; clear; induction gamma;
-        destruct gamma'; intros; simpl; try discriminate;
-          try injection H7; intros; eauto.
-      simpl in *|-*.
-      intro; caseEq (beq_nat m (Datatypes.length gamma')).
-      assert (exists m', m' = Datatypes.length gamma') as ex_m' by
-        (eexists _; reflexivity); destruct ex_m' as [m' m'_eq];
-          rewrite <- m'_eq in H at 1.
-      rewrite <- WF_gamma2 in H1.
-      rewrite (beq_nat_true _ _ H).
-      rewrite (beq_nat_true _ _ H), m'_eq in H1.
-      rewrite <- WF_gamma2 in m'_eq; rewrite m'_eq.
-      generalize m' b H1; clear.
-      induction gamma'; simpl; intros; try discriminate.
-      injection H1; auto.
-      eauto.
-      eapply WF_gamma'.
-      rewrite <- WF_gamma2 in H1.
-      assert (exists m', m' = Datatypes.length gamma') as ex_m' by
-      (eexists _; reflexivity); destruct ex_m' as [m' m'_eq].
-      generalize m' m (beq_nat_false _ _ H) H1; clear;
-        induction gamma'; simpl; destruct m; intros;
-          try discriminate; eauto.
-      elimtype False; eauto.
-      eapply P2_Env_insert.
-      eauto.
-      apply H0.
-    Qed.
+      intros; econstructor; unfold iAlgebra; intros.
+      eapply ind_alg_NP_Functor_eqv; unfold EQV_proj1_P; simpl; intros.
+      apply inject_i; econstructor; simpl; eauto.
+      rewrite H2; rewrite e_eq; eauto.
+      rewrite H3; rewrite e'_eq; eauto.
+      apply inject_i; econstructor 2; simpl; eauto.
+      rewrite H2; rewrite e_eq; eauto.
+      rewrite H3; rewrite e'_eq; eauto.
+      destruct a; destruct a'; apply IHa; auto.
+      apply inject_i; econstructor 3; simpl; eauto.
+      rewrite H2; rewrite e_eq; eauto.
+      rewrite H3; rewrite e'_eq; eauto.
+      destruct a; destruct a'; apply IHa; auto.
+      destruct b; destruct b'; apply IHb; auto.
+      apply inject_i; econstructor 4; simpl; eauto.
+      rewrite H2; rewrite e_eq; eauto.
+      rewrite H3; rewrite e'_eq; eauto.
+      destruct a; destruct a'; apply IHa; auto.
+      destruct b; destruct b'; apply IHb; auto.
+      destruct c; destruct c'; apply IHc; auto.
+      assumption.
+    Defined.
 
-    Section NP_beval_Soundness.
+  End eqv_Section.
+
+  Variable EQV_E : forall A B, (@eqv_i A B -> Prop) -> eqv_i A B -> Prop.
+  Context {Fun_EQV_E : forall A B, iFunctor (EQV_E A B)}.
+  Variable WFV : (WFValue_i D V -> Prop) -> WFValue_i D V -> Prop.
+  Context {funWFV : iFunctor WFV}.
+
+  Definition WF_eqv_environment_P (env_A_B : Env (typeofR D) * Env nat) gamma'' :=
+    (forall m b : nat,
+      lookup (snd env_A_B) m = Some b ->
+      exists T, lookup (fst env_A_B) b = Some T) /\
+    Datatypes.length (fst env_A_B) = Datatypes.length (snd env_A_B) /\
+    (forall m b : nat, lookup (snd env_A_B) m = Some b -> b = m) /\
+    WF_Environment _ _ WFV gamma'' (fst env_A_B).
+
+  Definition eqv_eval_alg_Soundness'_P
+    (typeof_rec : Exp (E (typeofR D)) -> typeofR D)
+    (eval_rec : Exp (E nat) -> evalR V)
+    (typeof_F : Mixin (Exp (E (typeofR D))) (E (typeofR D)) (typeofR D))
+    (eval_F : Mixin (Exp (E nat)) (E nat) (evalR V))
+    i :=
+    E_eqv EQV_E _ _ i /\
+    eval_alg_Soundness_P D V (E nat) WFV
+    _ WF_eqv_environment_P
+    (E (typeofR D)) _ (env_A _ _ i, env_B _ _ i) typeof_rec eval_rec
+    typeof_F eval_F
+    (proj1_sig (eqv_a _ _ i), proj1_sig (eqv_b _ _ i))
+    (conj (proj2_sig (eqv_a _ _ i)) (proj2_sig (eqv_b _ _ i))).
+
+  Lemma WF_eqv_environment_P_insert : forall gamma gamma' gamma'' v T,
+    WF_eqv_environment_P (gamma, gamma') gamma'' ->
+    WFValueC _ _ WFV v T ->
+    WF_eqv_environment_P (insert _ (Some T) gamma, insert _ (Datatypes.length gamma') gamma')
+    (insert _ v gamma'').
+  Proof.
+    intros; destruct H as [WF_gamma [WF_gamma2 [WF_gamma' WF_gamma'']]].
+    unfold WF_eqv_environment_P; simpl in *|-*; repeat split.
+    rewrite <- WF_gamma2.
+    revert WF_gamma; clear; simpl; induction gamma';
+      destruct m; simpl; intros; try discriminate.
+    injection H; intros; subst.
+    clear; induction gamma; simpl; eauto; eexists.
+    injection H; intros; subst.
+    generalize b (WF_gamma 0 _ (eq_refl _)); clear; induction gamma; simpl; intros b H;
+      destruct H as [T' lookup_T']; try discriminate.
+    destruct b; eauto.
+    eapply IHgamma'.
+    intros n0 b0 H0; eapply (WF_gamma (S n0) _ H0).
+    eassumption.
+    assert (exists m', Datatypes.length gamma' = m') as m'_eq
+      by (eexists _; reflexivity); destruct m'_eq as [m' m'_eq].
+    rewrite m'_eq; generalize m' gamma' WF_gamma2; clear; induction gamma;
+      destruct gamma'; intros; simpl; try discriminate;
+        try injection H7; intros; eauto.
+    simpl in *|-*.
+    intro; caseEq (beq_nat m (Datatypes.length gamma')).
+    assert (exists m', m' = Datatypes.length gamma') as ex_m' by
+      (eexists _; reflexivity); destruct ex_m' as [m' m'_eq];
+        rewrite <- m'_eq in H at 1.
+    rewrite <- WF_gamma2 in H1.
+    rewrite (beq_nat_true _ _ H).
+    rewrite (beq_nat_true _ _ H), m'_eq in H1.
+    rewrite <- WF_gamma2 in m'_eq; rewrite m'_eq.
+    generalize m' b H1; clear.
+    induction gamma'; simpl; intros; try discriminate.
+    injection H1; auto.
+    eauto.
+    eapply WF_gamma'.
+    rewrite <- WF_gamma2 in H1.
+    assert (exists m', m' = Datatypes.length gamma') as ex_m' by
+    (eexists _; reflexivity); destruct ex_m' as [m' m'_eq].
+    generalize m' m (beq_nat_false _ _ H) H1; clear;
+      induction gamma'; simpl; destruct m; intros;
+        try discriminate; eauto.
+    elimtype False; eauto.
+    eapply P2_Env_insert.
+    eauto.
+    apply H0.
+  Qed.
+
+  Section NP_beval_Soundness.
 
     Variable (NP : Set -> Set).
     Context {Fun_NP : Functor NP}.
@@ -607,6 +607,7 @@ Section PNames.
         iPAlgebra soundness_XName
         (soundness_X'_P
           typeof_rec eval_rec typeof_alg eval_alg) EQV_G.
+    Proof.
       intros; econstructor; generalize (ip_algebra); unfold iAlgebra; intros.
       unfold soundness_X'_P; intros.
       assert (EQV_G (eqv_eval_alg_Soundness'_P typeof_rec eval_rec typeof_alg eval_alg) i).
