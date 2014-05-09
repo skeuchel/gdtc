@@ -391,10 +391,7 @@ Section NatCase.
     intros; unfold isVI, bot, bot', project; simpl; rewrite wf_functor.
     rewrite out_in_fmap; rewrite wf_functor; simpl; unfold Bot_fmap.
     caseEq (prj (sub_F := NatValue) (inj (Bot (sig (@Universal_Property'_fold V _))))); auto.
-    apply inj_prj in H.
-    elimtype False.
-    eapply (inject_discriminate Dis_VI_Bot n (Bot _)).
-    unfold inject; erewrite H; reflexivity.
+    discriminate_inject H.
   Qed.
 
   Lemma isBot_bot :

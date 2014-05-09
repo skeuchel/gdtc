@@ -596,9 +596,7 @@ Section Lambda.
     inversion H; subst; simpl.
     unfold SV_invertBot_P; intros.
     simpl in H4; rewrite H3 in H4.
-    unfold closure', bot, Names.bot, inject' in H4.
-    elimtype False; eapply (inject_discriminate  Dis_Clos_Bot).
-    unfold inject; apply H4.
+    discriminate_inject H4.
   Qed.
 
   Context {SV_proj1_b_SV :
@@ -680,9 +678,8 @@ Section Lambda.
     inversion H; subst; simpl; intros.
     split; intros.
     apply (inject_i (subGF := Sub_SV_Bot_SV)); constructor; eauto.
-    elimtype False.
     rewrite H0 in H1.
-    eapply (inject_discriminate Dis_Clos_Bot); unfold inject in *|-*; simpl in *|-*; eauto.
+    discriminate_inject H1.
   Defined.
 
   Definition SV_invertClos := ifold_ SV _ (ip_algebra (iPAlgebra := SV_invertClos_SV)).
@@ -1315,9 +1312,7 @@ Section Lambda.
     split.
     apply (inject_i (subGF := Sub_WFV_Bot_WFV)); constructor; auto.
     rewrite H0; intros.
-    elimtype False.
-     eapply (inject_discriminate Dis_Clos_Bot); unfold inject in *|-*; simpl in *|-*; eauto;
-       apply f_equal; apply f_equal; apply sym_eq; eapply H10.
+    discriminate_inject H1.
   Defined.
 
   Definition WF_invertClos'  :=
@@ -1386,9 +1381,7 @@ Section Lambda.
     intros; unfold isClos, project; simpl; rewrite out_in_fmap;
       repeat rewrite wf_functor; simpl; unfold Bot_fmap.
     caseEq (prj (sub_F := ClosValue) (inj (Bot (sig (Universal_Property'_fold (F := V)))))).
-    elimtype False;  apply inj_prj in H.
-    eapply (inject_discriminate Dis_Clos_Bot); unfold inject in *|-*; simpl in *|-*;
-      apply f_equal; apply f_equal; apply sym_eq; eapply H.
+    discriminate_inject H.
     auto.
   Qed.
 
@@ -1400,9 +1393,7 @@ Section Lambda.
     caseEq (prj (sub_F := BotValue) (inj (Clos _ t1
       (map (fun e : Fix V => in_t_UP' V Fun_V (out_t_UP' V Fun_V e))
         (map (@proj1_sig _ _) f))))).
-    elimtype False;  apply inj_prj in H.
-    eapply (inject_discriminate Dis_Clos_Bot); unfold inject in *|-*; simpl in *|-*;
-      apply f_equal; apply f_equal; eapply H.
+    discriminate_inject H.
     auto.
   Qed.
 

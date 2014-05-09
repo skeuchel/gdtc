@@ -94,7 +94,7 @@ Section PLambda_Arith.
     split.
     apply (inject_i (subGF := Sub_WFV_VB_WFV)); econstructor; eauto.
     intros; rewrite H2 in H1.
-    elimtype False; apply (inject_discriminate _ _ _ H1).
+    discriminate_inject H1.
   Defined.
 
   Global Instance PAlgebra_WF_invertClos'_VB typeof_rec :
@@ -106,7 +106,7 @@ Section PLambda_Arith.
     split.
     apply (inject_i (subGF := Sub_WFV_VB_WFV)); econstructor; eauto.
     simpl in *|-*; intros; rewrite H2 in H0.
-    elimtype False; apply sym_eq in H0. apply (inject_discriminate _ _ _ H0).
+    discriminate_inject H0.
   Defined.
 
   (* ============================================== *)

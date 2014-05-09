@@ -1129,6 +1129,15 @@ Hint Extern 0 (WF_MAlgebra _) =>
             constructor; intros T T' f' rec' ft; destruct ft;
               simpl; auto; fail : typeclass_instances.
 
+Ltac discriminate_inject H :=
+  first [ apply inj_prj in H | idtac ];
+    contradict H;
+      solve [ apply inject_discriminate; auto with typeclass_instances
+            | apply not_eq_sym; apply inject_discriminate; auto with typeclass_instances
+            | apply inj_discriminate; auto with typeclass_instances
+            | apply not_eq_sym; apply inj_discriminate; auto with typeclass_instances
+            ].
+
 (*
 *** Local Variables: ***
 *** coq-prog-args: ("-emacs-U" "-impredicative-set") ***

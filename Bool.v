@@ -388,10 +388,7 @@ Section Bool.
     unfold iAlgebra; intros; unfold SV_invertVB_P.
     destruct (H _ H1) as [v' eq_v'].
     intros; rewrite eq_v' in H2.
-    elimtype False.
-    unfold vb, inject, vb', inject' in H2; simpl in H2.
-    apply sym_eq in H2.
-    apply (inject_discriminate H0 _ _ H2).
+    discriminate_inject H2.
   Defined.
 
   Global Instance SV_invertVB_Bot :
@@ -400,11 +397,8 @@ Section Bool.
     econstructor; intros.
     unfold iAlgebra; intros; unfold SV_invertVB_P.
     inversion H; subst; simpl; intros.
-    elimtype False.
     rewrite H0 in H1.
-    unfold vb, inject, vb', inject' in H1; simpl in H1.
-    repeat rewrite out_in_inverse, wf_functor in H1; simpl in H1.
-    eapply (inject_discriminate Dis_VB_Bot); unfold inject; simpl; eauto.
+    discriminate_inject H1.
   Defined.
 
   Context {iFun_F : iFunctor SV}.
@@ -544,7 +538,7 @@ Section Bool.
         match goal with
           eq_H0 : proj1_sig ?T = _ |- proj1_sig ?T = _ -> _ =>
             intro eq_H; rewrite eq_H in eq_H0;
-              elimtype False; eapply (inject_discriminate _ _ _ eq_H0)
+              discriminate_inject eq_H0
         end.
 
   Global Instance WF_invertVB_Bot :
@@ -636,8 +630,7 @@ Section Bool.
        rewrite out_in_fmap; repeat rewrite wf_functor; simpl; unfold Bot_fmap.
      caseEq (prj (Sub_Functor := Sub_BoolValue_V) (A:= (sig (@Universal_Property'_fold V _)))
        (inj (Bot (sig Universal_Property'_fold)))).
-     elimtype False; eapply (inject_discriminate Dis_VB_Bot b).
-     unfold inject; simpl; apply inj_prj in H; erewrite <- H; reflexivity.
+     discriminate_inject H.
      unfold isBot, project; rewrite out_in_fmap; rewrite wf_functor;
        unfold Bot_fmap; rewrite prj_inj; simpl.
      apply (inject_i (subGF := Sub_WFV_Bot_WFV)); constructor; reflexivity.
@@ -849,13 +842,13 @@ Hint Extern 1 (iPAlgebra SV_invertVB_Name (SV_invertVB_P _) _) =>
     constructor; unfold iAlgebra; unfold SV_invertVB_P; intros i H n H0;
       inversion H; subst; simpl in H0; revert H0;
         match goal with H : proj1_sig ?v = _ |- proj1_sig ?v = _ -> _ => rewrite H end; intros;
-          elimtype False; apply (inject_discriminate _ _ _ H0).
+          discriminate_inject H0.
 
 Hint Extern 1 (iPAlgebra SV_invertVB'_Name (SV_invertVB'_P _) _) =>
     constructor; unfold iAlgebra; unfold SV_invertVB'_P; intros i H n H0;
       inversion H; subst; simpl in H0; revert H0;
         match goal with H : proj1_sig ?v = _ |- proj1_sig ?v = _ -> _ => rewrite H end; intros;
-          elimtype False; apply (inject_discriminate _ _ _ H0).
+          discriminate_inject H0.
 
 Ltac WF_invertVB_default :=
   constructor; unfold iAlgebra; intros i H; unfold WF_invertVB_P;
@@ -863,7 +856,7 @@ Ltac WF_invertVB_default :=
       match goal with
         eq_H0 : proj1_sig ?T = _ |- proj1_sig ?T = _ -> _ =>
           intro eq_H; rewrite eq_H in eq_H0;
-            elimtype False; eapply (inject_discriminate _ _ _ eq_H0)
+            discriminate_inject eq_H0
       end.
 
 Hint Extern 5 (iPAlgebra WF_invertVB_Name (WF_invertVB_P _ _ _) _) =>
@@ -872,9 +865,7 @@ Hint Extern 5 (iPAlgebra WF_invertVB_Name (WF_invertVB_P _ _ _) _) =>
       match goal with
         eq_H0 : proj1_sig ?T = _ |- proj1_sig ?T = _ -> _ =>
           intro eq_H; rewrite eq_H in eq_H0;
-            elimtype False; first [apply (inject_discriminate _ _ _ eq_H0) |
-              apply sym_eq in eq_H0; apply (inject_discriminate _ _ _ eq_H0)];
-              fail
+            discriminate_inject eq_H0
       end : typeclass_instances.
 
 Hint Extern 0 =>

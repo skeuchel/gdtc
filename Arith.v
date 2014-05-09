@@ -406,10 +406,7 @@ Section Arith.
     unfold iAlgebra; intros; unfold SV_invertVI_P.
     destruct (H _ H1) as [v' eq_v'].
     intros; rewrite eq_v' in H2.
-    elimtype False.
-    unfold vi, inject, vi', inject' in H2; simpl in H2.
-    apply sym_eq in H2.
-    apply (inject_discriminate H0 _ _ H2).
+    discriminate_inject H2.
   Defined.
 
   Global Instance SV_invertVI_Bot :
@@ -418,11 +415,8 @@ Section Arith.
     econstructor; intros.
     unfold iAlgebra; intros; unfold SV_invertVI_P.
     inversion H; subst; simpl; intros.
-    elimtype False.
     rewrite H0 in H1.
-    unfold vi, inject, vi', inject' in H1; simpl in H1.
-    repeat rewrite out_in_inverse, wf_functor in H1; simpl in H1.
-    eapply (inject_discriminate Dis_VI_Bot); unfold inject; simpl; eauto.
+    discriminate_inject H1.
   Defined.
 
   Context {iFun_F : iFunctor SV}.
@@ -471,8 +465,7 @@ Section Arith.
     intros; unfold project, vi; simpl; rewrite out_in_fmap.
     repeat rewrite wf_functor; simpl; unfold VI_fmap.
     caseEq (prj (sub_F := BotValue) (inj (sub_G := V) (VI (sig (@Universal_Property'_fold V _)) n))).
-    apply inj_prj in H; elimtype False; eapply (inject_discriminate Dis_VI_Bot);
-    unfold inject; repeat apply f_equal; apply H.
+    discriminate_inject H.
     auto.
   Qed.
 
@@ -481,8 +474,7 @@ Section Arith.
     intros; unfold project, bot; simpl; rewrite out_in_fmap.
     repeat rewrite wf_functor; simpl; unfold Bot_fmap.
     caseEq (prj (sub_F := NatValue) (inj (sub_G := V) (Bot (sig (@Universal_Property'_fold V _))))).
-    apply inj_prj in H; elimtype False; eapply (inject_discriminate Dis_VI_Bot);
-    unfold inject; repeat apply f_equal; apply sym_eq in H; apply H.
+    discriminate_inject H.
     auto.
   Qed.
 
@@ -556,8 +548,7 @@ Section Arith.
     assert (vi n1 = bot _) by
       (unfold vi, vi', bot, bot', inject' at -1; rewrite <- H4;
         rewrite in_out_UP'_inverse; eauto with typeclass_instances).
-    unfold vi, bot in H5.
-    elimtype False; eapply (inject_discriminate Dis_VI_Bot _ _ H5).
+    discriminate_inject H5.
     caseEq (project (G := BotValue)
            (proj1_sig
               (boundedFix_UP m0 f_algebra
@@ -620,7 +611,7 @@ Section Arith.
       rewrite in_out_UP'_inverse in H7; [apply H7 | exact (proj2_sig _)]).
     generalize (SV_invertBot _ SV _ _ SubV_m Eval_m'); simpl; intro H8;
       unfold beval, mfold, evalR, Names.Exp in H8; rewrite H8 in Eval_m.
-    elimtype False; eapply (inject_discriminate Dis_VI_Bot (VI _ n1)); eauto.
+    discriminate_inject Eval_m.
     caseEq (project (G := BotValue)
            (proj1_sig
               (boundedFix_UP n0 f_algebra
@@ -650,7 +641,7 @@ Section Arith.
     rewrite in_out_UP'_inverse in H6; simpl.
     generalize (SV_invertBot _ SV _ _ SubV_m H6); simpl; intro.
     unfold beval, evalR, Names.Exp in H7; rewrite H7 in Eval_m.
-    elimtype False; eapply (inject_discriminate Dis_VI_Bot (VI _ n1)); eauto.
+    discriminate_inject Eval_m.
     exact (proj2_sig _).
     caseEq (project (G := BotValue)
       (proj1_sig
@@ -1028,8 +1019,7 @@ Section Arith.
       rewrite out_in_fmap; repeat rewrite wf_functor; simpl; unfold Bot_fmap.
     caseEq (prj (Sub_Functor := Sub_NatValue_V) (A:= (sig (@Universal_Property'_fold V _)))
       (inj (Bot (sig Universal_Property'_fold)))).
-    elimtype False; eapply (inject_discriminate Dis_VI_Bot n0).
-    unfold inject; simpl; apply inj_prj in H; erewrite <- H; reflexivity.
+    discriminate_inject H.
     caseEq (isBot V (in_t (inj (VI (Fix V) n)))).
     simpl in beval_b'.
     apply sym_eq in H0; apply sym_eq in d0_eq.
@@ -1063,8 +1053,7 @@ Section Arith.
         unfold Bot_fmap in H.
     caseEq (prj (Sub_Functor := Sub_NatValue_V) (A:= (sig (@Universal_Property'_fold V _)))
       (inj (Bot (sig Universal_Property'_fold)))).
-    elimtype False; eapply (inject_discriminate Dis_VI_Bot n0);
-      apply inj_prj in H1; unfold inject; rewrite <- H1; reflexivity.
+    discriminate_inject H1.
     rewrite H1 in H; discriminate.
     rewrite H0.
     unfold bot, isBot, project, inject; simpl; rewrite out_in_fmap;
@@ -1156,13 +1145,13 @@ Hint Extern 1 (iPAlgebra SV_invertVI_Name (SV_invertVI_P _) _) =>
     constructor; unfold iAlgebra; unfold SV_invertVI_P; intros i H n H0;
       inversion H; subst; simpl in H0; revert H0;
         match goal with H : proj1_sig ?v = _ |- proj1_sig ?v = _ -> _ => rewrite H end; intros;
-          elimtype False; apply (inject_discriminate _ _ _ H0).
+          discriminate_inject H0.
 
 Hint Extern 1 (iPAlgebra SV_invertVI'_Name (SV_invertVI'_P _) _) =>
     constructor; unfold iAlgebra; unfold SV_invertVI'_P; intros i H n H0;
       inversion H; subst; simpl in H0; revert H0;
         match goal with H : proj1_sig ?v = _ |- proj1_sig ?v = _ -> _ => rewrite H end; intros;
-          elimtype False; apply (inject_discriminate _ _ _ H0).
+          discriminate_inject H0.
 
 Hint Extern 5 (iPAlgebra WF_invertVI_Name (WF_invertVI_P _ _ _) _) =>
   constructor; unfold iAlgebra; intros i H; unfold WF_invertVI_P;
@@ -1170,8 +1159,7 @@ Hint Extern 5 (iPAlgebra WF_invertVI_Name (WF_invertVI_P _ _ _) _) =>
     match goal with
       eq_H0 : proj1_sig ?T = _ |- proj1_sig ?T = _ -> _ =>
         intro eq_H; rewrite eq_H in eq_H0;
-          elimtype False; first [apply (inject_discriminate _ _ _ eq_H0) |
-            apply sym_eq in eq_H0; apply (inject_discriminate _ _ _ eq_H0)]
+          discriminate_inject eq_H0
     end : typeclass_instances.
 
 Hint Extern 0 =>
