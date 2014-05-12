@@ -1,6 +1,9 @@
+Require Import Polynomial.
+Require Import Containers.
 Require Import Functors.
 Require Import List.
 Require Import FunctionalExtensionality.
+Require Import Coq.Program.Equality.
 
 Section Names.
 
@@ -33,9 +36,10 @@ Section Names.
 
   (** SuperFunctor for Types. **)
   Variable DT : Set -> Set.
-  Context {Fun_DT : Functor DT}.
-  Definition DType := UP'_F DT.
-
+  Context {fun_DT : Functor DT}.
+  Context {pfun_DT : PFunctor DT}.
+  Context {spf_DT : SPF DT}.
+  Definition DType := Fix' DT.
 
   (* ============================================== *)
   (* VALUES                                         *)
@@ -46,48 +50,38 @@ Section Names.
 
   Variable V : Set -> Set.
   Context {Fun_V : Functor V}.
-  Definition Value := UP'_F V.
+  Context {PFun_V : PFunctor V}.
+  Context {spf_V : SPF V}.
+  Definition Value := Fix' V.
 
   (** ERROR VALUES **)
 
-  Inductive StuckValue (A : Set) : Set :=
-  | Stuck : nat -> StuckValue A.
+   Inductive StuckValue (A : Set) : Set :=
+    | Stuck : nat -> StuckValue A.
 
-  Context {Sub_StuckValue_V : StuckValue :<: V}.
+   Context {Sub_StuckValue_V : StuckValue :<: V}.
 
-  Definition Stuck_fmap (A B : Set) (f : A -> B) :
-    StuckValue A -> StuckValue B :=
-    fun e => match e with
-               | Stuck n => Stuck _ n
-             end.
-
-  Global Instance Stuck_Functor : Functor StuckValue :=
-    {| fmap := Stuck_fmap |}.
-  Proof.
-    destruct a; reflexivity.
-    (* fmap_id *)
-    destruct a; reflexivity.
+  Global Instance StuckValue_Container : Container StuckValue.
+    apply (ConstContainer nat StuckValue
+            (fun A x => match x with Stuck n => n end)
+            Stuck).
+    intros; reflexivity.
+    destruct x; reflexivity.
   Defined.
 
-  (* Constructor + Universal Property. *)
-  Context {WF_SubStuckValue_V : WF_Functor _ _ Sub_StuckValue_V}.
-
-  Definition stuck' (n : nat) : Value := inject' (Stuck _ n).
-  Definition stuck (n : nat) : Fix V := proj1_sig (stuck' n).
-
-  Global Instance UP'_stuck {n : nat} :
-    Universal_Property'_fold (stuck n) := proj2_sig (stuck' n).
+  Definition stuck (n : nat) : Value := inject (Stuck _ n).
 
   (* Induction Principle for Stuckor Values. *)
 
-  Definition ind_alg_Stuck (P : Fix V -> Prop)
-    (H : forall n, P (stuck n)) (e : StuckValue (sig P)) : sig P :=
-    match e with
-      | Stuck n => exist P (stuck n) (H n)
+  Definition ind_alg_Stuck (P : Value -> Prop) (H : forall n, P (stuck n)) :
+    PAlgebra (inject' StuckValue) P := fun xs Axs =>
+    match xs return P (inject' StuckValue xs) with
+      | Stuck n => H n
     end.
 
-  Definition ind_palg_Stuck (Name : Set) (P : Fix V -> Prop) (H : forall n, P (stuck n)) :
-    PAlgebra Name (sig P) StuckValue :=
+  Definition ind_palg_Stuck (P : Value -> Prop)
+             (H : forall n, P (stuck n)) :
+    FPAlgebra P (inject' StuckValue) :=
     {| p_algebra := ind_alg_Stuck P H |}.
 
   (** BOTTOM VALUES **)
@@ -95,41 +89,44 @@ Section Names.
   Inductive BotValue (A : Set) : Set :=
   | Bot : BotValue A.
 
-  Context {Sub_BotValue_V : BotValue :<: V}.
-
-  Definition Bot_fmap : forall (A B : Set) (f : A -> B),
-                          BotValue A -> BotValue B := fun A B _ _ => Bot _.
-
-  Global Instance Bot_Functor : Functor BotValue :=
-    {| fmap := Bot_fmap |}.
-  Proof.
-    destruct a; reflexivity.
-    (* fmap_id *)
-    destruct a. reflexivity.
+  Global Instance BotValue_Container : Container BotValue.
+    apply (ConstContainer unit BotValue
+            (fun A x => match x with Bot => tt end)
+            (fun A x => Bot _)).
+    destruct x; reflexivity.
+    destruct x; reflexivity.
   Defined.
+
+  Context {Sub_BotValue_V : BotValue :<: V}.
 
   (* Constructor + Universal Property. *)
   Context {WF_SubBotValue_V : WF_Functor _ _ Sub_BotValue_V}.
 
-  Definition bot' : Value := inject' (Bot _).
-  Definition bot : Fix V := proj1_sig bot'.
-  Global Instance UP'_bot : Universal_Property'_fold bot :=
-    proj2_sig bot'.
+  Definition bot : Value := inject (F := V) (Bot _).
+  Hint Unfold bot.
 
-  Definition ind_alg_Bot (P : Fix V -> Prop)
-    (H : P bot) (e : BotValue (sig P)) : sig P :=
-    match e with
-      | Bot => exist P bot H
-    end.
+  Definition ind_alg_Bot (P : Value -> Prop) (H : P bot) :
+    PAlgebra (inject' BotValue) P :=
+    fun xs Axs =>
+      match xs return P (inject' BotValue xs) with
+        | Bot => H
+      end.
 
   (* Constructor Testing for Bottom Values. *)
 
-  Definition isBot : Fix V -> bool :=
+  Definition isBot : Value -> bool :=
     fun exp =>
       match project exp with
-        | Some Bot  => true
-        | None      => false
+       | Some Bot  => true
+       | None      => false
       end.
+
+  Lemma isBot_bot : isBot bot = true.
+  Proof.
+    unfold isBot, bot.
+    rewrite project_inject.
+    reflexivity.
+  Qed.
 
 
   (* ============================================== *)
@@ -139,7 +136,9 @@ Section Names.
   (** SuperFunctor for Expressions. **)
   Variable E : Set -> Set.
   Context {Fun_E : Functor E}.
-  Definition Exp := UP'_F E.
+  Context {PFun_E : PFunctor E}.
+  Context {spf_E : SPF E}.
+  Definition Exp := Fix' E.
 
   (* ============================================== *)
   (* OPERATIONS                                     *)
@@ -153,7 +152,7 @@ Section Names.
   Context {Typeof_E : forall T,
     FAlgebra TypeofName T typeofR E}.
   Definition typeof :=
-    mfold _ (fun _ => @f_algebra _ _ _ _ (Typeof_E _)).
+    fold_ (f_algebra (Name := TypeofName) id).
 
   (** EVALUATION **)
 
@@ -162,27 +161,24 @@ Section Names.
   Inductive EvalName := evalname.
 
   Context {eval_E : forall T, FAlgebra EvalName T evalR E}.
-  Definition eval := mfold _ (fun _ => @f_algebra _ _ _ _ (eval_E _)).
+  Definition eval := fold_ (f_algebra (Name := EvalName) id).
 
   Context {beval_E : FAlgebra EvalName Exp evalR E}.
 
   Definition beval (n: nat) :=
-    boundedFix_UP n (@f_algebra _ _ _ _ beval_E) (fun _ => bot').
+    boundedFix n (@f_algebra _ _ _ _ beval_E) (fun _ => bot).
 
   (** DTYPE EQUALITY **)
 
-  Definition eq_DTypeR := DType -> bool.
-  Inductive eq_DTypeName := eq_dtypename.
-  Context {eq_DType_DT : forall T, FAlgebra eq_DTypeName T eq_DTypeR DT}.
-  Definition eq_DType := mfold _ (fun _ => @f_algebra _ _ _ _ (eq_DType_DT _)).
+  Context {Eq_DType : Eq DType}.
+  Definition eq_DType : DType -> DType -> bool := eq.
 
-  Definition eq_DType_eq_P (d : Fix DT) (d_UP' : Universal_Property'_fold d) :=
-    forall d2, eq_DType d d2 = true -> d = proj1_sig d2.
-  Inductive eq_DType_eqName := eq_dtype_eqname.
-  Context {eq_DType_eq_DT : PAlgebra eq_DType_eqName (sig (UP'_P eq_DType_eq_P)) DT}.
-  Variable WF_Ind_eq_DT : WF_Ind eq_DType_eq_DT.
-  Lemma eq_DType_eq : forall (d1 : DType), eq_DType_eq_P (proj1_sig d1) (proj2_sig d1).
-    intro; eapply (proj2_sig (Ind (P := UP'_P eq_DType_eq_P) _ (proj2_sig d1))).
+  Definition eq_DType_eq_P (d : DType) := forall d2,
+    eq_DType d d2 = true -> d = d2.
+  Lemma eq_DType_eq : forall (d1 : DType), eq_DType_eq_P d1.
+  Proof.
+   unfold eq_DType_eq_P.
+   apply eq_propositional_true.
   Qed.
 
   (** PRETTY PRINTING **)
@@ -193,234 +189,362 @@ Section Names.
   Definition DTypePrintR := string.
   Inductive DTypePrintName := dtypeprintname.
   Context {DTypePrint_DT : forall T, FAlgebra DTypePrintName T DTypePrintR DT}.
-  Definition DTypePrint := mfold _ (fun _ => @f_algebra _ _ _ _ (DTypePrint_DT _)).
+  Definition DTypePrint := fold_ (f_algebra (Name := DTypePrintName) id).
 
   Definition ExpPrintR := nat -> string.
   Inductive ExpPrintName := expprintname.
   Context {ExpPrint_E : forall T, FAlgebra ExpPrintName T ExpPrintR E}.
-  Definition ExpPrint e := mfold _ (fun _ => @f_algebra _ _ _ _ (ExpPrint_E _)) e 48.
+  Definition ExpPrint := fold_ (f_algebra (Name := ExpPrintName) id).
 
   Definition ValuePrintR := string.
   Inductive ValuePrintName := valueprintname.
   Context {ValuePrint_V : forall T, FAlgebra ValuePrintName T ValuePrintR V}.
-  Definition ValuePrint := mfold _ (fun _ => @f_algebra _ _ _ _ (ValuePrint_V _)).
+  Definition ValuePrint := fold_ (f_algebra (Name := ValuePrintName) id).
 
   (* Printers for Bot and Stuck *)
-  Global Instance MAlgebra_ValuePrint_BotValue T :
-    FAlgebra ValuePrintName T ValuePrintR BotValue :=
-    {| f_algebra :=  fun _ _ => append "bot" "" |}.
+   Global Instance MAlgebra_ValuePrint_BotValue T : FAlgebra ValuePrintName T ValuePrintR BotValue :=
+     {| f_algebra :=  fun _ _ => append "bot" "" |}.
 
-  Global Instance MAlgebra_ValuePrint_StuckValue T :
-    FAlgebra ValuePrintName T ValuePrintR StuckValue :=
-    {| f_algebra := fun _ e =>
-         match e with
-           | Stuck n =>
-             append "Stuck "
-                    (String (ascii_of_nat (n + 48)) EmptyString)
-         end
-    |}.
+   Global Instance MAlgebra_ValuePrint_StuckValue T : FAlgebra ValuePrintName T ValuePrintR StuckValue :=
+     {| f_algebra :=
+       fun _ e => match e with
+                      | Stuck n => append "Stuck " (String (ascii_of_nat (n + 48)) EmptyString)
+                    end|}.
 
   (* ============================================== *)
   (* PREDICATE LIFTERS FOR LISTS                    *)
   (* ============================================== *)
 
-  (* Unary Predicates.*)
-  Inductive P_Env {A : Set} (P : A -> Prop) : forall (env : Env A), Prop :=
-  | P_Nil : P_Env P nil
-  | P_Cons : forall a (As : Env _),
-               P a -> P_Env P As ->
-               P_Env P (cons a As).
+    (* Unary Predicates.*)
+    Inductive P_Env {A : Set} (P : A -> Prop) : forall (env : Env A), Prop :=
+    | P_Nil : P_Env P nil
+    | P_Cons : forall a (As : Env _), P a -> P_Env P As ->
+      P_Env P (cons a As).
 
-  Lemma P_Env_lookup A (env : Env A) P :
-    P_Env P env ->
-    forall n v,
-      lookup env n = Some v -> P v.
-  Proof.
-    intros P_env; induction P_env;
-    destruct n; simpl; intros; try discriminate.
-    injection H0; intros; subst; eauto.
-    eauto.
-  Qed.
+    Lemma P_Env_lookup : forall A (env : Env A) P,
+      P_Env P env ->
+      forall n v,
+        lookup env n = Some v -> P v.
+      intros A env P P_env; induction P_env;
+        destruct n; simpl; intros; try discriminate.
+      injection H0; intros; subst; eauto.
+      eauto.
+    Qed.
 
-  Lemma P_Env_Lookup A (env : Env A) (P : A -> Prop) :
-    (forall n v,
-       lookup env n = Some v -> P v) ->
-    P_Env P env.
-  Proof.
-    intros H; induction env; constructor.
-    eapply (H 0); eauto.
-    apply IHenv; intros; eapply (H (S n)); eauto.
-  Qed.
+    Lemma P_Env_Lookup : forall A (env : Env A) (P : A -> Prop),
+      (forall n v,
+        lookup env n = Some v -> P v) ->
+      P_Env P env.
+      intros A env P H; induction env; constructor.
+      eapply (H 0); eauto.
+      apply IHenv; intros; eapply (H (S n)); eauto.
+    Qed.
 
-  Lemma P_Env_insert A (env : Env A) (P : A -> Prop) :
-    P_Env P env -> forall a, P a -> P_Env P (insert _ a env).
-  Proof.
-    induction env; simpl; intros; constructor; eauto.
-    inversion H; subst; eauto.
-    eapply IHenv; inversion H; eauto.
-  Qed.
+    Lemma P_Env_insert : forall A (env : Env A) (P : A -> Prop),
+      P_Env P env -> forall a, P a -> P_Env P (insert _ a env).
+      induction env; simpl; intros; constructor; eauto.
+      inversion H; subst; eauto.
+      eapply IHenv; inversion H; eauto.
+    Qed.
 
-  (* Binary Predicates.*)
-  Inductive P2_Env {A B : Set} (P : A -> B -> Prop) : forall (env : Env A) (env : Env B), Prop :=
-  | P2_Nil : P2_Env P nil nil
-  | P2_Cons : forall a b (As : Env _) (Bs : Env _),
-                P a b -> P2_Env P As Bs ->
-                P2_Env P (cons a As) (cons b Bs).
+    (* Binary Predicates.*)
+    Inductive P2_Env {A B : Set} (P : A -> B -> Prop) : forall (env : Env A) (env : Env B), Prop :=
+    | P2_Nil : P2_Env P nil nil
+    | P2_Cons : forall a b (As : Env _) (Bs : Env _), P a b -> P2_Env P As Bs ->
+      P2_Env P (cons a As) (cons b Bs).
 
-  Lemma P2_Env_lookup A B (env : Env A) (env' : Env B) P :
-    P2_Env P env env' ->
-    forall n v,
-      lookup env n = Some v ->
-      exists v', lookup env' n = Some v' /\ P v v'.
-  Proof.
-    intros P_env_env'; induction P_env_env';
-    destruct n; simpl; intros; try discriminate.
-    exists b; injection H0; intros; subst; split; eauto.
-    eauto.
-  Qed.
+    Inductive P2_Shape {A B : Set} : Env A -> Env B -> Prop :=
+    | P2S_Nil : P2_Shape nil nil
+    | P2S_Cons : forall a b {As : Env _} {Bs : Env _}, P2_Shape As Bs ->
+      P2_Shape (cons a As) (cons b Bs).
 
-  Lemma P2_Env_lookup' A B (env : Env A) (env' : Env B) P :
-    P2_Env P env env' ->
-    forall n v,
-      lookup env' n = Some v ->
-      exists v', lookup env n = Some v' /\ P v' v.
-  Proof.
-    intros P_env_env'; induction P_env_env';
-    destruct n; simpl; intros; try discriminate.
-    eexists; injection H0; intros; subst; split; eauto.
-    eauto.
-  Qed.
+    Fixpoint P2_Shape_irrelevance {A B : Set} {As : Env A} {Bs : Env B}
+             (s : P2_Shape As Bs) : forall s', s = s'.
+    Proof.
+      destruct s.
+      intros s'.
+      dependent destruction s'.
+      reflexivity.
+      intros s'.
+      dependent destruction s'.
+      rewrite (P2_Shape_irrelevance A B As Bs s s').
+      reflexivity.
+    Defined.
 
-  Lemma P2_Env_Nlookup A B (env : Env A) (env' : Env B) P :
-    P2_Env P env env' ->
-    forall n,
-      lookup env n = None -> lookup env' n = None.
-  Proof.
-    intros P_env_env'; induction P_env_env';
-    destruct n; simpl; intros; try discriminate; auto.
-  Qed.
+    Definition P2_Env_Shape {A B : Set} {P : A -> B -> Prop} {As : Env A} {Bs : Env B} :
+      P2_Env P As Bs -> P2_Shape As Bs.
+    Proof.
+      intros ps; induction ps; constructor; auto.
+    Defined.
 
-  Lemma P2_Env_Nlookup' A B (env : Env A) (env' : Env B) P :
-    P2_Env P env env' ->
-    forall n,
-      lookup env' n = None -> lookup env n = None.
-  Proof.
-    intros P_env_env'; induction P_env_env';
-    destruct n; simpl; intros; try discriminate; auto.
-  Qed.
+    Inductive P2_Index {A B : Set} (a : A) (b : B) :
+      forall {As : Env A} {Bs : Env B}, P2_Shape As Bs -> Set :=
+    | P2I_Here  : forall {As Bs} (s : P2_Shape As Bs),
+                    P2_Index a b (P2S_Cons a b s)
+    | P2I_There : forall a' b' {As Bs} (s : P2_Shape As Bs),
+                    P2_Index a b s ->
+                    P2_Index a b (P2S_Cons a' b' s).
 
-  Lemma P2_Env_length A B (env : Env A) (env' : Env B) P :
-    P2_Env P env env' -> List.length env = List.length env'.
-  Proof.
-    intros; induction H; simpl; congruence.
-  Qed.
+    Fixpoint P2_tabulate {A B : Set} {P : A -> B -> Prop}
+      {As : Env A} {Bs : Env B} (s : P2_Shape As Bs) :
+      (forall (a : A) (b : B), P2_Index a b s -> P a b) -> P2_Env P As Bs :=
+      match s in (P2_Shape As Bs) return
+        ((forall a b, P2_Index a b s -> P a b) -> P2_Env P As Bs)
+      with
+        | P2S_Nil => fun _ => P2_Nil P
+        | P2S_Cons _ _ _ _ s =>
+          fun pf =>
+            P2_Cons _ _ _ _ _
+              (pf _ _ (P2I_Here _ _ s))
+              (P2_tabulate _
+                 (fun _ _ i => pf _ _ (P2I_There _ _ _ _ s i)))
+      end.
 
-  Lemma P2_Env_insert A B (env : Env A) (env' : Env B) (P : A -> B -> Prop) :
-    P2_Env P env env' ->
-    forall a b, P a b -> P2_Env P (insert _ a env) (insert _ b env').
-  Proof.
-    intros; induction H; simpl; constructor; eauto.
-    constructor.
-  Qed.
+    Fixpoint P2_lookup {A B : Set} {P : A -> B -> Prop}
+      {As : Env A} {Bs : Env B} (s : P2_Shape As Bs) (ps : P2_Env P As Bs) :
+      forall (a : A) (b : B), P2_Index a b s -> P a b.
+    Proof.
+      intros a b idx.
+      destruct idx.
+      inversion ps.
+      apply H2.
+      inversion ps.
+      apply (P2_lookup _ _ _ _ _ _ H4 _ _ idx).
+    Defined.
 
-  (* Need this better induction principle when we're reasoning about
+    Fixpoint P2_tabulate_lookup' {A B : Set} {P : A -> B -> Prop}
+             {As : Env A} {Bs : Env B}
+             (ps : P2_Env P As Bs) :
+      P2_tabulate (P2_Env_Shape ps) (P2_lookup (P2_Env_Shape ps) ps) = ps.
+    Proof.
+      destruct ps; simpl.
+      reflexivity.
+      simpl.
+      f_equal.
+      apply (P2_tabulate_lookup' A B P As Bs ps).
+    Qed.
+
+    Lemma P2_tabulate_lookup {A B : Set} {P : A -> B -> Prop}
+             {As : Env A} {Bs : Env B}
+             (ps : P2_Env P As Bs)
+    : forall s, P2_tabulate s (P2_lookup s ps) = ps.
+    Proof.
+      intro s.
+      rewrite (P2_Shape_irrelevance s (P2_Env_Shape ps)).
+      apply P2_tabulate_lookup'.
+    Qed.
+
+    Lemma P2_lookup_tabulate {A B : Set} (P : A -> B -> Prop)
+             {As : Env A} {Bs : Env B} (s : P2_Shape As Bs)
+             (f : forall (a : A) (b : B), P2_Index a b s -> P a b)
+             (a : A) (b : B) (i : P2_Index a b s)
+    : P2_lookup s (P2_tabulate s f) _ _ i = f _ _ i.
+    Proof.
+      induction i; simpl.
+      reflexivity.
+      rewrite IHi.
+      reflexivity.
+    Qed.
+
+    Lemma P2_Env_lookup : forall A B (env : Env A) (env' : Env B) P,
+      P2_Env P env env' ->
+      forall n v,
+        lookup env n = Some v -> exists v', lookup env' n = Some v' /\
+          P v v'.
+      intros A B env env' P P_env_env'; induction P_env_env';
+        destruct n; simpl; intros; try discriminate.
+      exists b; injection H0; intros; subst; split; eauto.
+      eauto.
+    Qed.
+
+    Lemma P2_Env_lookup' : forall A B (env : Env A) (env' : Env B) P,
+      P2_Env P env env' ->
+      forall n v,
+        lookup env' n = Some v -> exists v', lookup env n = Some v' /\
+          P v' v.
+      intros A B env env' P P_env_env'; induction P_env_env';
+        destruct n; simpl; intros; try discriminate.
+      eexists; injection H0; intros; subst; split; eauto.
+      eauto.
+    Qed.
+
+    Lemma P2_Env_Nlookup : forall A B (env : Env A) (env' : Env B) P,
+      P2_Env P env env' ->
+      forall n,
+        lookup env n = None -> lookup env' n = None.
+      intros A B env env' P P_env_env'; induction P_env_env';
+        destruct n; simpl; intros; try discriminate; auto.
+    Qed.
+
+    Lemma P2_Env_Nlookup' : forall A B (env : Env A) (env' : Env B) P,
+      P2_Env P env env' ->
+      forall n,
+        lookup env' n = None -> lookup env n = None.
+      intros A B env env' P P_env_env'; induction P_env_env';
+        destruct n; simpl; intros; try discriminate; auto.
+    Qed.
+
+    Lemma P2_Env_length : forall A B (env : Env A) (env' : Env B) P,
+      P2_Env P env env' -> List.length env = List.length env'.
+      intros; induction H; simpl; congruence.
+    Qed.
+
+    Lemma P2_Env_insert : forall A B (env : Env A) (env' : Env B) (P : A -> B -> Prop),
+      P2_Env P env env' ->
+      forall a b, P a b -> P2_Env P (insert _ a env) (insert _ b env').
+      intros; induction H; simpl; constructor; eauto.
+      constructor.
+    Qed.
+
+    (* Need this better induction principle when we're reasoning about
        Functors that use P2_Envs. *)
-  Definition P2_Env_ind' :=
+    Definition P2_Env_ind' :=
     fun (A B : Set) (P : A -> B -> Prop) (P0 : forall As Bs, P2_Env P As Bs -> Prop)
-        (f : P0 _ _ (P2_Nil _))
-        (f0 : forall (a : A) (b : B) (As : Env A) (Bs : Env B) (ABs : P2_Env P As Bs)
-                     (P_a_b : P a b), P0 _ _ ABs -> P0 _ _ (P2_Cons P a b As Bs P_a_b ABs)) =>
-      fix F (env : Env A) (env0 : Env B) (p : P2_Env P env env0) {struct p} :
+      (f : P0 _ _ (P2_Nil _))
+      (f0 : forall (a : A) (b : B) (As : Env A) (Bs : Env B) (ABs : P2_Env P As Bs)
+        (P_a_b : P a b), P0 _ _ ABs -> P0 _ _ (P2_Cons P a b As Bs P_a_b ABs)) =>
+        fix F (env : Env A) (env0 : Env B) (p : P2_Env P env env0) {struct p} :
         P0 env env0 p :=
-    match p in (P2_Env _ env1 env2) return (P0 env1 env2 p) with
-      | P2_Nil => f
-      | P2_Cons a b As Bs y p0 => f0 a b As Bs p0 y (F As Bs p0)
-    end.
+        match p in (P2_Env _ env1 env2) return (P0 env1 env2 p) with
+        | P2_Nil => f
+        | P2_Cons a b As Bs y p0 => f0 a b As Bs p0 y (F As Bs p0)
+      end.
 
   (* ============================================== *)
   (* SUBVALUE RELATION                              *)
   (* ============================================== *)
 
-  Record SubValue_i : Set :=
-    mk_SubValue_i {sv_a : Value; sv_b : Value}.
 
-  (** SuperFunctor for SubValue Relation. **)
+    Record SubValue_i : Set := mk_SubValue_i
+      {sv_a : Value;
+        sv_b : Value}.
 
-  Variable SV : (SubValue_i -> Prop) -> SubValue_i -> Prop.
-  Definition SubValue := iFix SV.
-  Definition SubValueC V1 V2:= SubValue (mk_SubValue_i V1 V2).
-  Variable funSV : iFunctor SV.
+    (** SuperFunctor for SubValue Relation. **)
 
-  (** Subvalue is reflexive **)
-  Inductive SubValue_refl (A : SubValue_i -> Prop) : SubValue_i -> Prop :=
-    SV_refl : forall v v',
-                proj1_sig v = proj1_sig v' ->
-                SubValue_refl A (mk_SubValue_i v v').
+    Variable SV : (SubValue_i -> Prop) -> SubValue_i -> Prop.
+    Context `{ispf_SV : iSPF _ SV}.
+    Definition SubValue := iFix' SV.
+    Definition SubValueC V1 V2:= SubValue (mk_SubValue_i V1 V2).
 
-  Definition ind_alg_SV_refl (P : SubValue_i -> Prop)
-    (H : forall v v', proj1_sig v = proj1_sig v' -> P (mk_SubValue_i v v'))
-    i (e : SubValue_refl P i) : P i :=
-    match e in SubValue_refl _ i return P i with
-      | SV_refl v v' eq_v => H v v' eq_v
-    end.
+    (** Subvalue is reflexive **)
+    Inductive SubValue_refl (A : SubValue_i -> Prop) : SubValue_i -> Prop :=
+      SV_refl : forall v v',
+        v = v' ->
+        SubValue_refl A (mk_SubValue_i v v').
 
-  Definition SV_refl_ifmap (A B : SubValue_i -> Prop) i (f : forall i, A i -> B i)
-      (SV_a : SubValue_refl A i) : SubValue_refl B i :=
-    match SV_a in (SubValue_refl _ s) return (SubValue_refl B s)
-    with
-      | SV_refl v v' H => SV_refl B v v' H
-    end.
+    Inductive SV_refl_S : SubValue_i -> Set :=
+      SSV_refl : forall v (v' : Value), v = v' -> SV_refl_S (mk_SubValue_i v v').
+    Inductive SV_refl_P : forall (i : SubValue_i), SV_refl_S i -> Set :=.
+    Definition SV_refl_R (i : SubValue_i) (s : SV_refl_S i) (p : SV_refl_P i s) :
+      SubValue_i := match p with end.
 
-  Global Instance iFun_SV_refl : iFunctor SubValue_refl.
-  Proof.
-    constructor 1 with (ifmap := SV_refl_ifmap).
-    destruct a; simpl; intros; reflexivity.
-    destruct a; simpl; intros; reflexivity.
-  Defined.
+    Definition SV_refl_to A i : IExt _ _ SV_refl_R A i -> SubValue_refl A i :=
+      fun x =>
+        match x with
+          | iext s pf =>
+            match s with
+              | SSV_refl v v' e => SV_refl A v v' e
+            end
+        end.
+
+    Definition SV_refl_from A i : SubValue_refl A i -> IExt _ _ SV_refl_R A i :=
+      fun x => match
+        x in (SubValue_refl _ i) return (IExt SV_refl_S SV_refl_P SV_refl_R A i)
+      with
+        | SV_refl v v' e =>
+          iext _ _
+               (SSV_refl v v' e)
+               (fun p : SV_refl_P _ _ =>
+                  match p with end)
+      end.
+
+
+    Global Instance SV_refl_Container : IContainer SubValue_refl :=
+      {| IS    := SV_refl_S;
+         IP    := SV_refl_P;
+         IR    := SV_refl_R;
+         ifrom := SV_refl_from;
+         ito   := SV_refl_to
+      |}.
+    Proof.
+      intros; destruct a; reflexivity.
+      intros; destruct a; destruct s; simpl.
+      f_equal; extensionality p; destruct p.
+    Defined.
+
+    Definition ind_alg_SV_refl (P : SubValue_i -> Prop)
+      (H : forall v v', v = v' -> P (mk_SubValue_i v v'))
+      i (e : SubValue_refl P i) : P i :=
+      match e in SubValue_refl _ i return P i with
+        | SV_refl v v' eq_v => H v v' eq_v
+      end.
 
   Variable Sub_SV_refl_SV : Sub_iFunctor SubValue_refl SV.
 
   (** Bot is Bottom element for this relation **)
   Inductive SubValue_Bot (A : SubValue_i -> Prop) : SubValue_i -> Prop :=
-    SV_Bot : forall v v',
-               proj1_sig v = inject (Bot _) ->
-               SubValue_Bot A (mk_SubValue_i v v').
+    SV_Bot : forall v v', v = inject (Bot _) ->
+      SubValue_Bot A (mk_SubValue_i v v').
+
+  Inductive SV_Bot_S : SubValue_i -> Set :=
+    SSV_Bot : forall v (v' : Value), v = inject (Bot _) ->
+      SV_Bot_S (mk_SubValue_i v v').
+  Inductive SV_Bot_P : forall (i : SubValue_i), SV_Bot_S i -> Set :=.
+  Definition SV_Bot_R (i : SubValue_i) (s : SV_Bot_S i) (p : SV_Bot_P i s) :
+    SubValue_i := match p with end.
+
+  Definition SV_Bot_to A i : IExt _ _ SV_Bot_R A i -> SubValue_Bot A i :=
+    fun x =>
+      match x with
+        | iext s pf =>
+          match s with
+            | SSV_Bot v v' e => SV_Bot A v v' e
+          end
+      end.
+
+  Definition SV_Bot_from A i : SubValue_Bot A i -> IExt _ _ SV_Bot_R A i :=
+    fun x => match
+      x in (SubValue_Bot _ i) return (IExt SV_Bot_S SV_Bot_P SV_Bot_R A i)
+    with
+      | SV_Bot v v' e =>
+        iext _ _
+             (SSV_Bot v v' e)
+             (fun p : SV_Bot_P _ _ =>
+                match p with end)
+    end.
+
+  Global Instance SV_Bot_Container : IContainer SubValue_Bot :=
+    {| IS    := SV_Bot_S;
+       IP    := SV_Bot_P;
+       IR    := SV_Bot_R;
+       ifrom := SV_Bot_from;
+       ito   := SV_Bot_to
+    |}.
+  Proof.
+    intros; destruct a; reflexivity.
+    intros; destruct a; destruct s; simpl.
+    f_equal; extensionality p; destruct p.
+  Defined.
 
   Definition ind_alg_SV_Bot (P : SubValue_i -> Prop)
-    (H : forall v v' v_eq, P (mk_SubValue_i v v'))
+    (H : forall v v', v = inject (Bot _) -> P (mk_SubValue_i v v'))
     i (e : SubValue_Bot P i) : P i :=
     match e in SubValue_Bot _ i return P i with
-      | SV_Bot v v' v_eq => H v v' v_eq
+      | SV_Bot v v' eq_v => H v v' eq_v
     end.
-
-  Definition SV_Bot_ifmap (A B : SubValue_i -> Prop) i (f : forall i, A i -> B i)
-    (SV_a : SubValue_Bot A i) : SubValue_Bot B i :=
-    match SV_a in (SubValue_Bot _ s) return (SubValue_Bot B s)
-    with
-      | SV_Bot v v' H => SV_Bot B v v' H
-    end.
-
-  Global Instance iFun_SV_Bot : iFunctor SubValue_Bot.
-  constructor 1 with (ifmap := SV_Bot_ifmap).
-  Proof.
-    destruct a; simpl; intros; reflexivity.
-    destruct a; simpl; intros; reflexivity.
-  Defined.
 
   Variable Sub_SV_Bot_SV : Sub_iFunctor SubValue_Bot SV.
 
-
   (* Inversion principle for Bottom SubValues. *)
   Definition SV_invertBot_P (i : SubValue_i) :=
-    proj1_sig (sv_b i) = bot -> proj1_sig (sv_a i) = bot.
+    sv_b i = bot -> sv_a i = bot.
 
   Inductive SV_invertBot_Name := ece_invertbot_name.
   Context {SV_invertBot_SV :
-             iPAlgebra SV_invertBot_Name SV_invertBot_P SV}.
+    iPAlgebra SV_invertBot_Name SV_invertBot_P SV}.
 
   Global Instance SV_invertBot_refl :
     iPAlgebra SV_invertBot_Name SV_invertBot_P (SubValue_refl).
-  Proof.
     econstructor; intros.
     unfold iAlgebra; intros; unfold SV_invertBot_P.
     inversion H; subst; simpl; congruence.
@@ -428,86 +552,20 @@ Section Names.
 
   Global Instance SV_invertBot_Bot :
     iPAlgebra SV_invertBot_Name SV_invertBot_P SubValue_Bot.
-  Proof.
     econstructor; intros.
     unfold iAlgebra; intros; unfold SV_invertBot_P.
     inversion H; subst; simpl; eauto.
   Defined.
 
-  Definition SV_invertBot := ifold_ SV _ (ip_algebra (iPAlgebra := SV_invertBot_SV)).
+  Definition SV_invertBot := ifold_ (if_algebra (iPAlgebra := SV_invertBot_SV)).
   (* End Inversion principle for SubValue.*)
-
-  (* Projection doesn't affect SubValue Relation.*)
-
-  Definition SV_proj1_b_P (i :SubValue_i) :=
-    forall b' H, b' = proj1_sig (sv_b i) ->
-                 SubValueC (sv_a i) (exist _ b' H).
-
-  Inductive SV_proj1_b_Name := sv_proj1_b_name.
-  Context {SV_proj1_b_SV :
-             iPAlgebra SV_proj1_b_Name SV_proj1_b_P SV}.
-
-  Definition SV_proj1_b :=
-    ifold_ SV _ (ip_algebra (iPAlgebra := SV_proj1_b_SV)).
-
-  Global Instance SV_proj1_b_refl :
-    iPAlgebra SV_proj1_b_Name SV_proj1_b_P SubValue_refl.
-  Proof.
-    econstructor; intros.
-    unfold iAlgebra; intros; unfold SV_proj1_b_P.
-    inversion H; subst; simpl; intros.
-    apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; simpl; congruence.
-  Defined.
-
-  Global Instance SV_proj1_b_Bot :
-    iPAlgebra SV_proj1_b_Name SV_proj1_b_P SubValue_Bot.
-  Proof.
-    econstructor; intros.
-    unfold iAlgebra; intros; unfold SV_proj1_b_P.
-    inversion H; subst; simpl; eauto.
-    intros; revert H1; rewrite H2; intros.
-    apply inject_i.
-    constructor; assumption.
-  Defined.
-
-  Definition SV_proj1_a_P (i : SubValue_i) :=
-    forall a' H, proj1_sig (sv_a i) = a' ->
-                 SubValueC (exist _ a' H) (sv_b i).
-
-  Inductive SV_proj1_a_Name := sv_proj1_a_name.
-  Context {SV_proj1_a_SV :
-             iPAlgebra SV_proj1_a_Name SV_proj1_a_P SV}.
-
-  Definition SV_proj1_a :=
-    ifold_ SV _ (ip_algebra (iPAlgebra := SV_proj1_a_SV)).
-
-  Global Instance SV_proj1_a_refl :
-    iPAlgebra SV_proj1_a_Name SV_proj1_a_P SubValue_refl.
-  Proof.
-    econstructor; intros.
-    unfold iAlgebra; intros; unfold SV_proj1_a_P.
-    inversion H; subst; simpl; intros.
-    revert H1; rewrite <- H2; intros.
-    apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; simpl; eauto.
-  Defined.
-
-  Global Instance SV_proj1_a_Bot :
-    iPAlgebra SV_proj1_a_Name SV_proj1_a_P SubValue_Bot.
-  Proof.
-    econstructor; intros.
-    unfold iAlgebra; intros; unfold SV_proj1_a_P.
-    inversion H; subst; simpl; eauto.
-    intros; revert H1; rewrite <- H2, H0; intros.
-    apply inject_i.
-    constructor; reflexivity.
-  Defined.
 
   (** SubValue lifted to Environments **)
   Definition Sub_Environment (env env' : Env _) :=
     P2_Env SubValueC env env'.
 
   Lemma Sub_Environment_refl : forall (env : Env _),
-                                 Sub_Environment env env.
+    Sub_Environment env env.
     induction env; econstructor; eauto.
     apply (inject_i (subGF := Sub_SV_refl_SV));
       constructor; reflexivity.
@@ -517,268 +575,236 @@ Section Names.
   (* EVALUATION IS CONTINUOUS                        *)
   (* ============================================== *)
 
-  (** Helper property for proof of continuity of evaluation. **)
-  Definition eval_continuous_Exp_P (e : Fix E)
-             (e_UP' : Universal_Property'_fold e) :=
-    forall (m : nat),
-      (forall (e0 : Exp)
-              (gamma gamma' : Env Value) (n : nat),
-         Sub_Environment gamma gamma' ->
-         m <= n -> SubValueC (beval m e0 gamma) (beval n e0 gamma')) ->
-      forall (gamma gamma' : Env Value) (n : nat),
-        Sub_Environment gamma gamma' ->
-        m <= n ->
-        SubValueC (beval (S m) (exist _ _ e_UP') gamma) (beval (S n) (exist _ _ e_UP') gamma').
+    (** Helper property for proof of continuity of evaluation. **)
+    Definition eval_continuous_Exp_P (e : Exp) :=
+      forall (m : nat),
+        (forall (e0 : Exp)
+          (gamma gamma' : Env Value) (n : nat),
+          Sub_Environment gamma gamma' ->
+          m <= n -> SubValueC (beval m e0 gamma) (beval n e0 gamma')) ->
+        forall (gamma gamma' : Env Value) (n : nat),
+          Sub_Environment gamma gamma' ->
+          m <= n ->
+          SubValueC (beval (S m) e gamma) (beval (S n) e gamma').
 
-  Inductive EC_ExpName := ec_expname.
+    Inductive EC_ExpName := ec_expname.
 
-  Variable eval_continuous_Exp_E : PAlgebra EC_ExpName (sig (UP'_P eval_continuous_Exp_P)) E.
-  Variable WF_Ind_EC_Exp : WF_Ind eval_continuous_Exp_E.
+    Context {eval_continuous_Exp_E :
+      FPAlgebra (eval_continuous_Exp_P) (inject' E)}.
 
-  (** Evaluation is continuous. **)
-  Lemma beval_continuous :
-    forall m (e : Exp) (gamma gamma' : Env _),
-    forall n (Sub_G_G' : Sub_Environment gamma gamma'),
-      m <= n ->
-      SubValueC (beval m e gamma) (beval n e gamma').
-  Proof.
-    induction m; simpl.
-    intros; eapply in_ti; eapply inj_i; econstructor; simpl; eauto.
-    intros; destruct n; try (inversion H; fail).
-    assert (m <= n) as le_m_n0 by auto with arith; clear H.
-    revert m IHm gamma gamma' n Sub_G_G' le_m_n0.
-    fold (eval_continuous_Exp_P (proj1_sig e)).
-    apply (proj2_sig (Ind (P := UP'_P eval_continuous_Exp_P) _ (proj2_sig e))).
-  Qed.
+    (** Evaluation is continuous. **)
+    Lemma beval_continuous : forall m,
+      forall (e : Exp) (gamma gamma' : Env _),
+        forall n (Sub_G_G' : Sub_Environment gamma gamma'),
+          m <= n ->
+          SubValueC (beval m e gamma) (beval n e gamma').
+      induction m; simpl.
+      intros; eapply in_ti; eapply inj_i; econstructor; simpl; eauto.
+      intros; destruct n; try (inversion H; fail).
+      assert (m <= n) as le_m_n0 by auto with arith; clear H.
+      revert m IHm gamma gamma' n Sub_G_G' le_m_n0.
+      fold (eval_continuous_Exp_P e).
+      apply Ind.
+    Qed.
 
   (* ============================================== *)
   (* WELL-FORMED VALUES RELATION                     *)
   (* ============================================== *)
 
-  Record WFValue_i : Set :=
-    mk_WFValue_i {wfv_a : Value; wfv_b : DType}.
+    Record WFValue_i : Set := mk_WFValue_i
+      {wfv_a : Value;
+        wfv_b : DType}.
 
-  (** SuperFunctor for Well-Formed Value Relation. **)
+    (** SuperFunctor for Well-Formed Value Relation. **)
 
-  Variable WFV : (WFValue_i -> Prop) -> WFValue_i -> Prop.
-  Definition WFValue := iFix WFV.
-  Definition WFValueC V T:= WFValue (mk_WFValue_i V T).
-  Variable funWFV : iFunctor WFV.
+    Variable WFV : (WFValue_i -> Prop) -> WFValue_i -> Prop.
+    Context `{ispf_WFV : iSPF _ WFV}.
+    Definition WFValue := iFix' WFV.
+    Definition WFValueC V T:= WFValue (mk_WFValue_i V T).
 
-  (** Bottom is well-formed **)
+    (** Bottom is well-formed **)
 
-  Inductive WFValue_Bot (A : WFValue_i -> Prop) : WFValue_i -> Prop :=
-    WFV_Bot : forall v T,
-                proj1_sig v = inject (Bot _) ->
-                WFValue_Bot A (mk_WFValue_i v T).
+    Inductive WFValue_Bot (A : WFValue_i -> Prop) : WFValue_i -> Prop :=
+      WFV_Bot : forall v T,
+        v = inject (Bot _) ->
+        WFValue_Bot A (mk_WFValue_i v T).
 
-  Definition ind_alg_WFV_Bot (P : WFValue_i -> Prop)
-    (H : forall v T v_eq, P (mk_WFValue_i v T))
-    i (e : WFValue_Bot P i) : P i :=
-    match e in WFValue_Bot _ i return P i with
-      | WFV_Bot v T v_eq => H v T v_eq
-    end.
+    Inductive WFV_Bot_S : WFValue_i -> Set :=
+      SWFV_Bot : forall v T,
+      v = bot ->
+      WFV_Bot_S (mk_WFValue_i v T).
 
-  Definition WFV_Bot_ifmap (A B : WFValue_i -> Prop) i (f : forall i, A i -> B i)
-    (WFV_a : WFValue_Bot A i) : WFValue_Bot B i :=
-    match WFV_a in (WFValue_Bot _ s) return (WFValue_Bot B s)
-    with
-      | WFV_Bot v T H => WFV_Bot B v T H
-    end.
+    Inductive WFV_Bot_P : forall (i : WFValue_i), WFV_Bot_S i -> Set :=.
+    Definition WFV_Bot_R (i : WFValue_i) (s : WFV_Bot_S i) (p : WFV_Bot_P i s) :
+      WFValue_i := match p with end.
 
-  Global Instance iFun_WFV_Bot : iFunctor WFValue_Bot.
-  Proof.
-    constructor 1 with (ifmap := WFV_Bot_ifmap).
-    destruct a; simpl; intros; reflexivity.
-    destruct a; simpl; intros; reflexivity.
-  Defined.
+    Definition WFV_Bot_to A i : IExt _ _ WFV_Bot_R A i -> WFValue_Bot A i :=
+      fun x =>
+        match x with
+          | iext s pf =>
+            match s with
+              | SWFV_Bot v T eq => WFV_Bot A v T eq
+            end
+        end.
 
-  Variable WF_WFV_Bot_WFV : Sub_iFunctor WFValue_Bot WFV.
+    Definition WFV_Bot_from A i : WFValue_Bot A i -> IExt _ _ WFV_Bot_R A i :=
+      fun x => match
+        x in (WFValue_Bot _ i) return (IExt _ _ WFV_Bot_R A i)
+      with
+        | WFV_Bot v T eq =>
+          iext _ _
+               (SWFV_Bot v T eq)
+               (fun p : WFV_Bot_P _ _ =>
+                  match p with end)
+      end.
 
-  Definition WF_Environment env env' :=
-    P2_Env (fun v T =>
-              match T with
-                | Some T => WFValueC v T
-                | None => False
-              end) env env'.
+    Global Instance WFV_Bot_Container : IContainer WFValue_Bot :=
+      {| IS    := WFV_Bot_S;
+         IP    := WFV_Bot_P;
+         IR    := WFV_Bot_R;
+         ifrom := WFV_Bot_from;
+         ito   := WFV_Bot_to
+      |}.
+    Proof.
+      intros; destruct a; reflexivity.
+      intros; destruct a; destruct s; simpl.
+      f_equal; extensionality p; destruct p.
+    Defined.
 
-  (* Projection doesn't affect WFValue Relation.*)
+    Variable WF_WFV_Bot_WFV : Sub_iFunctor WFValue_Bot WFV.
 
-  Definition WFV_proj1_a_P (i :WFValue_i) :=
-    forall a' H,
-      a' = proj1_sig (wfv_a i) ->
-      WFValueC (exist _ a' H) (wfv_b i).
-
-  Inductive WFV_proj1_a_Name := wfv_proj1_a_name.
-  Context {WFV_proj1_a_WFV :
-             iPAlgebra WFV_proj1_a_Name WFV_proj1_a_P WFV}.
-
-  Definition WFV_proj1_a :=
-    ifold_ WFV _ (ip_algebra (iPAlgebra := WFV_proj1_a_WFV)).
-
-  Global Instance WFV_proj1_a_Bot :
-    iPAlgebra WFV_proj1_a_Name WFV_proj1_a_P WFValue_Bot.
-  econstructor; intros.
-  unfold iAlgebra; intros; unfold WFV_proj1_a_P.
-  inversion H; subst; simpl; intros.
-  apply (inject_i (subGF := WF_WFV_Bot_WFV)); constructor; simpl; congruence.
-  Defined.
-
-  Definition WFV_proj1_b_P (i :WFValue_i) :=
-    forall b' H,
-      b' = proj1_sig (wfv_b i) ->
-      WFValueC (wfv_a i) (exist _ b' H).
-
-  Inductive WFV_proj1_b_Name := wfv_proj1_b_name.
-  Context {WFV_proj1_b_WFV :
-             iPAlgebra WFV_proj1_b_Name WFV_proj1_b_P WFV}.
-
-  Definition WFV_proj1_b :=
-    ifold_ WFV _ (ip_algebra (iPAlgebra := WFV_proj1_b_WFV)).
-
-  Global Instance WFV_proj1_b_Bot :
-    iPAlgebra WFV_proj1_b_Name WFV_proj1_b_P WFValue_Bot.
-  Proof.
-    econstructor; intros.
-    unfold iAlgebra; intros; unfold WFV_proj1_b_P.
-    inversion H; subst; simpl; intros.
-    apply (inject_i (subGF := WF_WFV_Bot_WFV)); constructor; simpl; congruence.
-  Defined.
+    Definition WF_Environment env env' :=
+      P2_Env (fun v T =>
+        match T with
+          | Some T => WFValueC v T
+          | None => False
+        end) env env'.
 
   (* ============================================== *)
   (* Evaluation preserves Well-Formedness           *)
   (* ============================================== *)
 
-  Definition WF_Value_continuous_P i :=
-    forall T, WFValueC (sv_b i) T -> WFValueC (sv_a i) T.
+    Definition WF_Value_continuous_P i :=
+      forall T, WFValueC (sv_b i) T -> WFValueC (sv_a i) T.
 
-  Inductive WFV_ContinuousName : Set := wfv_continuousname.
+    Inductive WFV_ContinuousName : Set := wfv_continuousname.
 
-  Context {WF_Value_continous_alg : iPAlgebra WFV_ContinuousName WF_Value_continuous_P SV}.
+    Context {WF_Value_continous_alg : iPAlgebra WFV_ContinuousName WF_Value_continuous_P SV}.
 
-  Global Instance WFV_Value_continuous_refl  :
-    iPAlgebra WFV_ContinuousName WF_Value_continuous_P SubValue_refl.
-  Proof.
-    constructor; unfold iAlgebra; intros.
-    inversion H; subst.
-    unfold WF_Value_continuous_P; simpl; intros.
-    unfold WFValueC in H1.
-    destruct v; apply (WFV_proj1_a _ H1); eauto.
-  Qed.
+    Global Instance WFV_Value_continuous_refl  :
+      iPAlgebra WFV_ContinuousName WF_Value_continuous_P SubValue_refl.
+      constructor; unfold iAlgebra; intros.
+      inversion H; subst.
+      unfold WF_Value_continuous_P. auto.
+    Qed.
 
-  Global Instance WFV_Value_continuous_Bot  :
-    iPAlgebra WFV_ContinuousName WF_Value_continuous_P SubValue_Bot.
-  Proof.
-    constructor; unfold iAlgebra; intros.
-    inversion H; subst.
-    unfold WF_Value_continuous_P; simpl; intros.
-    apply inject_i; constructor; auto.
-  Qed.
+    Global Instance WFV_Value_continuous_Bot  :
+      iPAlgebra WFV_ContinuousName WF_Value_continuous_P SubValue_Bot.
+      constructor; unfold iAlgebra; intros.
+      inversion H; subst.
+      unfold WF_Value_continuous_P; simpl; intros.
+      apply inject_i; constructor; auto.
+    Qed.
 
-  Lemma WF_Value_continous :
-    forall v v',
+    Lemma WF_Value_continous : forall v v',
       SubValueC v v' ->
       WF_Value_continuous_P (mk_SubValue_i v v').
-  Proof.
-    intros; apply (ifold_ SV); try assumption.
-    apply ip_algebra.
-  Qed.
+      intros; apply (ifold_ ); try assumption.
+      apply if_algebra.
+    Qed.
 
-  Lemma WF_Value_beval :
-    forall m n (e : Exp),
-    forall gamma gamma' T
-           (Sub_G_G' : Sub_Environment gamma' gamma),
-      m <= n ->
-      WFValueC (beval n e gamma) T ->
-      WFValueC (beval m e gamma') T.
-  Proof.
-    intros; eapply WF_Value_continous.
-    eapply beval_continuous; try eassumption.
-    eassumption.
-  Qed.
+    Lemma WF_Value_beval : forall m n,
+      forall (e : Exp) gamma gamma' T
+        (Sub_G_G' : Sub_Environment gamma' gamma),
+        m <= n ->
+        WFValueC (beval n e gamma) T ->
+        WFValueC (beval m e gamma') T.
+      intros; eapply WF_Value_continous.
+      eapply beval_continuous; try eassumption.
+      eassumption.
+    Qed.
 
-  Variable (WF_MAlg_typeof : WF_MAlgebra Typeof_E).
-  Variable (WF_MAlg_eval : WF_MAlgebra eval_E).
+    Variable (WF_MAlg_typeof : WF_MAlgebra Typeof_E).
+    Variable (WF_MAlg_eval : WF_MAlgebra eval_E).
 
-  Definition eval_alg_Soundness_P
-    (P_bind : Set)
-    (P : P_bind -> Env Value -> Prop)
-    (E' : Set -> Set)
-    (Fun_E' : Functor E')
-    (pb : P_bind)
-    (typeof_rec : UP'_F E' -> typeofR)
-    (eval_rec : Exp -> evalR)
-    (typeof_F : Mixin (UP'_F E') E' typeofR)
-    (eval_F : Mixin Exp E evalR)
-    (e : (Fix E') * (Fix E))
-    (e_UP' : Universal_Property'_fold (fst e) /\ Universal_Property'_fold (snd e)) :=
-    forall
-      (eval_rec_proj : forall e, eval_rec e = eval_rec (in_t_UP' _ _ (out_t_UP' _ _ (proj1_sig e))))
-      (typeof_rec_proj : forall e, typeof_rec e = typeof_rec (in_t_UP' _ _ (out_t_UP' _ _ (proj1_sig e))))
-    gamma'' (WF_gamma'' : P pb gamma'')
-    (IHa : forall pb gamma'' (WF_gamma'' : P pb gamma'') (a : (UP'_F E' * Exp)),
-        (forall T,
-          typeof_F typeof_rec (out_t_UP' _ _ (proj1_sig (fst a))) = Some T ->
-          WFValueC (eval_F eval_rec (out_t_UP' _ _ (proj1_sig (snd a))) gamma'') T) ->
-        forall T, typeof_rec (fst a) = Some T ->
-          WFValueC (eval_rec (in_t_UP' _ _ (out_t_UP' _ _ (proj1_sig (snd a)))) gamma'') T),
-      forall T : DType,
-        typeof_F typeof_rec (out_t_UP' _ _ (fst e)) = Some T ->
-        WFValueC (eval_F eval_rec (out_t_UP' _ _ (snd e)) gamma'') T.
+    Definition eval_alg_Soundness_P
+      (P_bind : Set)
+      (P : P_bind -> Env Value -> Prop)
+      (E' : Set -> Set)
+      `{spf_E' : SPF E'}
+      (pb : P_bind)
+      (typeof_rec : Fix' E' -> typeofR)
+      (eval_rec : Exp -> evalR)
+      (typeof_F : Mixin (Fix' E') E' typeofR)
+      (eval_F : Mixin Exp E evalR)
+      (e : (Fix' E') * (Fix' E)) :=
+      forall
+      gamma'' (WF_gamma'' : P pb gamma'')
+      (IHa : forall pb gamma'' (WF_gamma'' : P pb gamma'') (a : (Fix' E' * Exp)),
+          (forall T,
+            typeof_F typeof_rec (out_t (fst a)) = Some T ->
+            WFValueC (eval_F eval_rec (out_t (snd a)) gamma'') T) ->
+          forall T, typeof_rec (fst a) = Some T ->
+            WFValueC (eval_rec (snd a) gamma'') T),
+        forall T : DType,
+          typeof_F typeof_rec (out_t (fst e)) = Some T ->
+          WFValueC (eval_F eval_rec (out_t (snd e)) gamma'') T.
 
-  Inductive eval_Soundness_alg_Name := eval_soundness_algname.
-
-  Variable eval_Soundness_alg_F :
-    forall typeof_rec eval_rec,
-      PAlgebra eval_Soundness_alg_Name (sig (UP'_P2 (eval_alg_Soundness_P unit
-        (fun _ _ => True) _ _ tt
+    Context {eval_Soundness_alg_F : forall typeof_rec eval_rec,
+      FPAlgebra (eval_alg_Soundness_P unit (fun _ _ => True) _ tt
         typeof_rec eval_rec
-        (f_algebra (FAlgebra := Typeof_E _)) (f_algebra (FAlgebra := eval_E _))))) E.
-  Variable WF_Ind_eval_Soundness_alg :
-    forall typeof_rec eval_rec,
-      @WF_Ind2 E E E eval_Soundness_alg_Name Fun_E Fun_E Fun_E
-      (UP'_P2 (eval_alg_Soundness_P _ _ _ _ tt typeof_rec eval_rec _ _)) _ _ (eval_Soundness_alg_F _ _).
+        (f_algebra (FAlgebra := Typeof_E _))
+        (f_algebra (FAlgebra := eval_E _))) (inject2 (F := E))}.
 
-  Definition eval_soundness_P (e : Fix E) (e_UP' : Universal_Property'_fold e) :=
-    forall gamma'' T,
-      typeof e = Some T ->
-      WFValueC (eval e gamma'') T.
 
-  Lemma eval_Soundness :
-    forall (e : Exp),
-    forall gamma'' T,
-      typeof (proj1_sig e) = Some T ->
-      WFValueC (eval (proj1_sig e) gamma'') T.
-  Proof.
-    intros.
-    rewrite <- (@in_out_UP'_inverse _ _ (proj1_sig e) (proj2_sig e)).
-    simpl; unfold typeof, eval, fold_, mfold, in_t.
-    rewrite wf_malgebra; unfold mfold.
-    destruct (Ind2 (Ind_Alg := eval_Soundness_alg_F
-      (fun e => typeof (proj1_sig e)) (fun e => eval (proj1_sig e)))
-      _ (proj2_sig e)) as [e' eval_e'].
-    unfold eval_alg_Soundness_P in eval_e'.
-    eapply eval_e'; intros; auto; try constructor.
-    rewrite (@in_out_UP'_inverse _ _ (proj1_sig _) (proj2_sig _)); auto.
-    rewrite (@in_out_UP'_inverse _ _ (proj1_sig _) (proj2_sig _)); auto.
-    unfold eval, mfold; simpl; unfold in_t; rewrite wf_malgebra; unfold mfold; apply H0; auto.
-    rewrite <- (@in_out_UP'_inverse _ _ (proj1_sig (fst a)) (proj2_sig (fst a))) in H1.
-    simpl in H1; unfold typeof, mfold, in_t in H1.
-    rewrite wf_malgebra in H1; apply H1.
-    rewrite <- (@in_out_inverse _ _ (proj1_sig e) (proj2_sig e)) in H.
-    simpl in H; unfold typeof, mfold, in_t in H; simpl in H.
-    rewrite <- wf_malgebra.
-    simpl; unfold out_t_UP'.
-    rewrite Fusion with (g := (fmap in_t)).
-    apply H.
-    exact (proj2_sig _).
-    intros; repeat rewrite fmap_fusion; reflexivity.
-  Qed.
+    Lemma eval_Soundness : forall (e : Exp),
+      forall gamma'' T, typeof e = Some T ->
+        WFValueC (eval e gamma'') T.
+      intros.
+      rewrite <- (@in_out_inverse _ _ _ _ e).
+      unfold eval; rewrite fold_computation; fold eval.
+      rewrite wf_malgebra.
+      unfold id.
+      try rewrite <- eta_expansion.
+      apply (Ind2 (Ind_Alg := eval_Soundness_alg_F typeof eval)); auto.
+      destruct a; simpl.
+      intros.
+      rewrite <- (@in_out_inverse _ _ _ _ e0).
+      unfold eval; rewrite fold_computation; fold eval.
+      rewrite wf_malgebra.
+      unfold id.
+      try rewrite <- eta_expansion.
+      apply H0.
+      unfold typeof in H1.
+      rewrite <- (@in_out_inverse _ _ _ _ f) in H1.
+      rewrite fold_computation in H1.
+      rewrite wf_malgebra in H1.
+      unfold id in H1.
+      try rewrite <- eta_expansion in H1.
+      apply H1.
+      simpl.
+      unfold typeof in H.
+      rewrite <- (@in_out_inverse _ _ _ _ e) in H.
+      rewrite fold_computation in H.
+      rewrite wf_malgebra in H.
+      unfold id in H.
+      try rewrite <- eta_expansion in H.
+      apply H.
+    Qed.
 
 End Names.
 
-(*
-*** Local Variables: ***
-*** coq-prog-args: ("-emacs-U" "-impredicative-set") ***
-*** End: ***
-*)
+Ltac fold_beval :=
+  repeat
+    match goal with
+      | [ |- context [ boundedFix ?m _ _ _ _ ] ] =>
+        fold (beval _ _ m)
+    end.
+
+Ltac simpl_beval :=
+  unfold beval; simpl;
+  rewrite out_in_inverse;
+  match goal with
+    | [ WF_eval_F : WF_FAlgebra EvalName _ _ _ _ _ _ |- _ ] =>
+      repeat rewrite (wf_mixin (WF_Mixin := WF_eval_F)); simpl
+  end; fold_beval.

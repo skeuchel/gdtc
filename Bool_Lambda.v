@@ -1,5 +1,8 @@
+Require Import Coq.Program.Equality.
 Require Import FJ_tactics.
 Require Import List.
+Require Import Polynomial.
+Require Import Containers.
 Require Import Functors.
 Require Import Names.
 Require Import PNames.
@@ -11,71 +14,34 @@ Section PLambda_Bool.
 
   Variable D : Set -> Set.
   Context {Fun_D : Functor D}.
-  Definition DType := DType D.
+  Context {PFun_D : PFunctor D}.
+  Context {SPF_D : SPF D}.
   Context {Sub_BType_D : BType :<: D}.
   Context {Sub_LType_D : LType :<: D}.
   Context {WF_Sub_BType_D : WF_Functor _ _ Sub_BType_D}.
   Context {WF_Sub_LType_D : WF_Functor _ _ Sub_LType_D}.
-  Context {eq_DType_D : forall T, FAlgebra eq_DTypeName T (eq_DTypeR D) D}.
-  Context {eq_TArrow_D : forall T, FAlgebra eq_TArrowName T (eq_TArrowR D) D}.
-
-  Definition BType_eq_TArrow (R : Set) (rec : R -> eq_TArrowR D)
-    (e : BType R) : eq_TArrowR D := (fun _ _ => false, tbool' D).
-
-  Global Instance MAlgebra_eq_TArrow_BType T:
-    FAlgebra eq_TArrowName T (eq_TArrowR D) BType | 4 :=
-      {| f_algebra := BType_eq_TArrow T|}.
-
-  Context {WF_TArrow_eq_DT : forall T, @WF_FAlgebra eq_TArrowName T _ _ _
-    Sub_BType_D (MAlgebra_eq_TArrow_BType T) (eq_TArrow_D _)}.
-
-  Global Instance PAlgebra_eq_TArrow_eq_BType :
-    PAlgebra eq_TArrow_eqName (sig (UP'_P (eq_TArrow_eq_P D))) BType.
-  Proof.
-    constructor; unfold Algebra; intros.
-    eapply ind_alg_BType.
-    unfold UP'_P; econstructor.
-    unfold eq_TArrow_eq_P; intros.
-    unfold eq_DType, mfold, tbool, tbool', inject' in H; simpl in H;
-      repeat rewrite wf_functor in H; simpl in H; unfold in_t in H.
-    simpl.
-    unfold eq_TArrow, mfold, tbool; simpl; rewrite wf_functor; simpl;
-      unfold in_t at 1; simpl; unfold BType_fmap.
-    rewrite (wf_algebra (WF_FAlgebra := WF_TArrow_eq_DT _)); simpl.
-    rewrite wf_functor; simpl; unfold BType_fmap; split; auto.
-    simpl; intros.
-    unfold in_t in H0; rewrite (wf_algebra (WF_FAlgebra := WF_TArrow_eq_DT _)) in H0;
-      simpl in H0; discriminate.
-    exact H.
-  Defined.
-
-  Global Instance WF_BType_eq_TArrow_eq
-    {Sub_BType_D' : BType :<: D} :
-    (forall a, inj (Sub_Functor := Sub_BType_D) a =
-      inj (A := Fix D) (Sub_Functor := Sub_BType_D') a) ->
-    WF_Ind (sub_F_E := Sub_BType_D') PAlgebra_eq_TArrow_eq_BType.
-  Proof.
-    constructor; destruct e; simpl; intros.
-    unfold tbool, tbool'; simpl; rewrite wf_functor; simpl;
-      unfold BType_fmap; auto.
-    rewrite H; reflexivity.
-  Defined.
 
   Variable E : Set -> Set -> Set.
   Context {Fun_E : forall A, Functor (E A)}.
+  Context {PFun_E : forall A, PFunctor (E A)}.
+  Context {SPF_E : forall A, SPF (E A)}.
   Context {Sub_Bool_E : forall A, Bool :<: (E A)}.
   Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR D) (E (typeofR D))}.
   Variable EQV_E : forall A B, (eqv_i E A B -> Prop) -> eqv_i E A B -> Prop.
   Context {funEQV_E : forall A B, iFunctor (EQV_E A B)}.
+  Context {ispf_EQV_E : forall A B, iSPF (EQV_E A B)}.
 
   Variable V : Set -> Set.
   Context {Fun_V : Functor V}.
+  Context {PFun_V : PFunctor V}.
+  Context {SPF_V : SPF V}.
   Context {Sub_BoolValue_V : BoolValue :<: V}.
   Context {Sub_BotValue_V : BotValue :<: V}.
   Context {Sub_ClosValue_V : ClosValue E :<: V}.
   Context {Sub_StuckValue_V : StuckValue :<: V}.
   Variable WFV : (WFValue_i D V -> Prop) -> WFValue_i D V -> Prop.
   Context {funWFV : iFunctor WFV}.
+  Context {ispf_WFV : iSPF WFV}.
 
   Context {Sub_WFV_VB_WFV : Sub_iFunctor (WFValue_VB D V) WFV}.
   Context {Sub_WFV_Bot_WFV : Sub_iFunctor (WFValue_Bot D V) WFV}.
@@ -93,8 +59,7 @@ Section PLambda_Bool.
     inversion H; subst; simpl; intros.
     split.
     apply (inject_i (subGF := Sub_WFV_VB_WFV)); econstructor; eauto.
-    intros; rewrite H2 in H1.
-    discriminate_inject H1.
+    intros; discriminate_inject H0.
   Defined.
 
   Global Instance PAlgebra_WF_invertClos'_VB typeof_rec :
@@ -105,8 +70,7 @@ Section PLambda_Bool.
     inversion H; subst; simpl; intros.
     split.
     apply (inject_i (subGF := Sub_WFV_VB_WFV)); econstructor; eauto.
-    simpl in *|-*; intros; rewrite H2 in H0.
-    discriminate_inject H0.
+    intros; discriminate_inject H0.
   Defined.
 
   (* ============================================== *)
@@ -114,33 +78,27 @@ Section PLambda_Bool.
   (* ============================================== *)
 
   Inductive Bool_eqv (A B : Set) (C : eqv_i E A B -> Prop) : eqv_i E A B -> Prop :=
-  | BLit_eqv : forall (gamma : Env _) gamma' n e e',
-    proj1_sig e = blit (E A) n ->
-    proj1_sig e' = blit (E B) n ->
-    Bool_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e')
-  | If_eqv : forall (gamma : Env _) gamma' i t el i' t' el' e e',
+  | BLit_eqv : forall (gamma : Env _) gamma' b,
+    Bool_eqv A B C (mk_eqv_i _ _ _ gamma gamma' (blit (E A) b) (blit (E B) b))
+  | If_eqv : forall (gamma : Env _) gamma' i t el i' t' el',
     C (mk_eqv_i _ _ _ gamma gamma' i i') ->
     C (mk_eqv_i _ _ _ gamma gamma' t t') ->
     C (mk_eqv_i _ _ _ gamma gamma' el el') ->
-    proj1_sig e = proj1_sig (cond' _ i t el) ->
-    proj1_sig e' = proj1_sig (cond' _ i' t' el') ->
-    Bool_eqv A B C (mk_eqv_i _ _ _ gamma gamma' e e').
+    Bool_eqv A B C (mk_eqv_i _ _ _ gamma gamma' (cond _ i t el) (cond _ i' t' el')).
 
   Lemma Bool_eqv_impl_NP_eqv : forall A B C i,
     Bool_eqv A B C i -> NP_Functor_eqv E Bool A B C i.
   Proof.
     intros; destruct H.
     unfold blit, blit in *; simpl in *.
-    constructor 1 with (np := fun D => BLit D n); auto.
-    econstructor 4 with (np := fun D => If D); eauto.
+    constructor 1 with (np := fun D => BLit D b); auto.
+    simpl; intros; dependent destruction p; auto.
+    constructor 4 with
+      (a := i) (a' := i') (b := t) (b' := t') (c := el) (c' := el')
+      (np := fun D => If D); auto.
+    simpl; intros; dependent destruction p; auto.
     simpl; congruence.
   Defined.
 
 
 End PLambda_Bool.
-
-(*
-*** Local Variables: ***
-*** coq-prog-args: ("-emacs-U" "-impredicative-set") ***
-*** End: ***
-*)

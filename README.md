@@ -1,8 +1,45 @@
-### Meta-Theory à la Carte ###
+Generic Datatypes à la Carte
+============================
 
-This repository contains the code accompanying the Meta-theory à la Carte paper
-by Delaware, Oliveira and Schrijvers. I have updated it so it works with both
-Coq8.3 and Coq8.4.
+Functors.v
+----------
 
-You can find the original source code at
-http://people.csail.mit.edu/bendy/MTC/
+Contains the general infrastructure for modular datatypes, algebras and
+proof algebras.
+
+* code for glueing (mixin) algebras and (mixin) proof-algebras along coproducts
+  of functors
+* type classes for carrying (mixin) algebras and proof algebras amd (FAlgebra,
+  FPAlgebra, FPMixin)
+* sub-functor relation (Sub_Functor)
+* naturality of injections into super functors (WF_Functor)
+* discrimination of distinct sub functors (Distinct_Sub_Functor)
+* algebra and mixin delegation (WF_Algebra, WF_Mixin)
+
+Containers.v
+------------
+
+Contains code for the universes of polynomal functors and container functors
+as well as generic implementation of
+
+* equality
+* functorial mappings
+* folds
+* inductions
+
+includings generic proofs about their properties.
+
+Names.v
+-------
+
+General infrastructure for evaluation and typing of expressions. Declarations
+for continuity and type-safety and final proofs for continuity and type-safety
+from the modular proof algebras.
+
+PNames.v
+--------
+Infrastructure for the PHOAS representation.
+
+Arith.v, Lambda.v, ..
+---------------------
+Feature specific declarations, algebras and proof algebras.

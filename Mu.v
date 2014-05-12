@@ -1,5 +1,7 @@
 Require Import FJ_tactics.
 Require Import List.
+Require Import Polynomial.
+Require Import Containers.
 Require Import Functors.
 Require Import Names.
 Require Import PNames.
@@ -16,82 +18,66 @@ Section Mu.
   (* Fixpoint Expressions *)
   Variable D : Set -> Set.
   Context {Fun_D : Functor D}.
+  Context {PFun_D : PFunctor D}.
+  Context {SPF_D : SPF D}.
 
   Inductive Fix_ (A E : Set) : Set :=
   | Mu : DType D -> (A -> E) -> Fix_ A E.
 
-  (** Functor Instance **)
+  (** Container Instance **)
 
-  Definition fmapFix {A} (X Y: Set) (f : X -> Y) : Fix_ A X -> Fix_ A Y :=
-    fun e =>
-      match e with
-        | Mu t g => Mu _ _ t (fun a => f (g a))
-      end.
-
-  Global Instance FixFunctor A : Functor (Fix_ A) | 5 :=
-    {| fmap := fmapFix |}.
+  Global Instance Fix_Iso (A : Set) :
+    Iso (Fix_ A) (K (DType D) :*: Fn A) :=
+    {| fromIso := fun E e => match e with
+                               | Mu d f       => (d,f)
+                             end;
+       toIso   := fun E e => match e with
+                               | (d,f) => Mu _ _ d f
+                             end
+    |}.
   Proof.
-    (* fmap fusion *)
-    intros. destruct a; unfold fmapFix; reflexivity.
-    (* fmap id *)
-    intros; destruct a; unfold fmapFix.
-    assert ((fun x => a x) = a) by
-      (apply functional_extensionality; intro; reflexivity).
-    unfold id.
-    rewrite H.
-    reflexivity.
+    intros; destruct a; reflexivity.
+    intros; destruct a as [d f]; reflexivity.
   Defined.
+
+  Global Instance Fix_Container (A : Set) : Container (Fix_ A) :=
+    ContainerIso (Fix_Iso A).
 
   Variable F : Set -> Set -> Set.
   Context {Sub_Fix_F : forall A : Set, Fix_ A :<: F A}.
   Context {Fun_F : forall A, Functor (F A)}.
+  Context {PFun_F: forall A, PFunctor (F A)}.
+  Context {SPF_F : forall A, SPF (F A)}.
+
   Definition Exp (A : Set) := Exp (F A).
 
   (* Constructors + Universal Property. *)
 
   Context {WF_Sub_Fix_F : forall A, WF_Functor _ _ (Sub_Fix_F A)}.
 
-  Definition mu' {A : Set}
-    (t1 : DType D)
-    (f : A -> sig (Universal_Property'_fold (F := F A)))
-    :
-    Exp A := inject' (Mu _ _ t1 f).
-
   Definition mu {A : Set}
-    (t1 : DType D)
-    (f : A -> Fix (F A))
-    {f_UP' : forall a, Universal_Property'_fold (f a)}
-    :
-    Fix (F A) := proj1_sig (mu' t1 (fun a => exist _ _ (f_UP' a))).
-
-  Global Instance UP'_mu {A : Set}
-    (t1 : DType D)
-    (f : A -> Fix (F A))
-    {f_UP' : forall a, Universal_Property'_fold (f a)}
-    :
-    Universal_Property'_fold (mu t1 f) :=
-    proj2_sig (mu' t1 (fun a => exist _ _ (f_UP' a))).
+    (t1 : DType D) (f : A -> Exp A) :
+    Exp A := inject (Mu _ _ t1 f).
 
   (* Induction Principle for PLambda. *)
   Definition ind_alg_Fix {A : Set}
-    (P : forall e : Fix (F A), Universal_Property'_fold e -> Prop)
-    (H : forall t1 f
-      (IHf : forall a, UP'_P P (f a)),
-      UP'_P P (@mu _ t1 _ (fun a => (proj1_sig (IHf a)))))
-    (e : Fix_ A (sig (UP'_P P))) : sig (UP'_P P) :=
-    match e with
-      | Mu t1 f =>
-        exist _ _ (H t1 (fun a => proj1_sig (f a)) (fun a => proj2_sig (f a)))
-    end.
+    (P : Exp A -> Prop)
+    (Hmu : forall d f, (forall a, P (f a)) -> P (mu d f))
+      : PAlgebra (inject' (Fix_ A)) P :=
+    fun xs =>
+      match xs return All P xs -> P (inject' (Fix_ A) xs) with
+        | Mu d f =>
+          fun Axs : forall p : _ + _, _ => Hmu d f (fun a => Axs (inr a))
+      end.
 
   (* Typing for Lambda Expressions. *)
 
-  Context {eq_DType_D : forall T, FAlgebra eq_DTypeName T (eq_DTypeR D) D}.
+  Context {Eq_DType : Eq (DType D)}.
 
   Definition Fix_typeof (R : Set) (rec : R -> typeofR D) (e : Fix_ (typeofR D) R) : typeofR D:=
   match e with
     | Mu t1 f => match rec (f (Some t1)) with
-                     | Some t2 => if (eq_DType D (proj1_sig t1) t2) then
+                     | Some t2 => if (eq_DType D t1 t2) then
                        Some t1 else None
                      | _ => None
                    end
@@ -103,12 +89,14 @@ Section Mu.
 
   Variable V : Set -> Set.
   Context {Fun_V : Functor V}.
+  Context {PFun_V: PFunctor V}.
+  Context {SPF_V : SPF V}.
+
   Definition Value := Value V.
 
-  Variable Sub_StuckValue_V : StuckValue :<: V.
-  Definition stuck' : nat -> Value := stuck' _.
-  Variable Sub_BotValue_V : BotValue :<: V.
-  Definition bot' : Value := bot' _.
+  Context {Sub_StuckValue_V : StuckValue :<: V}.
+  Context {Sub_BotValue_V : BotValue :<: V}.
+  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V}.
 
   (* ============================================== *)
   (* EVALUATION                                     *)
@@ -118,7 +106,7 @@ Section Mu.
     fun rec e =>
      match e with
        | Mu t1 f => fun env =>
-         rec (f (length env)) (insert _ (rec (mu' t1 f) env) env)
+         rec (f (length env)) (insert _ (rec (mu t1 f) env) env)
      end.
 
 (* Evaluation Algebra for Lambda Expressions. *)
@@ -140,7 +128,7 @@ Section Mu.
     (e : Fix_ nat R) : ExpPrintR :=
     match e with
       | Mu t1 f => fun n => append "|\/| x" ((String (ascii_of_nat n) EmptyString) ++
-        " : " ++ (DTypePrint _ (proj1_sig t1)) ++ ". " ++
+        " : " ++ (DTypePrint _ t1) ++ ". " ++
         (rec (f n) (S n)) ++ ")")
     end.
 
@@ -160,46 +148,29 @@ Section Mu.
 
   (* Continuity of Evaluation. *)
   Context {SV : (SubValue_i V -> Prop) -> SubValue_i V -> Prop}.
-  Context {WF_SubBotValue_V : WF_Functor BotValue V Sub_BotValue_V}.
+  Context `{ispf_SV : iSPF _ SV}.
   Context {Sub_SV_refl_SV : Sub_iFunctor (SubValue_refl V) SV}.
 
   (* Mu case. *)
 
   Lemma eval_continuous_Exp_H : forall t1 f
-    (IHf : forall a, UP'_P (eval_continuous_Exp_P V (F _) SV) (f a)),
-    UP'_P (eval_continuous_Exp_P V (F _) SV)
-    (@mu _ t1 _ (fun a => (proj1_sig (IHf a)))).
+    (IHf : forall a, eval_continuous_Exp_P V (F nat) SV (f a)),
+    eval_continuous_Exp_P V (F nat) SV (mu t1 f).
   Proof.
-    unfold eval_continuous_Exp_P; econstructor; simpl; intros.
-    unfold beval, mfold, mu; simpl; repeat rewrite wf_functor;
-      simpl; rewrite out_in_fmap; rewrite wf_functor; simpl.
-    repeat rewrite (wf_algebra (WF_FAlgebra := WF_eval_F )); simpl.
-    unfold beval, evalR, Names.Exp in H.
-    assert (f (Datatypes.length gamma) = (f (Datatypes.length gamma'))) as f_eq by
-      (rewrite (P2_Env_length _ _ _ _ _ H0); reflexivity).
-    rewrite f_eq.
-    eapply H; eauto.
-    eapply P2_Env_insert; eauto.
+    unfold eval_continuous_Exp_P; intros.
+    unfold mu, inject; simpl_beval.
+    rewrite (P2_Env_length _ _ _ _ _ H0).
+    apply H; auto.
+    apply P2_Env_insert; auto.
   Qed.
 
   Global Instance Fix_eval_continuous_Exp :
-    PAlgebra EC_ExpName (sig (UP'_P (eval_continuous_Exp_P V (F _) SV))) (Fix_ nat).
+    FPAlgebra (eval_continuous_Exp_P V (F nat) SV) (inject' (Fix_ nat)).
   Proof.
-    constructor; unfold Algebra; intros.
-    eapply ind_alg_Fix.
+    constructor; unfold PAlgebra; intros.
+    apply ind_alg_Fix.
     apply eval_continuous_Exp_H.
     assumption.
-  Defined.
-
-  Global Instance WF_PLambda_eval_continuous_Exp
-    {Sub_F_E' :  Fix_ nat :<: F nat} :
-    (forall a, inj (Sub_Functor := Sub_Fix_F _) a =
-      inj (A := (Fix (F nat))) (Sub_Functor := Sub_F_E') a) ->
-      WF_Ind (sub_F_E := Sub_F_E') Fix_eval_continuous_Exp.
-  Proof.
-    constructor; intros.
-    simpl; unfold ind_alg_Fix; destruct e; simpl.
-    unfold mu; simpl; rewrite wf_functor; simpl; apply f_equal; eauto.
   Defined.
 
   (* ============================================== *)
@@ -207,176 +178,145 @@ Section Mu.
   (* ============================================== *)
 
   Inductive Fix_eqv (A B : Set) (E : eqv_i F A B -> Prop) : eqv_i F A B -> Prop :=
-  | Mu_eqv : forall (gamma : Env _) gamma' f g t1 t2 e e',
+  | Mu_eqv : forall (gamma : Env _) gamma' f g d,
     (forall (a : A) (b : B),
       E (mk_eqv_i _ _ _ (insert _ a gamma) (insert _ b gamma') (f a) (g b))) ->
-    proj1_sig t1 = proj1_sig t2 ->
-    proj1_sig e = proj1_sig (mu' t1 f) ->
-    proj1_sig e' = proj1_sig (mu' t2 g) ->
-    Fix_eqv _ _ E (mk_eqv_i _  _ _ gamma gamma' e e').
+    Fix_eqv _ _ E (mk_eqv_i _  _ _ gamma gamma' (mu d f) (mu d g)).
 
-  Variable EQV_E : forall A B, (eqv_i F A B -> Prop) -> eqv_i F A B -> Prop.
-  Variable funEQV_E : forall A B, iFunctor (EQV_E A B).
+  Inductive Fix_eqv_S (A B : Set) : eqv_i F A B -> Set :=
+  | SMu_eqv : forall (gamma : Env _) gamma' f g d,
+    Fix_eqv_S A B (mk_eqv_i _ _ _ gamma gamma' (mu d f) (mu d g)).
+
+  Definition Fix_eqv_P (A B : Set) (i : eqv_i F A B) (s : Fix_eqv_S A B i) : Set.
+    destruct s.
+    apply ((A * B)%type).
+  Defined.
+
+  Definition Fix_eqv_R (A B : Set) (i : eqv_i F A B)
+             (s : Fix_eqv_S A B i)
+             (p : Fix_eqv_P A B i s) : eqv_i F A B.
+  Proof.
+    destruct s; simpl in p.
+    destruct p.
+    apply (mk_eqv_i _ _ _ (insert _ a gamma) (insert _ b gamma') (f a) (g b)).
+  Defined.
+
+  Definition Fix_eqv_to (A B : Set) (C : eqv_i F A B -> Prop) (i : eqv_i F A B) :
+    IExt _ _ (Fix_eqv_R A B) C i -> Fix_eqv A B C i.
+  Proof.
+    intros x; destruct x; destruct s; simpl in pf.
+    constructor; intros.
+    apply (pf (a , b)).
+  Defined.
+
+  Definition Fix_eqv_from (A B : Set) (C : eqv_i F A B -> Prop) (i : eqv_i F A B) :
+    Fix_eqv A B C i -> IExt _ _ (Fix_eqv_R A B) C i.
+  Proof.
+    intros x; destruct x.
+    constructor 1 with (s := SMu_eqv _ _ gamma gamma' f g d); simpl.
+    intro p; destruct p; auto.
+  Defined.
+
+  Global Instance Fix_eqv_Container (A B : Set) : IContainer (Fix_eqv A B) :=
+    {| IS    := Fix_eqv_S A B;
+       IP    := Fix_eqv_P A B;
+       IR    := Fix_eqv_R A B;
+       ifrom := Fix_eqv_from A B;
+       ito   := Fix_eqv_to A B
+    |}.
+  Proof.
+    intros; destruct a; reflexivity.
+    intros; destruct a; destruct s; simpl; f_equal;
+      extensionality x; destruct x; try destruct u; reflexivity.
+  Defined.
 
   Definition ind_alg_Fix_eqv
     (A B : Set)
     (P : eqv_i F A B -> Prop)
-    (H1 : forall gamma gamma' f g t1 t2 e e'
-      (IHf : forall a b,
-        P (mk_eqv_i _ _ _ (insert _ a gamma) (insert _ b gamma') (f a) (g b)))
-      t1_eq e_eq e'_eq,
-      P (mk_eqv_i _ _ _ gamma gamma' e e'))
+    (Hmu : forall gamma gamma' f g d
+      (IHf : forall a b, P (mk_eqv_i _ _ _ (insert _ a gamma) (insert _ b gamma') (f a) (g b))),
+      P (mk_eqv_i _ _ _ gamma gamma' (mu d f) (mu d g)))
     i (e : Fix_eqv A B P i) : P i :=
     match e in Fix_eqv _ _ _ i return P i with
-      | Mu_eqv gamma gamma' f g t1 t2 e e'
-        eqv_f_g t1_eq e_eq e'_eq =>
-        H1 gamma gamma' f g t1 t2 e e'
-        eqv_f_g t1_eq e_eq e'_eq
+      | Mu_eqv gamma gamma' f g d eqv_f_g  =>
+        Hmu gamma gamma' f g d eqv_f_g
     end.
 
-  Definition Fix_eqv_ifmap (A B : Set)
-    (A' B' : eqv_i F A B -> Prop) i (f : forall i, A' i -> B' i)
-    (eqv_a : Fix_eqv A B A' i) : Fix_eqv A B B' i :=
-    match eqv_a in Fix_eqv _ _ _ i return Fix_eqv _ _ _ i with
-      | Mu_eqv gamma gamma' f' g t1 t2 e e'
-        eqv_f_g t1_eq e_eq e'_eq =>
-        Mu_eqv _ _ _ gamma gamma' f' g t1 t2 e e'
-        (fun a b => f _ (eqv_f_g a b)) t1_eq e_eq e'_eq
-    end.
-
-  Global Instance iFun_Fix_eqv A B : iFunctor (Fix_eqv A B).
-    constructor 1 with (ifmap := Fix_eqv_ifmap A B).
-    destruct a; simpl; intros; reflexivity.
-    destruct a; simpl; intros; unfold id; eauto;
-    rewrite (functional_extensionality_dep _ a); eauto;
-    intros; apply functional_extensionality_dep; eauto.
-  Defined.
+  Variable EQV_E : forall A B, (eqv_i F A B -> Prop) -> eqv_i F A B -> Prop.
+  Context {fun_EQV_E : forall A B, iFunctor (EQV_E A B)}.
+  Context {ispf_EQV_E : forall A B, iSPF (EQV_E A B)}.
 
   Variable Sub_Fix_eqv_EQV_E : forall A B,
     Sub_iFunctor (Fix_eqv A B) (EQV_E A B).
 
   Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR D) (F (typeofR D))}.
 
-  Global Instance EQV_proj1_Fix_eqv :
-    forall A B, iPAlgebra EQV_proj1_Name (EQV_proj1_P F EQV_E A B) (Fix_eqv _ _).
-  Proof.
-    econstructor; intros.
-    unfold iAlgebra; intros; apply ind_alg_Fix_eqv;
-      unfold EQV_proj1_P; simpl; intros; subst.
-    apply (inject_i (subGF := Sub_Fix_eqv_EQV_E A B)); econstructor; simpl; eauto.
-    intros; caseEq (f a); caseEq (g b); apply IHf; eauto.
-    rewrite H2; simpl; eauto.
-    rewrite H3; simpl; eauto.
-    apply H.
-  Qed.
-
-  Context {EQV_proj1_EQV : forall A B,
-    iPAlgebra EQV_proj1_Name (EQV_proj1_P F EQV_E A B) (EQV_E A B)}.
-
   (* ============================================== *)
   (* WELL-FORMED FUNCTION VALUES                    *)
   (* ============================================== *)
 
   Variable WFV : (WFValue_i D V -> Prop) -> WFValue_i D V -> Prop.
-  Variable funWFV : iFunctor WFV.
+  Context `{ispf_WFV : iSPF _ WFV}.
+  Context {Sub_WFV_Bot_WFV : Sub_iFunctor (WFValue_Bot _ _) WFV}.
 
   Context {WF_typeof_F : forall T, @WF_FAlgebra TypeofName T _ _ _
     (Sub_Fix_F _) (MAlgebra_typeof_Fix T) (Typeof_F _)}.
   Context {WF_Value_continous_alg :
     iPAlgebra WFV_ContinuousName (WF_Value_continuous_P D V WFV) SV}.
 
-  Variable Sub_WFV_Bot_WFV : Sub_iFunctor (WFValue_Bot _ _) WFV.
-  Context {eq_DType_eq_D : PAlgebra eq_DType_eqName (sig (UP'_P (eq_DType_eq_P D))) D}.
-  Variable WF_Ind_DType_eq_D : WF_Ind eq_DType_eq_D.
+  Variable typeof_rec : Exp (typeofR D) -> typeofR D.
 
-   Context {WFV_proj1_a_WFV :
-     iPAlgebra WFV_proj1_a_Name (WFV_proj1_a_P D V WFV) WFV}.
-   Context {WFV_proj1_b_WFV :
-     iPAlgebra WFV_proj1_b_Name (WFV_proj1_b_P D V WFV) WFV}.
-  Context {eval_continuous_Exp_E : PAlgebra EC_ExpName
-    (sig (UP'_P (eval_continuous_Exp_P V (F _) SV))) (F nat)}.
-  Context {WF_Ind_EC_Exp : WF_Ind eval_continuous_Exp_E}.
+  Context {eval_continuous_Exp_E :
+    FPAlgebra (eval_continuous_Exp_P V (F nat) SV) (inject' (F nat))}.
 
-  Global Instance Fix_Soundness eval_rec :
+  Global Instance Fix_Soundness : forall eval_rec,
     iPAlgebra soundness_XName
     (soundness_X'_P D V F EQV_E WFV
-      (fun e => typeof _ _ (proj1_sig e)) eval_rec
+      (typeof _ _) eval_rec
       (f_algebra (FAlgebra := Typeof_F _))
       (f_algebra (FAlgebra := eval_F))) (Fix_eqv _ _).
   Proof.
-    econstructor; unfold iAlgebra; intros.
-    eapply ind_alg_Fix_eqv; try eassumption; unfold soundness_X'_P;
-      simpl; intros.
+    constructor; unfold iAlgebra; intros.
+    apply ind_alg_Fix_eqv; try eassumption;
+    unfold soundness_X'_P; simpl; intros.
     (* mu case *)
     split; intros.
-    apply (inject_i (subGF := Sub_Fix_eqv_EQV_E _ _)) ; econstructor; eauto.
-    intros; destruct (IHf a b) as [f_eqv _]; eauto.
-    rewrite e_eq; reflexivity.
-    rewrite e'_eq; reflexivity.
+    apply (inject_i (subGF := Sub_Fix_eqv_EQV_E _ _)); constructor; auto.
+    intros; destruct (IHf a b) as [f_eqv _]; auto.
     unfold eval_alg_Soundness_P.
-    unfold beval; simpl; repeat rewrite wf_functor; simpl.
-    rewrite e'_eq.
-    unfold mu, mu'; simpl; erewrite out_in_fmap;
-      repeat rewrite wf_functor; simpl.
-    rewrite (wf_algebra (WF_FAlgebra := WF_eval_F)); simpl; intros.
-    caseEq (g (Datatypes.length gamma'')).
-    rewrite <- eval_rec_proj.
+    unfold Fix' in *.
+    unfold beval, mu, inject; simpl; repeat rewrite wf_functor; simpl.
+    repeat rewrite out_in_inverse.
+    rewrite (wf_mixin (WF_Mixin := WF_eval_F)); simpl; intros.
     rename H0 into typeof_e.
-    rewrite e_eq in typeof_e.
-    rewrite out_in_fmap, fmap_fusion, wf_functor in typeof_e;
-      rewrite (wf_algebra (WF_FAlgebra := WF_typeof_F _)) in typeof_e;
-        simpl in typeof_e.
-    rewrite <- typeof_rec_proj in typeof_e.
-    caseEq (typeof _ _ (proj1_sig (f (Some t1)))); unfold typeofR, DType, Names.DType, UP'_F in *|-*;
+    unfold mu, inject in typeof_e.
+    rewrite (wf_mixin (WF_Mixin := WF_typeof_F _)) in typeof_e;
+      simpl in typeof_e.
+    caseEq (typeof _ _ (f (Some d))); unfold typeofR, DType, Names.DType in *|-*;
       rename H0 into typeof_f; rewrite typeof_f in typeof_e; try discriminate.
-    caseEq (eq_DType _ (proj1_sig t1) d); rename H0 into eq_t1_d;
-      rewrite eq_t1_d in typeof_e; try discriminate.
+    caseEq (eq_DType _ d d0); rename H0 into eq_d_d0;
+      rewrite eq_d_d0 in typeof_e; try discriminate.
     injection typeof_e; intros; subst; clear typeof_e.
-    generalize (eq_DType_eq D WF_Ind_DType_eq_D T d eq_t1_d);
-      intros d_eq.
-    rewrite eval_rec_proj.
-    cut (WFValueC D V WFV (eval_rec (exist _
-      (proj1_sig (g (Datatypes.length gamma''))) (proj2_sig (g (Datatypes.length gamma''))))
-    (insert (Names.Value V)
-      (eval_rec(mu' t2
-        (fun a : nat =>
-          in_t_UP' (F nat) (Fun_F nat)
-          (out_t_UP' (F nat) (Fun_F nat) (proj1_sig (g a)))))
-      gamma'') gamma'')) d).
-    destruct T as [T T_UP']; destruct d as [d d_UP'].
-    intro wf_mu; rewrite <- eval_rec_proj; rewrite H1 in wf_mu; simpl in *|-*.
-    apply (WFV_proj1_b _ _ WFV funWFV (mk_WFValue_i _ _ _ _) wf_mu _ _ d_eq).
-    intros; destruct (IHf (Some T) (Datatypes.length gamma'')) as [g_eqv _]; eauto.
-    destruct (g (Datatypes.length gamma'')) as [gl gl_UP'].
-    rewrite eval_rec_proj; eapply IH with
-      (pb := (insert (option (sig Universal_Property'_fold)) (Some T) gamma,
-        insert nat (Datatypes.length gamma'') gamma')); eauto.
+    generalize (eq_DType_eq D _ _ eq_d_d0); intro; subst.
+    intros; destruct (IHf (Some d0) (Datatypes.length gamma'')) as [g_eqv _]; auto.
+    apply IH with
+      (e := f (Some d0))
+      (pb := (insert (option _) (Some d0) gamma,
+        insert nat (Datatypes.length gamma'') gamma')); auto.
     assert (Datatypes.length gamma'' = Datatypes.length gamma') by
       (destruct WF_gamma'' as [WF_gamma [WF_gamma2 [WF_gamma' WF_gamma'']]];
         simpl in *|-*; rewrite <- WF_gamma2; eapply P2_Env_length; eauto).
     rewrite H0.
-    eapply WF_eqv_environment_P_insert; eauto.
-    destruct T as [T T_UP']; destruct d as [d d_UP'].
-    rewrite eval_rec_proj.
+    apply WF_eqv_environment_P_insert; auto.
     generalize (fun a b => proj1 (IHf a b IH)) as f_eqv; intros.
-    eapply IH.
-    eassumption.
-    apply (inject_i (subGF := Sub_Fix_eqv_EQV_E _ _)) ; econstructor; simpl;
-      try (apply t1_eq); eauto.
-    repeat rewrite wf_functor; simpl; repeat apply f_equal;
-      apply functional_extensionality; intros.
-    rewrite <- (in_out_UP'_inverse _ _ _ (proj2_sig (g x0))) at -1; reflexivity.
-    rewrite e_eq.
-    revert typeof_f; unfold typeof, mfold, in_t.
-    repeat rewrite wf_functor; simpl; rewrite (wf_algebra (WF_FAlgebra := WF_typeof_F _));
-      simpl; unfold mfold; intros.
-    unfold typeofR, DType, Names.DType, UP'_F in *|-*; rewrite typeof_f.
-    simpl in eq_t1_d; rewrite eq_t1_d; reflexivity.
+    apply IH with (e := mu d0 f) (1 := WF_gamma'').
+    apply (inject_i (subGF := Sub_Fix_eqv_EQV_E _ _)).
+    constructor; auto.
+    revert typeof_f; unfold typeof, in_t.
+    unfold mu, inject.
+    rewrite fold_computation, wf_functor, (wf_mixin (WF_Mixin := WF_typeof_F _));
+      simpl; unfold id at 2; fold (typeof D _); intros.
+    unfold DType, Fix', typeofR in *.
+    rewrite typeof_f, eq_d_d0; reflexivity.
   Defined.
 End Mu.
-
-(*
-*** Local Variables: ***
-*** coq-prog-args: ("-emacs-U" "-impredicative-set") ***
-*** End: ***
-*)
