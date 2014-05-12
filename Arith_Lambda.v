@@ -72,11 +72,11 @@ Section Lambda_Arith.
 
   Context {Sub_WFV_VI_WFV : Sub_iFunctor (WFValue_VI D V) WFV}.
   Context {Sub_WFV_Bot_WFV : Sub_iFunctor (WFValue_Bot D V) WFV}.
-  Context {Dis_Clos_Bot : Distinct_Sub_Functor LType AType D}.
+  Context {Dis_LType_AType : Distinct_Sub_Functor LType AType D}.
 
-  Context {Typeof_E : forall T, FAlgebra TypeofName T (typeofR D) (E (typeofR D))}.
-  Context {WF_typeof_E : forall T, @WF_FAlgebra TypeofName T _ _ _
-    (Sub_Arith_E _) (MAlgebra_typeof_Arith _ T) (Typeof_E _)}.
+  Context {Typeof_E : forall T, FAlgebra TypeofName T (typeofR D) (E (typeofR _))}.
+  Context {WF_typeof_E : forall T, WF_FAlgebra TypeofName T _ _ _ _
+    (MAlgebra_typeof_Arith _ T) (Typeof_E _)}.
 
   Global Instance PAlgebra_WF_invertClos_VI typeof_rec :
     iPAlgebra WF_invertClos_Name (WF_invertClos_P D E V EQV_E WFV typeof_rec) (WFValue_VI D V).

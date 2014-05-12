@@ -38,7 +38,7 @@ Section Bool.
   Global Instance UP'_tbool :
     Universal_Property'_fold tbool := proj2_sig tbool'.
 
-  (* Induction Principle for Nat Types. *)
+  (* Induction Principle for Bool Types. *)
   Definition ind_alg_BType
     (P : forall d : Fix D, Universal_Property'_fold d -> Prop)
     (H : UP'_P P tbool)
@@ -464,7 +464,7 @@ Section Bool.
   Variable WFV : (WFValue_i D V -> Prop) -> WFValue_i D V -> Prop.
   Variable funWFV : iFunctor WFV.
 
-  (** Natrual Numbers are well-formed **)
+  (** Boolean values are well-formed **)
 
   Inductive WFValue_VB (WFV : WFValue_i D V -> Prop) : WFValue_i D V -> Prop :=
   | WFV_VB : forall n v T,
@@ -563,15 +563,15 @@ Section Bool.
   Lemma Bool_eval_Soundness_H
     (typeof_R eval_R : Set) typeof_rec eval_rec
     {eval_F' : FAlgebra EvalName eval_R (evalR V) F}
-    {WF_eval_F' : @WF_FAlgebra EvalName _ _ Bool F
-      Sub_Bool_F (MAlgebra_eval_Bool _) (eval_F')} :
+    {WF_eval_F' : WF_FAlgebra EvalName _ _ Bool F _
+      (MAlgebra_eval_Bool _) (eval_F')} :
     forall b : bool,
       forall gamma'' : Env (Names.Value V),
         forall T : Names.DType D,
           Bool_typeof typeof_R typeof_rec (BLit _ b) = Some T ->
           WFValueC D V WFV (Bool_eval eval_R eval_rec (BLit _ b) gamma'') T.
   Proof.
-    intros n gamma'' T H4; intros.
+    intros b gamma'' T H4; intros.
     apply (inject_i (subGF := Sub_WFV_VB_WFV)); econstructor; eauto.
     simpl.
     unfold vb, vb', inject; simpl; eauto.
@@ -599,50 +599,51 @@ Section Bool.
          forall T : Names.DType D,
            Bool_typeof typeof_R typeof_rec (If _ i t el) = Some T ->
            WFValueC D V WFV (Bool_eval eval_R eval_rec (If _ i' t' el') gamma'') T.
+  Proof.
     simpl; intros i t el i' t' el' gamma'' IH_i IH_t IH_el T H4.
-     caseEq (typeof_rec i); intros; rename H into typeof_i;
-       unfold typeof, typeofR in typeof_i, H4; rewrite typeof_i in H4;
-         try discriminate.
-     caseEq (isTBool (proj1_sig d)); intros; rename H into d_eq; rewrite
-       d_eq in H4; try discriminate.
-     caseEq (typeof_rec t); rewrite H in H4; rename H into typeof_t.
-     caseEq (typeof_rec el); rewrite H in H4; rename H into typeof_el.
-     caseEq (eq_DType _ (proj1_sig d0) d1); rewrite H in H4; rename H into eq_d0_d1.
-     injection H4; intros; subst; clear H4.
-     unfold isTBool in d_eq.
-     caseEq (project (proj1_sig d)); intros; rewrite H in d_eq;
-       try discriminate; clear d_eq; rename H into d_eq; destruct b.
-     apply project_inject in d_eq; eauto with typeclass_instances.
-     unfold WFValueC in *|-*.
-     generalize (IH_i _ typeof_i) as WF_i;
-       generalize (IH_t _ typeof_t) as WF_t;
-         generalize (IH_el _ typeof_el) as WF_el; intros.
-     destruct (WF_invertVB _ WF_i d_eq) as [eval_i' | eval_i'];
-       inversion eval_i'; subst.
-     rewrite H1; unfold isVB, project, vb, vb', inject'; simpl;
-       rewrite out_in_fmap; repeat rewrite wf_functor; simpl; rewrite prj_inj.
-     destruct n.
-     unfold eval in WF_t; eapply WF_t.
-     unfold eval in WF_el; destruct T as [x u];
-       apply (WFV_proj1_b _ _ WFV funWFV _ WF_el x u
-         (eq_DType_eq D WF_Ind_DType_eq_D _ _ eq_d0_d1)).
-     rewrite H0; unfold bot, isVB, project, inject, inject'; simpl;
-       rewrite out_in_fmap; repeat rewrite wf_functor; simpl; unfold Bot_fmap.
-     caseEq (prj (Sub_Functor := Sub_BoolValue_V) (A:= (sig (@Universal_Property'_fold V _)))
-       (inj (Bot (sig Universal_Property'_fold)))).
-     discriminate_inject H.
-     unfold isBot, project; rewrite out_in_fmap; rewrite wf_functor;
-       unfold Bot_fmap; rewrite prj_inj; simpl.
-     apply (inject_i (subGF := Sub_WFV_Bot_WFV)); constructor; reflexivity.
-     exact (proj2_sig d).
-     discriminate.
-     discriminate.
-     discriminate.
+    caseEq (typeof_rec i); intros; rename H into typeof_i;
+      unfold typeof, typeofR in typeof_i, H4; rewrite typeof_i in H4;
+        try discriminate.
+    caseEq (isTBool (proj1_sig d)); intros; rename H into d_eq; rewrite
+      d_eq in H4; try discriminate.
+    caseEq (typeof_rec t); rewrite H in H4; rename H into typeof_t.
+    caseEq (typeof_rec el); rewrite H in H4; rename H into typeof_el.
+    caseEq (eq_DType _ (proj1_sig d0) d1); rewrite H in H4; rename H into eq_d0_d1.
+    injection H4; intros; subst; clear H4.
+    unfold isTBool in d_eq.
+    caseEq (project (proj1_sig d)); intros; rewrite H in d_eq;
+      try discriminate; clear d_eq; rename H into d_eq; destruct b.
+    apply project_inject in d_eq; eauto with typeclass_instances.
+    unfold WFValueC in *|-*.
+    generalize (IH_i _ typeof_i) as WF_i;
+      generalize (IH_t _ typeof_t) as WF_t;
+        generalize (IH_el _ typeof_el) as WF_el; intros.
+    destruct (WF_invertVB _ WF_i d_eq) as [eval_i' | eval_i'];
+      inversion eval_i'; subst.
+    rewrite H1; unfold isVB, project, vb, vb', inject'; simpl;
+      rewrite out_in_fmap; repeat rewrite wf_functor; simpl; rewrite prj_inj.
+    destruct n.
+    unfold eval in WF_t; eapply WF_t.
+    unfold eval in WF_el; destruct T as [x u];
+      apply (WFV_proj1_b _ _ WFV funWFV _ WF_el x u
+        (eq_DType_eq D WF_Ind_DType_eq_D _ _ eq_d0_d1)).
+    rewrite H0; unfold bot, isVB, project, inject, inject'; simpl;
+      rewrite out_in_fmap; repeat rewrite wf_functor; simpl; unfold Bot_fmap.
+    caseEq (prj (Sub_Functor := Sub_BoolValue_V) (A:= (sig (@Universal_Property'_fold V _)))
+      (inj (Bot (sig Universal_Property'_fold)))).
+    discriminate_inject H.
+    unfold isBot, project; rewrite out_in_fmap; rewrite wf_functor;
+      unfold Bot_fmap; rewrite prj_inj; simpl.
+    apply (inject_i (subGF := Sub_WFV_Bot_WFV)); constructor; reflexivity.
+    exact (proj2_sig d).
+    discriminate.
+    discriminate.
+    discriminate.
   Defined.
 
   Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR D) F}.
-  Context {WF_typeof_F : forall T, @WF_FAlgebra TypeofName T _ _ _
-    Sub_Bool_F (MAlgebra_typeof_Bool T) (Typeof_F _)}.
+  Context {WF_typeof_F : forall T, WF_FAlgebra _ _ _ _ _ _
+    (MAlgebra_typeof_Bool T) (Typeof_F _) }.
   Context {WF_Value_continous_alg :
     iPAlgebra WFV_ContinuousName (WF_Value_continuous_P D V WFV) SV}.
 

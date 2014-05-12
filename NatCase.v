@@ -491,79 +491,81 @@ Section NatCase.
     caseEq (typeof_rec (in_t_UP' _ _ (out_t_UP' _ _  (proj1_sig (s (Some (tnat' D)))))));
       rename H1 into typeof_s; rewrite typeof_s in H0; try discriminate.
     rewrite isVI_vi; destruct n0.
-    assert (WFValueC D V WFV (eval_rec  (in_t_UP' _ _  (out_t_UP' _ _ (proj1_sig z'))) gamma'') d0) as WF_z'.
-    apply (IHa _ _ WF_gamma'' (in_t_UP' _ _ (out_t_UP' _ _ (proj1_sig z)), z'));
-      intros; auto; apply IHz; auto;
-      unfold fst in H1; rewrite in_out_UP'_inverse in H1; auto;
-        exact (proj2_sig _).
-    caseEq (eq_DType _ (proj1_sig d0) d1); rewrite H1 in H0; try discriminate;
-      rename H1 into eq_d0; injection H0; intros; subst.
-    generalize (WFV_proj1_a D V WFV _ _ WF_z' _ (proj2_sig _) (refl_equal _));
+      (* zero case *)
+      assert (WFValueC D V WFV (eval_rec  (in_t_UP' _ _  (out_t_UP' _ _ (proj1_sig z'))) gamma'') d0) as WF_z'.
+      apply (IHa _ _ WF_gamma'' (in_t_UP' _ _ (out_t_UP' _ _ (proj1_sig z)), z'));
+        intros; auto; apply IHz; auto;
+        unfold fst in H1; rewrite in_out_UP'_inverse in H1; auto;
+          exact (proj2_sig _).
+      caseEq (eq_DType _ (proj1_sig d0) d1); rewrite H1 in H0; try discriminate;
+        rename H1 into eq_d0; injection H0; intros; subst.
+      generalize (WFV_proj1_a D V WFV _ _ WF_z' _ (proj2_sig _) (refl_equal _));
+        simpl.
+      destruct (eval_rec (in_t_UP' _ _ (out_t_UP' _ _ (proj1_sig z'))) gamma''); simpl; auto.
+      (* successor case *)
+      caseEq (eq_DType _ (proj1_sig d0) d1); rewrite H1 in H0; try discriminate;
+        rename H1 into eq_d0; injection H0; intros; subst.
+      assert (WF_eqv_environment_P D V WFV (insert _ (Some (tnat' _)) gamma,
+        insert _ (Datatypes.length gamma') gamma')
+      (insert _ (vi' V n0) gamma'')).
+          destruct WF_gamma'' as [WF_gamma [WF_gamma2 [WF_gamma' WF_gamma'']]].
+          unfold WF_eqv_environment_P; simpl; repeat split.
+          simpl in WF_gamma2; rewrite <- WF_gamma2.
+          revert WF_gamma; clear; simpl; induction gamma';
+            destruct m; simpl; intros; try discriminate.
+          injection H; intros; subst.
+          clear; induction gamma; simpl; eauto; eexists.
+          injection H; intros; subst.
+          generalize b (WF_gamma 0 _ (eq_refl _)); clear; induction gamma; simpl; intros b H;
+              destruct H as [T lookup_T]; try discriminate.
+          destruct b; eauto.
+          eapply IHgamma'.
+          intros n0 b0 H0; eapply (WF_gamma (S n0) _ H0).
+          eassumption.
+          assert (exists m', Datatypes.length gamma' = m') as m'_eq
+            by (eexists _; reflexivity); destruct m'_eq as [m' m'_eq].
+          rewrite m'_eq; generalize m' gamma' WF_gamma2; clear; induction gamma;
+            destruct gamma'; intros; simpl; try discriminate;
+              try injection H7; intros; eauto.
+          simpl in *|-*.
+          intro; caseEq (beq_nat m (Datatypes.length gamma')).
+          assert (exists m', m' = Datatypes.length gamma') as ex_m' by
+            (eexists _; reflexivity); destruct ex_m' as [m' m'_eq];
+              rewrite <- m'_eq in H2 at 1.
+          rewrite (beq_nat_true _ _ H1), <- m'_eq.
+          rewrite (beq_nat_true _ _ H1) in H2.
+          generalize m' b H2; clear.
+          induction gamma'; simpl; intros;
+               try discriminate.
+          congruence.
+          eauto.
+          eapply WF_gamma'.
+          assert (exists m', m' = Datatypes.length gamma') as ex_m' by
+            (eexists _; reflexivity); destruct ex_m' as [m' m'_eq];
+              rewrite <- m'_eq in H2 at 1.
+          generalize m' m (beq_nat_false _ _ H1) H2; clear;
+            induction gamma'; simpl; destruct m; intros;
+              try discriminate; eauto.
+          elimtype False; eauto.
+          eapply P2_Env_insert;
+            [assumption | apply (inject_i (subGF := Sub_WFV_VI_WFV));
+              econstructor; unfold vi; auto].
+      assert (WFValueC D V WFV (eval_rec (in_t_UP' _ _
+        (out_t_UP' _ _ (proj1_sig (s' (Datatypes.length gamma'')))))
+        (insert (Arith.Value V) (vi' V n0) gamma'')) d1) as WF_s'.
+      eapply (IHa _ _ H1 (in_t_UP' _ _ (out_t_UP' _ _ (proj1_sig _)), _)); eauto.
+      intros.
       simpl.
-    destruct (eval_rec (in_t_UP' _ _ (out_t_UP' _ _ (proj1_sig z'))) gamma''); simpl; auto.
-    caseEq (eq_DType _ (proj1_sig d0) d1); rewrite H1 in H0; try discriminate;
-      rename H1 into eq_d0; injection H0; intros; subst.
-    assert (WF_eqv_environment_P D V WFV (insert _ (Some (tnat' _)) gamma,
-      insert _ (Datatypes.length gamma') gamma')
-    (insert _ (vi' V n0) gamma'')).
-    destruct WF_gamma'' as [WF_gamma [WF_gamma2 [WF_gamma' WF_gamma'']]].
-    unfold WF_eqv_environment_P; simpl; repeat split.
-    simpl in WF_gamma2; rewrite <- WF_gamma2.
-    revert WF_gamma; clear; simpl; induction gamma';
-      destruct m; simpl; intros; try discriminate.
-    injection H; intros; subst.
-    clear; induction gamma; simpl; eauto; eexists.
-    injection H; intros; subst.
-    generalize b (WF_gamma 0 _ (eq_refl _)); clear; induction gamma; simpl; intros b H;
-        destruct H as [T lookup_T]; try discriminate.
-    destruct b; eauto.
-    eapply IHgamma'.
-    intros n0 b0 H0; eapply (WF_gamma (S n0) _ H0).
-    eassumption.
-    assert (exists m', Datatypes.length gamma' = m') as m'_eq
-      by (eexists _; reflexivity); destruct m'_eq as [m' m'_eq].
-    rewrite m'_eq; generalize m' gamma' WF_gamma2; clear; induction gamma;
-      destruct gamma'; intros; simpl; try discriminate;
-        try injection H7; intros; eauto.
-    simpl in *|-*.
-    intro; caseEq (beq_nat m (Datatypes.length gamma')).
-    assert (exists m', m' = Datatypes.length gamma') as ex_m' by
-      (eexists _; reflexivity); destruct ex_m' as [m' m'_eq];
-        rewrite <- m'_eq in H2 at 1.
-    rewrite (beq_nat_true _ _ H1), <- m'_eq.
-    rewrite (beq_nat_true _ _ H1) in H2.
-    generalize m' b H2; clear.
-    induction gamma'; simpl; intros;
-         try discriminate.
-    congruence.
-    eauto.
-    eapply WF_gamma'.
-    assert (exists m', m' = Datatypes.length gamma') as ex_m' by
-      (eexists _; reflexivity); destruct ex_m' as [m' m'_eq];
-        rewrite <- m'_eq in H2 at 1.
-    generalize m' m (beq_nat_false _ _ H1) H2; clear;
-      induction gamma'; simpl; destruct m; intros;
-        try discriminate; eauto.
-    elimtype False; eauto.
-    eapply P2_Env_insert;
-      [assumption | apply (inject_i (subGF := Sub_WFV_VI_WFV));
-        econstructor; unfold vi; auto].
-    assert (WFValueC D V WFV (eval_rec (in_t_UP' _ _
-      (out_t_UP' _ _ (proj1_sig (s' (Datatypes.length gamma'')))))
-      (insert (Arith.Value V) (vi' V n0) gamma'')) d1) as WF_s'.
-    eapply (IHa _ _ H1 (in_t_UP' _ _ (out_t_UP' _ _ (proj1_sig _)), _)); eauto.
-    intros.
-    simpl.
-    destruct WF_gamma'' as [WF_gamma [WF_gamma2 [WF_gamma' WF_gamma'']]].
-    eapply IHs; eauto.
-    simpl in *|-*; rewrite (P2_Env_length _ _ _ _ _ WF_gamma'').
-    rewrite <- WF_gamma2 in H1; apply H1.
-    unfold fst in H2; rewrite in_out_UP'_inverse in H2.
-    apply H2.
-    exact (proj2_sig _).
-    generalize (WFV_proj1_b D V WFV _ _ WF_s' _ (proj2_sig _)
-      (eq_DType_eq D WF_Ind_DType_eq_D _ _ eq_d0)); simpl.
-    destruct T; auto.
+      destruct WF_gamma'' as [WF_gamma [WF_gamma2 [WF_gamma' WF_gamma'']]].
+      eapply IHs; eauto.
+      simpl in *|-*; rewrite (P2_Env_length _ _ _ _ _ WF_gamma'').
+      rewrite <- WF_gamma2 in H1; apply H1; eauto.
+      unfold fst in H2; rewrite in_out_UP'_inverse in H2.
+      apply H2.
+      exact (proj2_sig _).
+      generalize (WFV_proj1_b D V WFV _ _ WF_s' _ (proj2_sig _)
+        (eq_DType_eq D WF_Ind_DType_eq_D _ _ eq_d0)); simpl.
+      destruct T; auto.
     rewrite H2.
     rewrite isVI_bot.
     rewrite isBot_bot.

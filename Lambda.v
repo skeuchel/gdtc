@@ -279,18 +279,18 @@ Section Lambda.
     | Var v => v
     | App e1 e2 =>
       match (rec e1, rec e2) with
-                   | (Some t1, Some t3) =>
-                     match (isTArrow t1) with
-                       | Some (t1, t2) =>
-                         if (eq_DType (eq_DType_DT := eq_DType_DT) D (proj1_sig t1) t3) then Some t2 else None
-                       | _ => None
-                     end
-                   | _ => None
-                 end
+        | (Some t1, Some t3) =>
+          match (isTArrow t1) with
+            | Some (t1, t2) =>
+              if (eq_DType (eq_DType_DT := eq_DType_DT) D (proj1_sig t1) t3) then Some t2 else None
+            | _ => None
+          end
+        | _ => None
+      end
     | Lam t1 f =>
       match rec (f (Some t1)) with
-                   | Some t2 => Some (inject' (TArrow _ t1 t2))
-                   | _ => None
+        | Some t2 => Some (inject' (TArrow _ t1 t2))
+        | _ => None
       end
   end.
 
@@ -673,6 +673,7 @@ Section Lambda.
 
   Global Instance SV_invertClos_Bot :
     iPAlgebra SV_invertClos_Name SV_invertClos_P (SubValue_Bot V).
+  Proof.
     econstructor; intros.
     unfold iAlgebra; intros; unfold SV_invertClos_P.
     inversion H; subst; simpl; intros.
@@ -709,6 +710,7 @@ Section Lambda.
 
   Global Instance SV_invertClos'_Bot :
     iPAlgebra SV_invertClos'_Name SV_invertClos'_P (SubValue_Bot V).
+  Proof.
     econstructor; intros.
     unfold iAlgebra; intros; unfold SV_invertClos'_P.
     inversion H; subst; simpl; split; intros; eauto.

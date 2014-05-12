@@ -7,7 +7,7 @@ Require Import FunctionalExtensionality.
 Require Import Bool.
 Require Import Lambda.
 
-Section PLambda_Arith.
+Section PLambda_Bool.
 
   Variable D : Set -> Set.
   Context {Fun_D : Functor D}.
@@ -137,7 +137,7 @@ Section PLambda_Arith.
   Defined.
 
 
-End PLambda_Arith.
+End PLambda_Bool.
 
 (*
 *** Local Variables: ***
