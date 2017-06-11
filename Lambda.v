@@ -62,13 +62,13 @@ Section Lambda.
   (* Constructor + Universal Property. *)
   Context {WF_Sub_LType_D : WF_Functor _ _ Sub_LType_D}.
 
-  Definition tarrow (t1 t2 : DType) := inject (TArrow _ t1 t2).
+  Definition tarrow (t1 t2 : DType) := inject LType D (TArrow _ t1 t2).
 
   (* Algebra for testing type equality. *)
 
   Definition isTArrow : DType -> option (_ * _) :=
     fun typ =>
-      match project typ with
+      match project LType D typ with
        | Some (TArrow t1 t2)  => Some (t1, t2)
        | None                 => None
       end.
@@ -179,19 +179,19 @@ Section Lambda.
 
   Context {WF_Sub_Lambda_F : forall A, WF_Functor _ _ (Sub_Lambda_F A)}.
 
-  Definition var {A : Set} (a : A) : Exp A := inject (Var _ _ a).
-  Definition app {A : Set} (e1 e2 : Exp A) := inject (App _ _ e1 e2).
-  Definition lam {A : Set} (t1 : DType) (f : A -> Exp A) := inject (Lam _ _ t1 f).
+  Definition var {A : Set} (a : A) : Exp A := inject (Lambda A) (F A) (Var _ _ a).
+  Definition app {A : Set} (e1 e2 : Exp A) := inject (Lambda A) (F A) (App _ _ e1 e2).
+  Definition lam {A : Set} (t1 : DType) (f : A -> Exp A) := inject (Lambda A) (F A) (Lam _ _ t1 f).
 
   (* Induction Principle for Lambda. *)
   Definition ind_alg_Lambda {A : Set}
-    (P : Fix' (F A) -> Prop)
+    (P : Fix (F A) -> Prop)
     (Hvar : forall x, P (var x))
     (Happ : forall e1 e2, P e1 -> P e2 -> P (app e1 e2))
     (Hlam : forall t1 f, (forall a, P (f a)) -> P (lam t1 f))
-      : PAlgebra (inject' (Lambda A)) P :=
+      : PAlgebra (inject (Lambda A) (F A)) P :=
     fun xs =>
-      match xs return All P xs -> P (inject' (Lambda A) xs) with
+      match xs return All P xs -> P (inject (Lambda A) (F A) xs) with
         | Var a     => fun _ => Hvar a
         | App e1 e2 =>
           fun Axs : forall p : _ + _, _ =>
@@ -218,7 +218,7 @@ Section Lambda.
       end
     | Lam t1 f =>
       match rec (f (Some t1)) with
-        | Some t2 => Some (inject (TArrow _ t1 t2))
+        | Some t2 => Some (inject LType D (TArrow _ t1 t2))
         | _ => None
       end
   end.
@@ -256,13 +256,13 @@ Section Lambda.
   (* Constructor + Universal Property. *)
   Context {WF_Sub_ClosValue_V : WF_Functor _ _ (Sub_ClosValue_V)}.
 
-  Definition closure f env : Value := inject (Clos _ f env).
+  Definition closure f env : Value := inject ClosValue V (Clos _ f env).
 
   (* Constructor Testing for Function Values. *)
 
-  Definition isClos : Fix' V -> option _ :=
+  Definition isClos : Fix V -> option _ :=
     fun exp =>
-     match project exp with
+     match project ClosValue V exp with
       | Some (Clos f env)  => Some (f, env)
       | None             => None
      end.
@@ -611,7 +611,7 @@ Section Lambda.
     unfold isClos.
     generalize (H e1 _ _ _ H0 H1) as Sub_e1_m_e1_n; intro.
     fold (Exp nat).
-    caseEq (project (G := ClosValue)
+    caseEq (project ClosValue V
       (boundedFix m (f_algebra (FAlgebra := eval_F))
         (fun _ : Env (Names.Value V) => Names.bot V) e1 gamma)).
     apply inject_project in H2; rename H2 into Eval_m.
@@ -626,13 +626,13 @@ Section Lambda.
     eapply H; eauto.
     eapply P2_Env_insert; eauto.
     unfold isBot.
-    caseEq (project (G := BotValue)
+    caseEq (project BotValue V
       (boundedFix m (f_algebra (FAlgebra := eval_F))
         (fun _ : Env (Names.Value V) => Names.bot V) e1 gamma)).
     destruct b.
     apply (inject_i (subGF := Sub_SV_Bot_SV)); constructor.
     eauto.
-    caseEq (project (G := ClosValue)
+    caseEq (project ClosValue V
       (boundedFix n (f_algebra (FAlgebra := eval_F))
         (fun _ : Env (Names.Value V) => Names.bot V) e1 gamma')).
     destruct c.
@@ -648,7 +648,7 @@ Section Lambda.
     unfold closure in H2.
     rewrite project_inject in H2.
     discriminate.
-    caseEq (project (G := BotValue)
+    caseEq (project BotValue V
       (boundedFix n (f_algebra (FAlgebra := eval_F))
         (fun _ : Env (Names.Value V) => Names.bot V) e1 gamma')).
     destruct b.
@@ -663,7 +663,7 @@ Section Lambda.
   Qed.
 
   Global Instance Lambda_eval_continuous_Exp :
-    FPAlgebra (eval_continuous_Exp_P V (F nat) SV) (inject' (Lambda nat)).
+    FPAlgebra (eval_continuous_Exp_P V (F nat) SV) (inject (Lambda nat) (F nat)).
   Proof.
     constructor; unfold PAlgebra; intros.
     apply ind_alg_Lambda.
@@ -683,7 +683,7 @@ Section Lambda.
   Context {ifun_EQV_E : forall A B, iFunctor (EQV_E A B)}.
   Context {ispf_EQV_E : forall A B, iSPF (EQV_E A B)}.
 
-  Definition E_eqv A B := iFix' (EQV_E A B).
+  Definition E_eqv A B := iFix (EQV_E A B).
   Definition E_eqvC {A B : Set} gamma gamma' e e' :=
     E_eqv _ _ (mk_eqv_i _ A B gamma gamma' e e').
 
@@ -877,7 +877,7 @@ Section Lambda.
   Defined.
 
   Lemma e4_irrelevance {A B : Set} {As Bs} (s : P2_Shape As Bs)
-        (f g : forall (a : Fix) (b : option DType),
+        (f g : forall (a : Fix V) (b : option DType),
                  P2_Index a b s -> exists T : DType, b = Some T)
   : f = g.
   Proof.
@@ -959,7 +959,7 @@ Section Lambda.
   Definition WF_invertClos_P (i : WFValue_i D V) :=
     WFValue _ _ WFV i /\
     forall t1 t2, wfv_b _ _ i = tarrow t1 t2 ->
-    WFValue_Clos  (iFix' WFV) i \/ WFValue_Bot _ _ (iFix' WFV) i.
+    WFValue_Clos  (iFix WFV) i \/ WFValue_Bot _ _ (iFix WFV) i.
 
   Inductive WF_invertClos_Name := wfv_invertclosure_name.
   Context {WF_invertClos_WFV :
@@ -1002,8 +1002,8 @@ Section Lambda.
 
   Definition WF_invertClos'_P  (i : WFValue_i D V) :=
     WFValue _ _ WFV i /\
-    forall v : ClosValue _, wfv_a _ _ i = inject v ->
-    WFValue_Clos  (iFix' WFV) i.
+    forall v : ClosValue _, wfv_a _ _ i = inject _ _ v ->
+    WFValue_Clos  (iFix WFV) i.
 
   Inductive WF_invertClos'_Name := wfv_invertclosure'_name.
   Context {WF_invertClos'_WFV :
@@ -1050,12 +1050,12 @@ Section Lambda.
     eapply ind_alg_SV_Clos with (P' := fun env env' => forall gamma,
       P2_Env (fun (v0 : Names.Value V) (T0 : option (Names.DType D)) =>
         match T0 with
-          | Some T1 => iFix' WFV {| wfv_a := v0; wfv_b := T1 |}
+          | Some T1 => iFix WFV {| wfv_a := v0; wfv_b := T1 |}
           | None => False
         end) env' gamma ->
       P2_Env (fun (v0 : Names.Value V) (T0 : option (Names.DType D)) =>
         match T0 with
-          | Some T1 => iFix' WFV {| wfv_a := v0; wfv_b := T1 |}
+          | Some T1 => iFix WFV {| wfv_a := v0; wfv_b := T1 |}
           | None => False
         end) env gamma); try eassumption; auto.
     unfold WF_Value_continuous_P; simpl; intros.
@@ -1139,7 +1139,7 @@ Section Lambda.
     apply eq_DType_eq in eq_t1; subst.
     generalize (IH a _ _ _ WF_gamma'' d eqv_a typeof_a); intros WF_a.
     unfold isTArrow in H0.
-    caseEq (project d); rename H1 into typeof_d;
+    caseEq (project LType D d); rename H1 into typeof_d;
       rewrite typeof_d in H0; try discriminate; destruct l.
     inversion H0; subst.
     apply inject_project in typeof_d.

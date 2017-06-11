@@ -54,16 +54,16 @@ Section NatCase.
   Context {Sub_NatCase_F : forall A, NatCase A :<: F A}.
   Context {WF_Sub_NatCase_F : forall A, WF_Functor _ _ (Sub_NatCase_F A)}.
 
-  Definition nvar {A : Set} n : Exp A := inject (NVar _ _ n).
-  Definition case {A : Set} n z s : Exp A := inject (Case _ _ n z s).
+  Definition nvar {A : Set} n : Exp A := inject (NatCase A) (F A) (NVar _ _ n).
+  Definition case {A : Set} n z s : Exp A := inject (NatCase A) (F A) (Case _ _ n z s).
 
   Definition ind_alg_NatCase {A : Set}
-    (P : Fix' (F A) -> Prop)
+    (P : Fix (F A) -> Prop)
     (Hnvar : forall x, P (nvar x))
     (Hcase : forall e1 e2 f, P e1 -> P e2 -> (forall a, P (f a)) -> P (case e1 e2 f))
-  : PAlgebra (inject' (NatCase A)) P :=
+  : PAlgebra (inject (NatCase A) (F A)) P :=
     fun xs =>
-      match xs return All P xs -> P (inject' (NatCase A) xs) with
+      match xs return All P xs -> P (inject (NatCase A) (F A) xs) with
         | NVar a       => fun _ => Hnvar a
         | Case e1 e2 f => fun Axs : forall p : _ + _, _ =>
                             Hcase e1 e2 f
@@ -186,7 +186,7 @@ Section NatCase.
     iPAlgebra SV_invertBot_Name (SV_invertBot_P V) SV}.
 
   Global Instance NatCase_eval_continuous_Exp  :
-    FPAlgebra (eval_continuous_Exp_P V (F nat) SV) (inject' (NatCase nat)).
+    FPAlgebra (eval_continuous_Exp_P V (F nat) SV) (inject (NatCase nat) (F nat)).
   Proof.
     constructor; unfold PAlgebra; intros.
     apply ind_alg_NatCase; auto; intros.
@@ -207,7 +207,7 @@ Section NatCase.
     unfold case, inject; simpl_beval.
     unfold isVI at 2.
     rewrite <- (P2_Env_length _ _ _ _ _ H1).
-    caseEq (project (G := NatValue) (beval V (F _) n e1 gamma')).
+    caseEq (project NatValue V (beval V (F _) n e1 gamma')).
     destruct n0.
     apply inject_project in H3; rename H3 into Eval_e1'.
     destruct (SV_invertVI' _ _ SubV_e1 _ Eval_e1') as [Eval_e1 | Eval_e1];
@@ -221,21 +221,21 @@ Section NatCase.
     rewrite isBot_bot.
     apply (inject_i (subGF := Sub_SV_Bot_SV)); constructor; reflexivity; auto.
     unfold isVI at 1.
-    caseEq (project (G := NatValue) (beval V (F nat) m e1 gamma)).
+    caseEq (project NatValue V (beval V (F nat) m e1 gamma)).
     destruct n0.
     apply inject_project in H4; rename H4 into Eval_e1.
     generalize (SV_invertVI _ _ SubV_e1 _ Eval_e1); simpl; intros Eval_e1'.
     rewrite Eval_e1' in H3.
     unfold vi in H3; rewrite project_inject in H3; discriminate.
     unfold isBot at 2.
-    caseEq (project (G := BotValue) (beval V (F nat) n e1 gamma')).
+    caseEq (project BotValue V (beval V (F nat) n e1 gamma')).
     destruct b.
     apply inject_project in H5; rename H5 into Eval_e1'.
     generalize (SV_invertBot _ SV _ SubV_e1 Eval_e1'); simpl; intro Eval_e1.
     rewrite Eval_e1, isBot_bot.
     apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; reflexivity.
     unfold isBot.
-    caseEq (project (G := BotValue) (beval V (F nat) m e1 gamma)).
+    caseEq (project BotValue V (beval V (F nat) m e1 gamma)).
     destruct b.
     apply (inject_i (subGF := Sub_SV_Bot_SV)); constructor; reflexivity; auto.
     apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; reflexivity.
@@ -249,7 +249,7 @@ Section NatCase.
   Context {ifun_EQV_E : forall A B, iFunctor (EQV_E A B)}.
   Context {ispf_EQV_E : forall A B, iSPF (EQV_E A B)}.
 
-  Definition E_eqv A B := iFix' (EQV_E A B).
+  Definition E_eqv A B := iFix (EQV_E A B).
   Definition E_eqvC {A B : Set} gamma gamma' e e' :=
     E_eqv _ _ (mk_eqv_i _ A B gamma gamma' e e').
 
@@ -356,7 +356,7 @@ Section NatCase.
       isTNat _ T = true -> T = tnat _.
   Proof.
     unfold isTNat; intros T.
-    caseEq (project (G := AType) T).
+    caseEq (project AType D T).
     apply inject_project in H.
     destruct a; exact H.
     discriminate.

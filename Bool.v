@@ -38,21 +38,21 @@ Section Bool.
    (* Constructor + Universal Property. *)
   Context {WF_Sub_BType_D : WF_Functor _ _ Sub_BType_D}.
 
-  Definition tbool : DType := inject (TBool _).
+  Definition tbool : DType := inject BType D (TBool _).
 
   (* Induction Principle for Bool Types. *)
   Definition ind_alg_BType
     (P : DType -> Prop)
-    (H : P tbool) : PAlgebra (inject' BType) P :=
+    (H : P tbool) : PAlgebra (inject BType D) P :=
     fun xs Axs =>
-      match xs return P (inject' BType xs) with
+      match xs return P (inject BType D xs) with
         | TBool => H
       end.
 
   (* Type Equality Section. *)
   Definition isTBool : DType -> bool :=
     fun typ =>
-      match project typ with
+      match project BType D typ with
         | Some TBool => true
         | None      => false
       end.
@@ -115,16 +115,16 @@ Section Bool.
   (* Constructor + Universal Property. *)
   Context {WF_Sub_Bool_F : WF_Functor _ _ Sub_Bool_F}.
   Definition blit (b : bool) : Exp :=
-    inject (BLit _ b).
+    inject Bool F (BLit _ b).
   Definition cond (i t e : Exp) : Exp :=
-    inject (If _ i t e).
+    inject Bool F (If _ i t e).
 
   (* Induction Principle for Bool. *)
   Definition ind_alg_Bool
-    (P : Fix' F -> Prop)
+    (P : Fix F -> Prop)
     (Hblit : forall b, P (blit b))
     (Hcond : forall i t e, P i -> P t -> P e -> P (cond i t e))
-      : PAlgebra (inject' Bool) P.
+      : PAlgebra (inject Bool F) P.
   Proof.
     intros xs Axs.
     destruct xs.
@@ -141,11 +141,11 @@ Section Bool.
     `{Fun_E' : SPF E'}
     {Sub_Bool_E : Bool :<: E}
     {Sub_Bool_E' : Bool :<: E'}
-    (P : (Fix' E) * (Fix' E') -> Prop)
-    (Hblit : forall b, P (inject2 (BLit _ b)))
+    (P : (Fix E) * (Fix E') -> Prop)
+    (Hblit : forall b, P (inject2 Bool E E' (BLit _ b)))
     (Hcond : forall i t e (IHi : P i) (IHt : P t) (IHe : P e),
-      P (inject2 (If _ i t e)))
-      : PAlgebra (inject2 (F := Bool) (G := E) (G' := E')) P.
+      P (inject2 Bool E E' (If _ i t e)))
+      : PAlgebra (inject2 Bool E E') P.
   Proof.
     intros xs Axs.
     destruct xs.
@@ -167,7 +167,7 @@ Section Bool.
   Definition Bool_typeof (R : Set) (rec : R -> typeofR D)
     (e : Bool R) : typeofR D :=
     match e with
-      | BLit n => Some (inject (TBool _))
+      | BLit n => Some (inject BType D (TBool _))
       | If i t e => match (rec i) with
                       | Some TI =>
                         match isTBool TI with
@@ -213,13 +213,13 @@ Section Bool.
   (* Constructor + Universal Property. *)
   Context {WF_Sub_BoolValue_F : WF_Functor _ _ Sub_BoolValue_V}.
 
-  Definition vb (b : bool) : Value := inject (VB _ b).
+  Definition vb (b : bool) : Value := inject BoolValue V (VB _ b).
 
   (* Constructor Testing for Boolmetic Values. *)
 
   Definition isVB : Value -> option bool :=
     fun exp =>
-      match project exp with
+      match project BoolValue V exp with
         | Some (VB b) => Some b
         | None        => None
       end.
@@ -238,29 +238,27 @@ Section Bool.
   Lemma isVB_bot : isVB (bot _) = None.
   Proof.
     unfold isVB, bot.
-    caseEq (project (G := BoolValue) (inject (Bot _))).
-    elimtype False.
-    eapply (inject_discriminate Dis_VB_Bot b).
-    unfold project, bot, inject', inject in H.
-    rewrite out_in_inverse in H.
-    apply inj_prj in H.
-    unfold inject; rewrite <- H.
-    reflexivity.
-    reflexivity.
+    caseEq (project BoolValue V (inject BotValue V (Bot _))).
+    - elimtype False.
+      eapply (inject_discriminate Dis_VB_Bot b).
+      unfold project, bot, inject in H.
+      rewrite out_in_inverse in H.
+      apply inj_prj in H.
+      now unfold inject; rewrite <- H.
+    - reflexivity.
   Qed.
 
-  Lemma isBot_vb (b : bool) : isBot V (inject (VB _ b)) = false.
+  Lemma isBot_vb (b : bool) : isBot V (inject BoolValue V (VB _ b)) = false.
   Proof.
     unfold isBot.
-    caseEq (project (G := BotValue) (inject (VB _ b))).
-    elimtype False.
-    eapply (inject_discriminate Dis_VB_Bot _ b0).
-    unfold project, vb, inject', inject in H.
-    rewrite out_in_inverse in H.
-    apply inj_prj in H.
-    unfold inject; rewrite <- H.
-    reflexivity.
-    reflexivity.
+    caseEq (project BotValue V (inject BoolValue V (VB _ b))).
+    - elimtype False.
+      eapply (inject_discriminate Dis_VB_Bot _ b0).
+      unfold project, vb, inject in H.
+      rewrite out_in_inverse in H.
+      apply inj_prj in H.
+      now unfold inject; rewrite <- H.
+    - reflexivity.
   Qed.
 
   Context {Sub_StuckValue_V : StuckValue :<: V}.
@@ -360,7 +358,7 @@ Section Bool.
     (sub_V'_V : V' :<: V)
     (WF_V' : WF_Functor V' V sub_V'_V),
     (forall (i : SubValue_i V) (H : SV' SV_invertVB_P i),
-      exists v', sv_a _ i = inject v') ->
+      exists v', sv_a _ i = inject V' V v') ->
     Distinct_Sub_Functor BoolValue V' V ->
     iPAlgebra SV_invertVB_Name SV_invertVB_P SV'.
   Proof.
@@ -373,11 +371,11 @@ Section Bool.
 
   Global Instance SV_invertVB_Bot :
     iPAlgebra SV_invertVB_Name SV_invertVB_P (SubValue_Bot V).
-    constructor; intros.
   Proof.
+    constructor; intros.
     unfold iAlgebra; intros; unfold SV_invertVB_P.
     inversion H; subst; simpl; intros.
-	discriminate_inject H0.
+    discriminate_inject H0.
   Defined.
 
   Definition SV_invertVB := ifold_ (if_algebra (iPAlgebra := SV_invertVB_SV)).
@@ -485,7 +483,7 @@ Section Bool.
   (* Inversion principles for Well-formed Booleans. *)
   Definition WF_invertVB_P (i : WFValue_i D V) :=
     wfv_b _ _ i = tbool ->
-    WFValue_VB (iFix' WFV) i \/ (wfv_a D V i = bot V).
+    WFValue_VB (iFix WFV) i \/ (wfv_a D V i = bot V).
 
   Inductive WF_invertVB_Name := wfv_invertvb_name.
   Context {WF_invertVB_WFV :
@@ -571,7 +569,7 @@ Section Bool.
     caseEq (eq_DType _ d0 d1); rewrite H in H4; rename H into eq_d0_d1.
     injection H4; intros; subst; clear H4.
     unfold isTBool in d_eq.
-    caseEq (project d); intros; rewrite H in d_eq;
+    caseEq (project BType D d); intros; rewrite H in d_eq;
       try discriminate; clear d_eq; rename H into d_eq; destruct b.
     apply inject_project in d_eq; eauto with typeclass_instances.
     unfold WFValueC in *|-*.
@@ -585,9 +583,9 @@ Section Bool.
     apply WF_t.
     apply eq_DType_eq in eq_d0_d1; auto; subst.
     apply WF_el.
-    rewrite H0; unfold bot at 1, isVB, project, inject', inject; simpl;
+    rewrite H0; unfold bot at 1, isVB, project, inject; simpl;
       rewrite out_in_inverse; repeat rewrite wf_functor; simpl.
-    caseEq (prj (Sub_Functor := Sub_BoolValue_V) (A:= Fix) (inj (Bot _))).
+    caseEq (prj (Sub_Functor := Sub_BoolValue_V) (A:= Fix _) (inj (Bot _))).
     discriminate_inject H.
     rewrite isBot_bot.
     apply (inject_i (subGF := Sub_WFV_Bot_WFV)); constructor; reflexivity.
@@ -614,11 +612,11 @@ Section Bool.
       Sub_Bool_E' (MAlgebra_typeof_Bool T) (Typeof_E' T)}
     (pb : P_bind)
     (eval_rec : Exp -> evalR V)
-    (typeof_rec : Fix' E' -> typeofR D)
+    (typeof_rec : Fix E' -> typeofR D)
     :
     FPAlgebra (eval_alg_Soundness_P D V F WFV _ P
       _ pb typeof_rec eval_rec (f_algebra (FAlgebra := Typeof_E' _))
-      (f_algebra (FAlgebra := eval_F))) (inject2 (F := Bool)).
+      (f_algebra (FAlgebra := eval_F))) (inject2 Bool E' F).
   Proof.
     constructor.
     apply ind2_alg_Bool;
@@ -628,12 +626,12 @@ Section Bool.
     rewrite (@wf_mixin _ _ _ _ _ _ _ (WF_typeof_E' _)) in H; simpl in H.
     (* BLit Case *)
     apply Bool_eval_Soundness_H with
-      (typeof_R := Fix' E') (eval_R := Exp)
+      (typeof_R := Fix E') (eval_R := Exp)
       (typeof_rec := typeof_rec) (eval_rec := eval_rec)
       (eval_F' := eval_F) (gamma'' := gamma''); auto.
     (* If Case *)
     apply Bool_eval_Soundness_H0 with
-      (typeof_R := Fix' E') (typeof_rec := typeof_rec)
+      (typeof_R := Fix E') (typeof_rec := typeof_rec)
       (eval_F' := eval_F) (i := fst i) (t := fst t) (el := fst e); auto.
     apply (IHa _ _ WF_gamma'' i); simpl; auto;
       intros; apply (IHi _ WF_gamma'' IHa); auto.
@@ -661,7 +659,7 @@ Section Bool.
   (* If case. *)
 
   Lemma eval_continuous_Exp_H0 : forall
-    (i t e : Fix' F)
+    (i t e : Fix F)
     (IHi : eval_continuous_Exp_P V F SV i)
     (IHt : eval_continuous_Exp_P V F SV t)
     (IHe : eval_continuous_Exp_P V F SV e),
@@ -674,7 +672,7 @@ Section Bool.
     generalize (H e _ _ _ H0 H1); simpl; intros SubV_e.
     unfold cond, inject; simpl_beval.
     unfold isVB at 2.
-    caseEq (project (G := BoolValue) (beval V F n i gamma')).
+    caseEq (project BoolValue V (beval V F n i gamma')).
     destruct b.
     apply inject_project in H2; fold (vb b) in H2; rename H2 into Eval_i'.
     destruct (SV_invertVB' _ SubV_i _ Eval_i') as [Eval_i | Eval_i];
@@ -683,28 +681,28 @@ Section Bool.
     rewrite isVB_bot, isBot_bot.
     apply (inject_i (subGF := Sub_SV_Bot_SV)); constructor; reflexivity.
     unfold isVB.
-    caseEq (project (G := BoolValue) (beval V F m i gamma)).
+    caseEq (project BoolValue V (beval V F m i gamma)).
     destruct b.
     apply inject_project in H3; rename H3 into Eval_i.
     generalize (SV_invertVB _ SubV_i _ Eval_i); simpl; intros Eval_i'.
     rewrite Eval_i' in H2.
     unfold vb in H2; rewrite project_inject in H2; discriminate.
     unfold isBot at 2.
-    caseEq (project (G := BotValue) (beval V F n i gamma')).
+    caseEq (project BotValue V (beval V F n i gamma')).
     destruct b.
     apply inject_project in H4; rename H4 into Eval_i'.
     generalize (SV_invertBot _ SV _ SubV_i Eval_i'); simpl; intro Eval_i.
     rewrite Eval_i, isBot_bot.
     apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; reflexivity.
     unfold isBot.
-    caseEq (project (G := BotValue) (beval V F m i gamma)).
+    caseEq (project BotValue V (beval V F m i gamma)).
     destruct b.
     apply (inject_i (subGF := Sub_SV_Bot_SV)); constructor; reflexivity.
     apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; reflexivity.
   Qed.
 
   Global Instance Bool_eval_continuous_Exp  :
-    FPAlgebra (eval_continuous_Exp_P V F SV) (inject' Bool).
+    FPAlgebra (eval_continuous_Exp_P V F SV) (inject Bool F).
   Proof.
     constructor.
     apply ind_alg_Bool.

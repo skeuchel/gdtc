@@ -79,19 +79,12 @@ Section Test_Section.
   Defined.
 
   Global Instance EV_Alg :
-    FPAlgebra (eval_continuous_Exp_P V (E nat) SV) (inject' (E nat)).
+    FPAlgebra (eval_continuous_Exp_P V (E nat) SV) (inject (E nat) (E nat)).
   Proof.
-    apply FPAlgebra_Plus_cont_inject.
-    eapply Arith_eval_continuous_Exp; unfold WF_FAlgebra;
-      simpl; eauto 200 with typeclass_instances.
-    generalize (@Lambda_eval_continuous_Exp
-             D _ _ _
-             E _ _ _ _
-             V _ _ _ _ _ _
-             SV _ _ _).
-    unfold Names.Exp.
-    intro H; apply H; eauto 200 with typeclass_instances.
-  Defined.
+    apply FPAlgebra_Plus_cont_inject; eauto 200 with typeclass_instances.
+    - generalize (@Lambda_eval_continuous_Exp D _ _ _ E _ _ _ _).
+      eauto 200 with typeclass_instances.
+  Qed.
 
   Definition eval_continuous : forall m,
     forall (e : Names.Exp (E nat)) (gamma gamma' : Env _),

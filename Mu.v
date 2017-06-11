@@ -57,15 +57,15 @@ Section Mu.
 
   Definition mu {A : Set}
     (t1 : DType D) (f : A -> Exp A) :
-    Exp A := inject (Mu _ _ t1 f).
+    Exp A := inject (Fix_ A) (F A)  (Mu _ _ t1 f).
 
   (* Induction Principle for PLambda. *)
   Definition ind_alg_Fix {A : Set}
     (P : Exp A -> Prop)
     (Hmu : forall d f, (forall a, P (f a)) -> P (mu d f))
-      : PAlgebra (inject' (Fix_ A)) P :=
+      : PAlgebra (inject (Fix_ A) (F A)) P :=
     fun xs =>
-      match xs return All P xs -> P (inject' (Fix_ A) xs) with
+      match xs return All P xs -> P (inject (Fix_ A) (F A) xs) with
         | Mu d f =>
           fun Axs : forall p : _ + _, _ => Hmu d f (fun a => Axs (inr a))
       end.
@@ -165,7 +165,7 @@ Section Mu.
   Qed.
 
   Global Instance Fix_eval_continuous_Exp :
-    FPAlgebra (eval_continuous_Exp_P V (F nat) SV) (inject' (Fix_ nat)).
+    FPAlgebra (eval_continuous_Exp_P V (F nat) SV) (inject (Fix_ nat) (F nat)).
   Proof.
     constructor; unfold PAlgebra; intros.
     apply ind_alg_Fix.
@@ -267,7 +267,7 @@ Section Mu.
   Variable typeof_rec : Exp (typeofR D) -> typeofR D.
 
   Context {eval_continuous_Exp_E :
-    FPAlgebra (eval_continuous_Exp_P V (F nat) SV) (inject' (F nat))}.
+    FPAlgebra (eval_continuous_Exp_P V (F nat) SV) (inject (F nat) (F nat))}.
 
   Global Instance Fix_Soundness : forall eval_rec,
     iPAlgebra soundness_XName
@@ -284,7 +284,6 @@ Section Mu.
     apply (inject_i (subGF := Sub_Fix_eqv_EQV_E _ _)); constructor; auto.
     intros; destruct (IHf a b) as [f_eqv _]; auto.
     unfold eval_alg_Soundness_P.
-    unfold Fix' in *.
     unfold beval, mu, inject; simpl; repeat rewrite wf_functor; simpl.
     repeat rewrite out_in_inverse.
     rewrite (wf_mixin (WF_Mixin := WF_eval_F)); simpl; intros.
@@ -316,7 +315,8 @@ Section Mu.
     unfold mu, inject.
     rewrite fold_computation, wf_functor, (wf_mixin (WF_Mixin := WF_typeof_F _));
       simpl; unfold id at 2; fold (typeof D _); intros.
-    unfold DType, Fix', typeofR in *.
+    unfold DType, typeofR in *.
     rewrite typeof_f, eq_d_d0; reflexivity.
   Defined.
+
 End Mu.

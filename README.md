@@ -1,6 +1,15 @@
 Generic Datatypes à la Carte
 ============================
 
+This repository contains the source code accompanying the paper
+
+[Keuchel, Steven, and Tom Schrijvers. "Generic datatypes à la carte."
+Proceedings of the 9th ACM SIGPLAN workshop on Generic programming. ACM, 2013](http://dl.acm.org/citation.cfm?id=2502491)
+
+which include the GDTC framework and the case-study ported from MTC to GDTC. The
+code has been tested with Coq version 8.4pl6; later versions may not work.
+
+
 Functors.v
 ----------
 

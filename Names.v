@@ -39,7 +39,7 @@ Section Names.
   Context {fun_DT : Functor DT}.
   Context {pfun_DT : PFunctor DT}.
   Context {spf_DT : SPF DT}.
-  Definition DType := Fix' DT.
+  Definition DType := Fix DT.
 
   (* ============================================== *)
   (* VALUES                                         *)
@@ -52,7 +52,7 @@ Section Names.
   Context {Fun_V : Functor V}.
   Context {PFun_V : PFunctor V}.
   Context {spf_V : SPF V}.
-  Definition Value := Fix' V.
+  Definition Value := Fix V.
 
   (** ERROR VALUES **)
 
@@ -69,19 +69,19 @@ Section Names.
     destruct x; reflexivity.
   Defined.
 
-  Definition stuck (n : nat) : Value := inject (Stuck _ n).
+  Definition stuck (n : nat) : Value := inject StuckValue V (Stuck _ n).
 
   (* Induction Principle for Stuckor Values. *)
 
   Definition ind_alg_Stuck (P : Value -> Prop) (H : forall n, P (stuck n)) :
-    PAlgebra (inject' StuckValue) P := fun xs Axs =>
-    match xs return P (inject' StuckValue xs) with
+    PAlgebra (inject StuckValue V) P := fun xs Axs =>
+    match xs return P (inject StuckValue V xs) with
       | Stuck n => H n
     end.
 
   Definition ind_palg_Stuck (P : Value -> Prop)
              (H : forall n, P (stuck n)) :
-    FPAlgebra P (inject' StuckValue) :=
+    FPAlgebra P (inject StuckValue V) :=
     {| p_algebra := ind_alg_Stuck P H |}.
 
   (** BOTTOM VALUES **)
@@ -102,13 +102,13 @@ Section Names.
   (* Constructor + Universal Property. *)
   Context {WF_SubBotValue_V : WF_Functor _ _ Sub_BotValue_V}.
 
-  Definition bot : Value := inject (F := V) (Bot _).
+  Definition bot : Value := inject BotValue V (Bot _).
   Hint Unfold bot.
 
   Definition ind_alg_Bot (P : Value -> Prop) (H : P bot) :
-    PAlgebra (inject' BotValue) P :=
+    PAlgebra (inject BotValue V) P :=
     fun xs Axs =>
-      match xs return P (inject' BotValue xs) with
+      match xs return P (inject BotValue V xs) with
         | Bot => H
       end.
 
@@ -116,7 +116,7 @@ Section Names.
 
   Definition isBot : Value -> bool :=
     fun exp =>
-      match project exp with
+      match project BotValue V exp with
        | Some Bot  => true
        | None      => false
       end.
@@ -124,8 +124,7 @@ Section Names.
   Lemma isBot_bot : isBot bot = true.
   Proof.
     unfold isBot, bot.
-    rewrite project_inject.
-    reflexivity.
+    now rewrite project_inject.
   Qed.
 
 
@@ -138,7 +137,7 @@ Section Names.
   Context {Fun_E : Functor E}.
   Context {PFun_E : PFunctor E}.
   Context {spf_E : SPF E}.
-  Definition Exp := Fix' E.
+  Definition Exp := Fix E.
 
   (* ============================================== *)
   (* OPERATIONS                                     *)
@@ -423,7 +422,7 @@ Section Names.
 
     Variable SV : (SubValue_i -> Prop) -> SubValue_i -> Prop.
     Context `{ispf_SV : iSPF _ SV}.
-    Definition SubValue := iFix' SV.
+    Definition SubValue := iFix SV.
     Definition SubValueC V1 V2:= SubValue (mk_SubValue_i V1 V2).
 
     (** Subvalue is reflexive **)
@@ -483,11 +482,11 @@ Section Names.
 
   (** Bot is Bottom element for this relation **)
   Inductive SubValue_Bot (A : SubValue_i -> Prop) : SubValue_i -> Prop :=
-    SV_Bot : forall v v', v = inject (Bot _) ->
+    SV_Bot : forall v v', v = inject BotValue V (Bot _) ->
       SubValue_Bot A (mk_SubValue_i v v').
 
   Inductive SV_Bot_S : SubValue_i -> Set :=
-    SSV_Bot : forall v (v' : Value), v = inject (Bot _) ->
+    SSV_Bot : forall v (v' : Value), v = inject BotValue V (Bot _) ->
       SV_Bot_S (mk_SubValue_i v v').
   Inductive SV_Bot_P : forall (i : SubValue_i), SV_Bot_S i -> Set :=.
   Definition SV_Bot_R (i : SubValue_i) (s : SV_Bot_S i) (p : SV_Bot_P i s) :
@@ -527,7 +526,7 @@ Section Names.
   Defined.
 
   Definition ind_alg_SV_Bot (P : SubValue_i -> Prop)
-    (H : forall v v', v = inject (Bot _) -> P (mk_SubValue_i v v'))
+    (H : forall v v', v = inject BotValue V (Bot _) -> P (mk_SubValue_i v v'))
     i (e : SubValue_Bot P i) : P i :=
     match e in SubValue_Bot _ i return P i with
       | SV_Bot v v' eq_v => H v v' eq_v
@@ -590,7 +589,7 @@ Section Names.
     Inductive EC_ExpName := ec_expname.
 
     Context {eval_continuous_Exp_E :
-      FPAlgebra (eval_continuous_Exp_P) (inject' E)}.
+      FPAlgebra (eval_continuous_Exp_P) (inject E E)}.
 
     (** Evaluation is continuous. **)
     Lemma beval_continuous : forall m,
@@ -619,14 +618,14 @@ Section Names.
 
     Variable WFV : (WFValue_i -> Prop) -> WFValue_i -> Prop.
     Context `{ispf_WFV : iSPF _ WFV}.
-    Definition WFValue := iFix' WFV.
+    Definition WFValue := iFix WFV.
     Definition WFValueC V T:= WFValue (mk_WFValue_i V T).
 
     (** Bottom is well-formed **)
 
     Inductive WFValue_Bot (A : WFValue_i -> Prop) : WFValue_i -> Prop :=
       WFV_Bot : forall v T,
-        v = inject (Bot _) ->
+        v = inject BotValue V (Bot _) ->
         WFValue_Bot A (mk_WFValue_i v T).
 
     Inductive WFV_Bot_S : WFValue_i -> Set :=
@@ -733,14 +732,14 @@ Section Names.
       (E' : Set -> Set)
       `{spf_E' : SPF E'}
       (pb : P_bind)
-      (typeof_rec : Fix' E' -> typeofR)
+      (typeof_rec : Fix E' -> typeofR)
       (eval_rec : Exp -> evalR)
-      (typeof_F : Mixin (Fix' E') E' typeofR)
+      (typeof_F : Mixin (Fix E') E' typeofR)
       (eval_F : Mixin Exp E evalR)
-      (e : (Fix' E') * (Fix' E)) :=
+      (e : (Fix E') * (Fix E)) :=
       forall
       gamma'' (WF_gamma'' : P pb gamma'')
-      (IHa : forall pb gamma'' (WF_gamma'' : P pb gamma'') (a : (Fix' E' * Exp)),
+      (IHa : forall pb gamma'' (WF_gamma'' : P pb gamma'') (a : (Fix E' * Exp)),
           (forall T,
             typeof_F typeof_rec (out_t (fst a)) = Some T ->
             WFValueC (eval_F eval_rec (out_t (snd a)) gamma'') T) ->
@@ -754,7 +753,7 @@ Section Names.
       FPAlgebra (eval_alg_Soundness_P unit (fun _ _ => True) _ tt
         typeof_rec eval_rec
         (f_algebra (FAlgebra := Typeof_E _))
-        (f_algebra (FAlgebra := eval_E _))) (inject2 (F := E))}.
+        (f_algebra (FAlgebra := eval_E _))) (inject2 E E E)}.
 
 
     Lemma eval_Soundness : forall (e : Exp),

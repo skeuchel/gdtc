@@ -50,21 +50,21 @@ Section Arith.
   (* Constructor . *)
   Context {WF_Sub_AType_D : WF_Functor _ _ Sub_AType_D}.
 
-  Definition tnat : DType := inject (TNat _).
+  Definition tnat : DType := inject AType D (TNat _).
 
   (* Induction Principle for Nat Types. *)
   Definition ind_alg_AType
     (P : DType -> Prop)
-    (H : P tnat) : PAlgebra (inject' AType) P :=
+    (H : P tnat) : PAlgebra (inject AType D) P :=
     fun xs Axs =>
-      match xs return P (inject' AType xs) with
+      match xs return P (inject AType D xs) with
         | TNat => H
       end.
 
   (* Type Equality Section. *)
   Definition isTNat : DType -> bool :=
    fun typ =>
-     match project typ with
+     match project AType D typ with
       | Some TNat => true
       | None      => false
      end.
@@ -142,16 +142,16 @@ Section Arith.
 
   (* Constructor + Universal Property. *)
   Context {WF_Sub_Arith_F : WF_Functor _ _ Sub_Arith_F}.
-  Definition lit (n : nat) : Exp := inject (Lit _ n).
-  Definition add (m n : Exp) : Exp :=  inject (Add _ m n).
+  Definition lit (n : nat) : Exp := inject Arith F (Lit _ n).
+  Definition add (m n : Exp) : Exp :=  inject Arith F (Add _ m n).
 
   (* Induction Principles for Arith. *)
   Definition ind_alg_Arith
-    (P : Fix' F -> Prop)
+    (P : Fix F -> Prop)
     (Hlit : forall n, P (lit n))
     (Hadd : forall m n, P m -> P n -> P (add m n))
-      : PAlgebra (inject' Arith) P :=
-    fun xs => match xs return (All P xs -> P (inject xs)) with
+      : PAlgebra (inject Arith F) P :=
+    fun xs => match xs return (All P xs -> P (inject Arith F xs)) with
                 | Lit n => fun Axs => Hlit n
                 | Add m n => fun Axs => Hadd m n (Axs (inl _ tt)) (Axs (inr _ tt))
                 (* | Add m n => fun Axs => Hadd m n (Axs PAdd1) (Axs PAdd2) *)
@@ -163,12 +163,12 @@ Section Arith.
     `{SPF_E' : SPF E'}
     {Sub_Arith_E : Arith :<: E}
     {Sub_Arith_E' : Arith :<: E'}
-    (P : (Fix' E) * (Fix' E') -> Prop)
-    (Hlit : forall n, P (inject2 (Lit _ n)))
+    (P : (Fix E) * (Fix E') -> Prop)
+    (Hlit : forall n, P (inject2 Arith E E' (Lit _ n)))
     (Hadd : forall m n (IHm : P m) (IHn : P n),
-      P (inject2 (Add _ m n)))
-  : PAlgebra (inject2 (F := Arith) (G := E) (G' := E')) P :=
-    fun xs => match xs return (All P xs -> P (inject2 xs)) with
+      P (inject2 Arith E E' (Add _ m n)))
+  : PAlgebra (inject2 Arith E E') P :=
+    fun xs => match xs return (All P xs -> P (inject2 Arith E E' xs)) with
                 | Lit n => fun Axs => Hlit n
                 | Add m n => fun Axs => Hadd m n (Axs (inl _ tt)) (Axs (inr _ tt))
                 (* | Add m n => fun Axs => Hadd m n (Axs PAdd1) (Axs PAdd2) *)
@@ -230,13 +230,13 @@ Section Arith.
   (* Constructor + Universal Property. *)
   Context {WF_Sub_NatValue_F : WF_Functor _ _ Sub_NatValue_V}.
 
-  Definition vi (n : nat) : Value := inject (VI _ n).
+  Definition vi (n : nat) : Value := inject NatValue V (VI _ n).
 
   (* Constructor Testing for Arithmetic Values. *)
 
-  Definition isVI : Fix' V -> option nat :=
+  Definition isVI : Fix V -> option nat :=
     fun exp =>
-      match project exp with
+      match project NatValue V exp with
         | Some (VI n) => Some n
         | None        => None
       end.
@@ -379,7 +379,7 @@ Section Arith.
     (sub_V'_V : V' :<: V)
     (WF_V' : WF_Functor V' V sub_V'_V),
     (forall (i : SubValue_i V) (H : SV' SV_invertVI_P i),
-      exists v', sv_a _ i = inject v') ->
+      exists v', sv_a _ i = inject V' V v') ->
     Distinct_Sub_Functor NatValue V' V ->
     iPAlgebra SV_invertVI_Name SV_invertVI_P SV'.
   Proof.
@@ -434,25 +434,25 @@ Section Arith.
 
   Lemma project_bot_vi :
     forall n,
-      project (F := V) (G := BotValue) (vi n) = None.
+      project BotValue V (vi n) = None.
   Proof.
     intros; crush_project.
   Qed.
 
-  Lemma project_vi_bot : project (F := V) (G := NatValue) (bot _) = None.
+  Lemma project_vi_bot : project NatValue V (bot _) = None.
   Proof.
     intros; crush_project.
   Qed.
 
   Lemma project_vi_vi :
     forall n,
-      project (F := V) (G := NatValue) (vi n) = Some (VI _ n).
+      project NatValue V (vi n) = Some (VI _ n).
   Proof.
     intros; unfold vi; rewrite project_inject; reflexivity.
   Qed.
 
   Lemma eval_continuous_Exp_H0 : forall
-    (m n : Fix' F)
+    (m n : Fix F)
     (IHm : eval_continuous_Exp_P V F SV m)
     (IHn : eval_continuous_Exp_P V F SV n),
     eval_continuous_Exp_P V F SV (add m n).
@@ -461,24 +461,24 @@ Section Arith.
     generalize (H m _ _ _ H0 H1); simpl; intros SubV_m.
     generalize (H n _ _ _ H0 H1); simpl; intros SubV_n.
     unfold isVI at 1.
-    caseEq (project (G := NatValue) (beval V F m0 m gamma)).
+    caseEq (project NatValue V (beval V F m0 m gamma)).
     destruct n1.
     apply inject_project in H2; fold (vi n1) in H2; rename H2 into Eval_m.
     generalize (SV_invertVI _ SubV_m _ Eval_m); simpl; intros Eval_m'.
     rewrite Eval_m, Eval_m', isVI_vi, isBot_vi.
     unfold isVI at 1.
-    caseEq (project (G := NatValue) (beval V F m0 n gamma)).
+    caseEq (project NatValue V (beval V F m0 n gamma)).
     destruct n2.
     apply inject_project in H2; rename H2 into Eval_n.
     generalize (SV_invertVI _ SubV_n _ Eval_n); simpl; intros Eval_n'.
     rewrite Eval_n', isVI_vi.
     apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; eauto.
     unfold isBot at 1.
-    caseEq (project (G := BotValue) (beval V F m0 n gamma)).
+    caseEq (project BotValue V (beval V F m0 n gamma)).
     destruct b.
     apply inject_i; constructor; reflexivity.
     unfold isVI at 1.
-    caseEq (project (G := NatValue) (beval V F n0 n gamma')).
+    caseEq (project NatValue V (beval V F n0 n gamma')).
     destruct n2.
     apply inject_project in H4; rename H4 into Eval_n'.
     destruct (SV_invertVI' _ SubV_n _ Eval_n') as [n_eq_vi | n_eq_bot];
@@ -488,7 +488,7 @@ Section Arith.
     rewrite n_eq_bot in H3; unfold bot in H3;
       rewrite project_inject in H3; discriminate.
     unfold isBot.
-    caseEq (project (G := BotValue) (beval V F n0 n gamma')).
+    caseEq (project BotValue V (beval V F n0 n gamma')).
     destruct b.
     apply inject_project in H5; rename H5 into Eval_n'.
     generalize (SV_invertBot _ SV _ SubV_n Eval_n').
@@ -496,15 +496,15 @@ Section Arith.
       rewrite Eval_n, project_inject in H3; discriminate.
     apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; eauto.
     unfold isBot at 1.
-    caseEq (project (G := BotValue) (beval V F m0 m gamma)).
+    caseEq (project BotValue V (beval V F m0 m gamma)).
     destruct b.
     apply (inject_i (subGF := Sub_SV_Bot_SV)); constructor; eauto.
     unfold isBot at 1.
-    caseEq (project (G := BotValue) (beval V F m0 n gamma)).
+    caseEq (project BotValue V (beval V F m0 n gamma)).
     destruct b.
     apply (inject_i (subGF := Sub_SV_Bot_SV)); constructor; eauto.
     unfold isVI at 1.
-    caseEq (project (G := NatValue) (beval V F n0 m gamma')).
+    caseEq (project NatValue V (beval V F n0 m gamma')).
     destruct n1.
     apply inject_project in H5; rename H5 into Eval_m'.
     destruct (SV_invertVI' _ SubV_m _ Eval_m') as [n_eq_vi | n_eq_bot];
@@ -514,14 +514,14 @@ Section Arith.
     rewrite n_eq_bot in H3; unfold bot in H3;
       rewrite project_inject in H3; discriminate.
     unfold isBot at 1.
-    caseEq (project (G := BotValue) (beval V F n0 m gamma')).
+    caseEq (project BotValue V (beval V F n0 m gamma')).
     destruct b.
     apply inject_project in H6; rename H6 into Eval_m'.
     generalize (SV_invertBot _ SV _ SubV_m Eval_m').
-    simpl; unfold bot, inject'; intros Eval_m.
+    simpl; unfold bot; intros Eval_m.
     rewrite Eval_m, project_inject in H3; discriminate.
     unfold isBot at 1.
-    caseEq (project (G := BotValue) (beval V F n0 n gamma')).
+    caseEq (project BotValue V (beval V F n0 n gamma')).
     destruct b.
     apply inject_project in H7; rename H7 into Eval_n'.
     generalize (SV_invertBot _ SV _ SubV_n Eval_n').
@@ -530,13 +530,13 @@ Section Arith.
     apply (inject_i (subGF := Sub_SV_refl_SV)); constructor; eauto.
   Qed.
 
-  Lemma project_bot_bot : project (F := V) (G := BotValue) (bot _) = Some (Bot _).
+  Lemma project_bot_bot : project BotValue V (bot _) = Some (Bot _).
   Proof.
     intros; unfold bot; rewrite project_inject; reflexivity.
   Qed.
 
   Global Instance Arith_eval_continuous_Exp :
-    FPAlgebra (eval_continuous_Exp_P V F SV) (inject' Arith).
+    FPAlgebra (eval_continuous_Exp_P V F SV) (inject Arith F).
   Proof.
     constructor; unfold Algebra; intros.
     eapply ind_alg_Arith.
@@ -544,7 +544,7 @@ Section Arith.
     apply eval_continuous_Exp_H0.
   Defined.
 
-  Context {eval_continuous_Exp_E : FPAlgebra (eval_continuous_Exp_P V F SV) (inject' F)}.
+  Context {eval_continuous_Exp_E : FPAlgebra (eval_continuous_Exp_P V F SV) (inject F F)}.
 
   (* ============================================== *)
   (* WELL-FORMED NAT VALUES                         *)
@@ -612,7 +612,7 @@ Section Arith.
   (* Inversion principles for Well-formed natural numbers. *)
   Definition WF_invertVI_P (i : WFValue_i D V) :=
     wfv_b _ _ i = tnat ->
-    WFValue_VI (iFix' WFV) i \/ (wfv_a D V i = bot V).
+    WFValue_VI (iFix WFV) i \/ (wfv_a D V i = bot V).
 
   Inductive WF_invertVI_Name := wfv_invertvi_name.
   Context {WF_invertVI_WFV :
@@ -684,9 +684,9 @@ Section Arith.
       d0_eq in H4; try discriminate.
     injection H4; intros; subst; clear H4.
     unfold isTNat in d_eq, d0_eq.
-    caseEq (project d); intros; rewrite H in d_eq;
+    caseEq (project AType D d); intros; rewrite H in d_eq;
       try discriminate; clear d_eq; rename H into d_eq; destruct a0.
-    caseEq (project d0); intros; rewrite H in d0_eq;
+    caseEq (project AType D d0); intros; rewrite H in d0_eq;
       try discriminate; clear d0_eq; rename H into d0_eq; destruct a0.
     apply inject_project in d_eq; apply inject_project in d0_eq.
     generalize (IH_a _ typeof_a) as WF_a;
@@ -723,11 +723,11 @@ Section Arith.
       Sub_Arith_E' (MAlgebra_typeof_Arith T) (Typeof_E' T)}
     (pb : P_bind)
     (eval_rec : Exp -> evalR V)
-    (typeof_rec : Fix' E' -> typeofR D)
+    (typeof_rec : Fix E' -> typeofR D)
     :
     FPAlgebra (eval_alg_Soundness_P D V F WFV _ P
       _ pb typeof_rec eval_rec (f_algebra (FAlgebra := Typeof_E' _))
-      (f_algebra (FAlgebra := eval_F))) (inject2 (F := Arith)).
+      (f_algebra (FAlgebra := eval_F))) (inject2 Arith E' F).
   Proof.
     constructor.
       apply ind2_alg_Arith;
@@ -737,12 +737,12 @@ Section Arith.
       rewrite (@wf_mixin _ _ _ _ _ _ _ (WF_typeof_E' _)) in H; simpl in H.
       (* Lit Case *)
       apply Arith_eval_Soundness_H with
-        (typeof_R := Fix' E') (eval_R := Exp)
+        (typeof_R := Fix E') (eval_R := Exp)
         (typeof_rec := typeof_rec) (eval_rec := eval_rec)
         (eval_F' := eval_F) (gamma'' := gamma''); auto.
       (* Add Case *)
       apply Arith_eval_Soundness_H0 with
-        (typeof_R := Fix' E') (typeof_rec := typeof_rec)
+        (typeof_R := Fix E') (typeof_rec := typeof_rec)
         (eval_F' := eval_F) (a := fst m) (b := fst n); auto.
       apply (IHa _ _ WF_gamma'' m); simpl; auto;
         intros; apply (IHm _ WF_gamma'' IHa); auto.

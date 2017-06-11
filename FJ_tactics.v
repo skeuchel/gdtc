@@ -259,6 +259,8 @@ Fixpoint distinct (A : Type) (l : list A) : Prop :=
     | cons a l' => (~ In a l') /\ distinct A l'
   end.
 
+Arguments distinct {A} l.
+
 Lemma nth_error_map : forall A B (f : A -> B) As n a,
   nth_error As n = Some a -> nth_error (map f As) n = Some (f a).
   clear; induction As; destruct n; simpl; intros; try discriminate.
@@ -282,9 +284,6 @@ Lemma map_nth_error' : forall A B (f : A -> B) As n,
   nth_error (map f As) n = None -> nth_error As n = None.
   clear; induction As; destruct n; simpl; intros; try discriminate; auto.
 Qed.
-
-
-Implicit Arguments distinct [A].
 
   Lemma distinct_sym : forall B (Bs Bs' : list B), distinct (Bs ++ Bs') -> distinct (Bs' ++ Bs).
     clear; induction Bs; simpl.

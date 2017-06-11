@@ -61,8 +61,8 @@ Section PNames.
     Record eqv_i (A B : Set) : Set := mk_eqv_i
       {env_A : Env A;
         env_B : Env B;
-        eqv_a : Fix' (E A);
-        eqv_b : Fix' (E B)}.
+        eqv_a : Fix (E A);
+        eqv_b : Fix (E B)}.
 
     (** SuperFunctor for Equivalence Relation. **)
     Variable EQV_E : forall A B,
@@ -70,7 +70,7 @@ Section PNames.
     Context {ifun_EQV_E : forall A B, iFunctor (EQV_E A B)}.
     Context {ispf_EQV_E : forall A B, iSPF (EQV_E A B)}.
 
-    Definition E_eqv A B := iFix' (EQV_E A B).
+    Definition E_eqv A B := iFix (EQV_E A B).
     Definition E_eqvC {A B : Set} gamma gamma' e e' :=
       E_eqv _ _ (mk_eqv_i A B gamma gamma' e e').
 
@@ -86,8 +86,8 @@ Section PNames.
       e e' (np : forall D : Set, NP D)
       (np_all : forall (D : Set) (P : D -> Prop),
                   All P (np D)),
-      e = inject (subGF := sub_NP_F A) (np _) ->
-      e' = inject (subGF := sub_NP_F B) (np _) ->
+      e = inject _ _ (subFG := sub_NP_F A) (np _) ->
+      e' = inject _ _ (subFG := sub_NP_F B) (np _) ->
       (forall (A' B' C' : Set) (f : A' -> C') (g : B' -> C'),
         fmap f (np A') = fmap g (np B')) ->
       NP_Functor_eqv A B C (mk_eqv_i _ _ gamma gamma' e e')
@@ -96,8 +96,8 @@ Section PNames.
       (np_all : forall (D : Set) (P : D -> Prop) (d : D),
                   P d -> All P (np _ d))
       a a',
-      e = inject (subGF := sub_NP_F A) (np _ a) ->
-      e' = inject (subGF := sub_NP_F B) (np _ a') ->
+      e = inject _ _ (subFG := sub_NP_F A) (np _ a) ->
+      e' = inject _ _ (subFG := sub_NP_F B) (np _ a') ->
       C (mk_eqv_i _ _ gamma gamma' a a') ->
       (forall (A' B' C' : Set) (f : A' -> C') (g : B' -> C')
         (a' : A') (b' : B'), f a' = g b' ->
@@ -108,8 +108,8 @@ Section PNames.
       (np_all : forall (D : Set) (P : D -> Prop) (d1 d2 : D),
                   P d1 -> P d2 -> All P (np _ d1 d2))
       a a' b b',
-      e = inject (subGF := sub_NP_F A) (np _ a b) ->
-      e' = inject (subGF := sub_NP_F B) (np _ a' b') ->
+      e = inject _ _ (subFG := sub_NP_F A) (np _ a b) ->
+      e' = inject _ _ (subFG := sub_NP_F B) (np _ a' b') ->
       C (mk_eqv_i _ _ gamma gamma' a a') ->
       C (mk_eqv_i _ _ gamma gamma' b b') ->
       (forall (A' B' C' : Set) (f : A' -> C') (g : B' -> C')
@@ -121,8 +121,8 @@ Section PNames.
       (np_all : forall (D : Set) (P : D -> Prop) (d1 d2 d3 : D),
                   P d1 -> P d2 -> P d3 -> All P (np _ d1 d2 d3))
       a a' b b' c c',
-      e = inject (subGF := sub_NP_F A) (np _ a b c) ->
-      e' = inject (subGF := sub_NP_F B) (np _ a' b' c') ->
+      e = inject _ _ (subFG := sub_NP_F A) (np _ a b c) ->
+      e' = inject _ _ (subFG := sub_NP_F B) (np _ a' b' c') ->
       C (mk_eqv_i _ _ gamma gamma' a a') ->
       C (mk_eqv_i _ _ gamma gamma' b b') ->
       C (mk_eqv_i _ _ gamma gamma' c c') ->
@@ -139,8 +139,8 @@ Section PNames.
       e e' (np : forall D : Set, NP D)
       (np_all : forall (D : Set) (P : D -> Prop),
                   All P (np D)),
-      e = inject (subGF := sub_NP_F A) (np _) ->
-      e' = inject (subGF := sub_NP_F B) (np _) ->
+      e = inject _ _ (subFG := sub_NP_F A) (np _) ->
+      e' = inject _ _ (subFG := sub_NP_F B) (np _) ->
       (forall (A' B' C' : Set) (f : A' -> C') (g : B' -> C'),
         fmap f (np A') = fmap g (np B')) ->
       NP_Functor_eqv_S A B (mk_eqv_i _ _ gamma gamma' e e')
@@ -149,8 +149,8 @@ Section PNames.
       (np_all : forall (D : Set) (P : D -> Prop) (d : D),
                   P d -> All P (np _ d))
       a a',
-      e = inject (subGF := sub_NP_F A) (np _ a) ->
-      e' = inject (subGF := sub_NP_F B) (np _ a') ->
+      e = inject _ _ (subFG := sub_NP_F A) (np _ a) ->
+      e' = inject _ _ (subFG := sub_NP_F B) (np _ a') ->
       (forall (A' B' C' : Set) (f : A' -> C') (g : B' -> C')
         (a' : A') (b' : B'), f a' = g b' ->
         fmap f (np A' a') = fmap g (np B' b')) ->
@@ -160,8 +160,8 @@ Section PNames.
       (np_all : forall (D : Set) (P : D -> Prop) (d1 d2 : D),
                   P d1 -> P d2 -> All P (np _ d1 d2))
       a a' b b',
-      e = inject (subGF := sub_NP_F A) (np _ a b) ->
-      e' = inject (subGF := sub_NP_F B) (np _ a' b') ->
+      e = inject _ _ (subFG := sub_NP_F A) (np _ a b) ->
+      e' = inject _ _ (subFG := sub_NP_F B) (np _ a' b') ->
       (forall (A' B' C' : Set) (f : A' -> C') (g : B' -> C')
         (a' a'' : A') (b' b'' : B'), f a' = g b' -> f a'' = g b'' ->
         fmap f (np A' a' a'') = fmap g (np B' b' b'')) ->
@@ -171,8 +171,8 @@ Section PNames.
       (np_all : forall (D : Set) (P : D -> Prop) (d1 d2 d3 : D),
                   P d1 -> P d2 -> P d3 -> All P (np _ d1 d2 d3))
       a a' b b' c c',
-      e = inject (subGF := sub_NP_F A) (np _ a b c) ->
-      e' = inject (subGF := sub_NP_F B) (np _ a' b' c') ->
+      e = inject _ _ (subFG := sub_NP_F A) (np _ a b c) ->
+      e' = inject _ _ (subFG := sub_NP_F B) (np _ a' b' c') ->
       (forall (A' B' C' : Set) (f : A' -> C') (g : B' -> C')
         (a' a'' a''' : A') (b' b'' b''' : B'),
         f a' = g b' -> f a'' = g b'' -> f a''' = g b''' ->
@@ -396,7 +396,7 @@ Section PNames.
 
     Context {eval_Soundness_alg_NP : forall pb typeof_rec eval_rec,
       FPAlgebra (eval_alg_Soundness_P D V (E nat) WFV _ WF_eqv_environment_P (E (typeofR D)) pb typeof_rec eval_rec
-        (f_algebra (FAlgebra := Typeof_E _)) (f_algebra (FAlgebra := beval_E))) (inject2 (F := NP))}.
+        (f_algebra (FAlgebra := Typeof_E _)) (f_algebra (FAlgebra := beval_E))) (inject2 NP _ _)}.
 
     Variable WF_WFV_Bot_WFV : Sub_iFunctor (WFValue_Bot D V) WFV.
 
@@ -407,7 +407,7 @@ Section PNames.
     Context {WF_eval_F : @WF_FAlgebra EvalName _ _ NP (E _)
       (sub_NP_F _) beval_NP (eval_E _)}.
     Context {WF_typeof_F : @WF_FAlgebra TypeofName _ _ NP (E _)
-      (sub_NP_F _) (Typeof_NP _) (Typeof_E (Fix' (E (typeofR D))))}.
+      (sub_NP_F _) (Typeof_NP _) (Typeof_E (Fix (E (typeofR D))))}.
 
     Global Instance eqv_eval_Soundness typeof_rec eval_rec :
       iPAlgebra eqv_eval_SoundnessName
@@ -423,9 +423,9 @@ Section PNames.
       apply inject_i; econstructor; eauto.
       rewrite e_eq, e'_eq.
       generalize (p_algebra (FPAlgebra := eval_Soundness_alg_NP (gamma, gamma') typeof_rec eval_rec) (np _)).
-      unfold inject2, Fix'.
-      rewrite (wf_np _ _ _ (@fst (Fix' (E (typeofR D))) (Fix' (E nat))) id).
-      rewrite (wf_np _ _ _ (@snd (Fix' (E (typeofR D))) (Fix' (E nat))) id).
+      unfold inject2.
+      rewrite (wf_np _ _ _ (@fst (Fix (E (typeofR D))) (Fix (E nat))) id).
+      rewrite (wf_np _ _ _ (@snd (Fix (E (typeofR D))) (Fix (E nat))) id).
       repeat rewrite fmap_id.
       intros H0; apply H0.
       apply np_all.
@@ -434,9 +434,9 @@ Section PNames.
       apply inject_i; econstructor 2; eauto.
       rewrite e_eq, e'_eq.
       generalize (p_algebra (FPAlgebra := eval_Soundness_alg_NP (gamma, gamma') typeof_rec eval_rec) (np _ (a,a'))).
-      unfold inject2, Fix'.
-      rewrite (wf_np _ _ _ (@fst (Fix' (E (typeofR D))) (Fix' (E nat))) id _ a); auto.
-      rewrite (wf_np _ _ _ (@snd (Fix' (E (typeofR D))) (Fix' (E nat))) id _ a'); auto.
+      unfold inject2.
+      rewrite (wf_np _ _ _ (@fst (Fix (E (typeofR D))) (Fix (E nat))) id _ a); auto.
+      rewrite (wf_np _ _ _ (@snd (Fix (E (typeofR D))) (Fix (E nat))) id _ a'); auto.
       repeat rewrite fmap_id.
       intros H0; apply H0.
       apply np_all; auto.
@@ -446,9 +446,9 @@ Section PNames.
       apply inject_i; econstructor 3; eauto.
       rewrite e_eq, e'_eq.
       generalize (p_algebra (FPAlgebra := eval_Soundness_alg_NP (gamma, gamma') typeof_rec eval_rec) (np _ (a,a') (b,b'))).
-      unfold inject2, Fix'.
-      rewrite (wf_np _ _ _ (@fst (Fix' (E (typeofR D))) (Fix' (E nat))) id _ _ a b); auto.
-      rewrite (wf_np _ _ _ (@snd (Fix' (E (typeofR D))) (Fix' (E nat))) id _ _ a' b'); auto.
+      unfold inject2.
+      rewrite (wf_np _ _ _ (@fst (Fix (E (typeofR D))) (Fix (E nat))) id _ _ a b); auto.
+      rewrite (wf_np _ _ _ (@snd (Fix (E (typeofR D))) (Fix (E nat))) id _ _ a' b'); auto.
       repeat rewrite fmap_id.
       intros H0; apply H0.
       apply np_all; auto.
@@ -458,9 +458,9 @@ Section PNames.
       apply inject_i; econstructor 4; eauto.
       rewrite e_eq, e'_eq.
       generalize (p_algebra (FPAlgebra := eval_Soundness_alg_NP (gamma, gamma') typeof_rec eval_rec) (np _ (a,a') (b,b') (c,c'))).
-      unfold inject2, Fix'.
-      rewrite (wf_np _ _ _ (@fst (Fix' (E (typeofR D))) (Fix' (E nat))) id _ _ _ a b c); auto.
-      rewrite (wf_np _ _ _ (@snd (Fix' (E (typeofR D))) (Fix' (E nat))) id _ _ _ a' b' c'); auto.
+      unfold inject2.
+      rewrite (wf_np _ _ _ (@fst (Fix (E (typeofR D))) (Fix (E nat))) id _ _ _ a b c); auto.
+      rewrite (wf_np _ _ _ (@snd (Fix (E (typeofR D))) (Fix (E nat))) id _ _ _ a' b' c'); auto.
       repeat rewrite fmap_id.
       intros H0; apply H0.
       apply np_all; auto.
@@ -615,7 +615,7 @@ Section PNames.
     Context {WF_Value_continous_alg :
       iPAlgebra WFV_ContinuousName (WF_Value_continuous_P D V WFV) SV}.
     Context {eval_continuous_Exp_E : FPAlgebra
-       (eval_continuous_Exp_P V (E nat) SV) (inject' (E nat))}.
+       (eval_continuous_Exp_P V (E nat) SV) (inject (E nat) (E nat))}.
 
     Lemma soundness_X :
       forall n gamma gamma' gamma'' e' e'',

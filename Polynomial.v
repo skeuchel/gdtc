@@ -583,7 +583,7 @@ Section Container.
   Defined.
 
   Global Instance Eq_Fix (F : Set -> Set) {poly_F : Polynomial F} :
-    Eq (Fix (F := F)) := {| eq := fun x y => eq (toFixP _ x) (toFixP _ y) |}.
+    Eq (Fix F) := {| eq := fun x y => eq (toFixP _ x) (toFixP _ y) |}.
   Proof.
     intros; simpl.
     apply eq_propositional_true in H.

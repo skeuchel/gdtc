@@ -180,21 +180,12 @@ Section Test_Section.
   Defined.
 
   Global Instance EV_Alg :
-    FPAlgebra (eval_continuous_Exp_P V (E nat) SV) (inject' (E nat)).
+    FPAlgebra (eval_continuous_Exp_P V (E nat) SV) (inject (E nat) (E nat)).
   Proof.
-    repeat apply FPAlgebra_Plus_cont_inject.
-    eapply Arith_eval_continuous_Exp; unfold WF_FAlgebra;
-      simpl; eauto 200 with typeclass_instances.
-    generalize (@Lambda_eval_continuous_Exp
-             D _ _ _
-             E _ _ _ _
-             V _ _ _ _ _ _
-             SV _ _ _).
-    unfold Names.Exp.
-    intro H; apply H; eauto 200 with typeclass_instances.
-    eapply Bool_eval_continuous_Exp; unfold WF_FAlgebra;
-      simpl; eauto 200 with typeclass_instances.
-  Defined.
+    repeat apply FPAlgebra_Plus_cont_inject; eauto 200 with typeclass_instances.
+    - generalize (@Lambda_eval_continuous_Exp D _ _ _ E _ _ _ _).
+      eauto 200 with typeclass_instances.
+  Qed.
 
   Lemma eval_continuous : forall m,
     forall (e : Exp E nat) (gamma gamma' : Env _),
@@ -242,7 +233,6 @@ Section Test_Section.
     apply eqv_eval_Soundness;
     eauto 250 with typeclass_instances.
     apply (@Lambda_eqv_eval_soundness_alg D _ _ _ _ _ E _ _ _ _ V _ _ _ _ _ _ _ V_eval WF_FAlgebra_eval_Lambda _ _ Eqv _ _ _ _ WFV _ _ (typeof D (E (typeofR D)))); eauto with typeclass_instances.
-    eauto 250 with typeclass_instances.
     eauto 250 with typeclass_instances.
   Qed.
 

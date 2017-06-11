@@ -102,7 +102,7 @@ Section Functors.
   Class WF_Functor (F G: Set -> Set)
     (subfg: F :<: G)
     {Fun_F: Functor F}
-    {Fun_G: Functor G} : Set :=
+    {Fun_G: Functor G} : Prop :=
     { wf_functor :
         forall (A B : Set) (f : A -> B) (fa: F A) ,
           fmap f (inj fa) (F := G) = inj (fmap f fa)
@@ -136,6 +136,7 @@ Section Functors.
     {WF_Fun_F : WF_Functor F _ subfh}
     :
     WF_Functor F (G :+: H) (Sub_Functor_inr F G H _ ).
+  Proof.
     econstructor; intros.
     simpl; rewrite wf_functor; reflexivity.
   Defined.
@@ -144,7 +145,7 @@ Section Functors.
   Class Distinct_Sub_Functor (F G H : Set -> Set)
     {sub_F_H : F :<: H}
     {sub_G_H : G :<: H}
-    : Set :=
+    : Prop :=
     { inj_discriminate :
         forall {A : Set} (f : F A) (g : G A),
              inj (Sub_Functor := sub_F_H) f
@@ -276,15 +277,12 @@ Notation "A :<: B" := (Sub_Functor A B) (at level 80, right associativity).
 Notation "A ::+:: B" := (inj_iFunctor A B) (at level 80, right associativity).
 Notation "A ::<:: B" := (Sub_iFunctor A B) (at level 80, right associativity).
 
-Definition inj'' {F G : Set -> Set} (sub_F_G: F :<: G) {A : Set} :=
-  @inj F G sub_F_G A.
-
 Section Folds.
 
   Class PFunctor (F : Set -> Set) {Fun_F : Functor F} :=
   { All : forall {A : Set} (Q : A -> Prop) , F A -> Prop;
-    All_natural {A B : Set} (f : A -> B) (Q : B -> Prop) (xs : F A) :
-      All (fun x => Q (f x)) xs -> All Q (fmap f xs)
+    All_fmap {A B : Set} (f : A -> B) (Q : B -> Prop) (xs : F A) :
+      All (fun x => Q (f x)) xs <-> All Q (fmap f xs)
   }.
 
   (*
@@ -335,23 +333,19 @@ Section Folds.
       (forall i, R i -> A i) -> F R i -> A i.
 
   Definition Algebra_Plus {F G : Set -> Set} {A : Set}
-    (falg : Algebra F A) (galg : Algebra G A)
-  : Algebra (F :+: G) A :=
-    fun x =>
-      match x with
-        | inl f => falg f
-        | inr g => galg g
-      end.
+    (falg : Algebra F A) (galg : Algebra G A) : Algebra (F :+: G) A :=
+    fun x => match x with
+             | inl f => falg f
+             | inr g => galg g
+             end.
   Notation "f >+< g" := (Algebra_Plus f g) (at level 80, right associativity).
 
   Definition Mixin_Plus {F G : Set -> Set} {T A : Set}
-    (falg : Mixin T F A) (galg : Mixin T G A)
-  : Mixin T (F :+: G) A :=
-    fun rec x =>
-      match x with
-        | inl f => falg rec f
-        | inr g => galg rec g
-      end.
+    (falg : Mixin T F A) (galg : Mixin T G A) : Mixin T (F :+: G) A :=
+    fun rec x => match x with
+                 | inl f => falg rec f
+                 | inr g => galg rec g
+                 end.
   Notation "f >++< g" := (Mixin_Plus f g) (at level 80, right associativity).
 
   Class WF_Algebra {A: Set} (F G: Set -> Set)
@@ -464,6 +458,8 @@ Section Folds.
                          fold_ f (in_t a) = f (fmap (fold_ f) a)
   }.
 
+  Global Arguments Fix F {_ _ _}.
+
   Class iSPF {I : Set} (F : (I -> Prop) -> I -> Prop) `{ifunctor : iFunctor _ F} :=
   { iFix             : I -> Prop;
     in_ti            : forall i, F iFix i -> iFix i;
@@ -486,85 +482,63 @@ Section Folds.
                          fold_ f (in_t a) = f (fmap (fold_ f) a) *)
   }.
 
-  Fixpoint boundedFix {A: Set}
-    {F: Set -> Set}
-    `{spf_F: SPF F}
-    (n : nat)
-    (fM: Mixin (Fix (F := F)) F A)
-    (default: A)
-    (e: Fix (F := F)): A :=
+  Global Arguments iFix {I} F {_ _} i.
+
+  Fixpoint boundedFix {A: Set} {F: Set -> Set} `{spf_F: SPF F}
+    (n : nat) (fM: Mixin (Fix F) F A) (default: A) (e: Fix F): A :=
     match n with
       | 0   => default
       | S n => fM (boundedFix n fM default) (out_t e)
     end.
 
-  Definition Fix' (F : Set -> Set) `{SPF F} : Set := Fix (F := F).
+  Definition inject F G `{spf_G : SPF G} {subFG: F :<: G} :
+    F (Fix G) -> Fix G := fun exp => in_t (inj exp).
 
-  Definition inject {F G} `{spf_F : SPF F} {subGF: G :<: F} :
-    G Fix -> Fix := fun gexp => in_t (inj gexp).
-
-  Definition inject' {F} G `{spf_F : SPF F} {subGF: G :<: F} :
-    G Fix -> Fix := inject.
-
-  Definition project {F G} `{spf_F : SPF F} {subGF: G :<: F} :
-    Fix -> option (G Fix) :=
-      fun exp => prj (out_t exp).
-
-  Definition project' {F} G `{spf_F : SPF F} {subGF: G :<: F} :
-    Fix -> option (G Fix) := project.
+  Definition project F G `{spf_G : SPF G} {subFG: F :<: G} :
+    Fix G -> option (F (Fix G)) := fun exp => prj (out_t exp).
 
   Lemma inject_in_t F `{spf_F : SPF F} :
-    inject (F := F) (G := F) = in_t.
+    inject F F = in_t.
   Proof.
-    extensionality x.
-    reflexivity.
-  Qed.
-
-  Lemma inject'_in_t F `{spf_F : SPF F} :
-    inject' F (F := F) = in_t.
-  Proof.
-    apply inject_in_t.
+    now extensionality x.
   Qed.
 
   Lemma inject_project
         (G H : Set -> Set) `{spf_H : SPF H}
         {sub_G_H : G :<: H} :
-    forall (h : Fix (F := H)) (g : G (Fix (F := H))),
-      project h = Some g -> h = inject g.
+    forall (h : Fix H) (g : G (Fix H)),
+      project _ _ h = Some g -> h = inject _ _ g.
   Proof.
-    unfold inject, project; simpl; intros.
-    apply inj_prj in H0.
-    rewrite <- H0, in_out_inverse; reflexivity.
+    unfold inject, project; simpl; intros ? ? Heq.
+    apply inj_prj in Heq.
+    now rewrite <- Heq, in_out_inverse.
   Qed.
 
   Lemma project_inject (F G  : Set -> Set)
     `(spf_F : SPF F) (sub_G_F : G :<: F) :
-    forall (g : G (Fix (F := F))),
-      project (inject g) = Some g.
+    forall (g : G (Fix F)),
+      project _ _ (inject _ _ g) = Some g.
   Proof.
     unfold project, inject; simpl; intros.
-    rewrite out_in_inverse.
-    apply prj_inj.
+    now rewrite out_in_inverse, prj_inj.
   Qed.
 
   Lemma inject_inject (G H : Set -> Set)
     `{spf_H : SPF H} {sub_G_H : G :<: H} :
-    forall (g1 g2 : G (Fix (F := H))),
-      inject g1 = inject g2 -> g1 = g2.
+    forall (g1 g2 : G (Fix H)),
+      inject _ _ g1 = inject _ _ g2 -> g1 = g2.
   Proof.
-    intros.
-    apply (f_equal project) in H0.
-    repeat rewrite project_inject in H0.
+    intros ? ? Heq.
+    apply (f_equal (project _ _)) in Heq.
+    repeat rewrite project_inject in Heq.
     congruence.
   Qed.
 
-  Definition iFix' {I : Set} (F : (I -> Prop) -> I -> Prop) `{iSPF I F} : I -> Prop := iFix (F := F).
-
   Definition inject_i {I F G} `{spf_F : iSPF I F} {subGF: Sub_iFunctor G F } :
-    forall i, G (iFix' F) i -> iFix' F i := fun i gexp => in_ti i (inj_i i gexp).
+    forall i, G (iFix F) i -> iFix F i := fun i gexp => in_ti i (inj_i i gexp).
 
   Definition project_i {I F G} `{spf_F : iSPF I F} {subGF: Sub_iFunctor G F } :
-    forall i, iFix' F i -> (G (iFix' F) i) \/ True :=
+    forall i, iFix F i -> (G (iFix F) i) \/ True :=
       fun i fexp => prj_i i (out_ti i fexp).
 
   Section DerivedLaws.
@@ -572,7 +546,7 @@ Section Folds.
     Variable F : Set -> Set.
     Context `{SPF_F : SPF F}.
 
-    Lemma fold_reflection (e : Fix' F) :
+    Lemma fold_reflection (e : Fix F) :
       fold_ in_t e = e.
     Proof.
       apply sym_eq.
@@ -583,7 +557,7 @@ Section Folds.
       reflexivity.
     Qed.
 
-    Lemma fold_fusion (e : Fix' F) :
+    Lemma fold_fusion (e : Fix F) :
       forall (A B : Set) (h : A -> B) (f : Algebra F A) (g : Algebra F B),
         (forall a, h (f a) = g (fmap h a)) ->
         (fun e' => h (fold_ f e')) e = fold_ g e.
@@ -591,32 +565,27 @@ Section Folds.
       intros.
       apply fold_uniqueness.
       intros.
-      rewrite fold_computation.
-      rewrite H.
-      rewrite fmap_fusion.
-      reflexivity.
+      now rewrite fold_computation, H, fmap_fusion.
     Qed.
 
     Lemma Universal_Property_fold (B : Set)
-      (f : Algebra F B) : forall (h : Fix' F -> B), h = fold_ f ->
+      (f : Algebra F B) : forall (h : Fix F -> B), h = fold_ f ->
         forall e, h (in_t e) = f (fmap h e).
     Proof.
-      intros.
-      rewrite H.
-      apply fold_computation.
+      intros ? Heq; rewrite Heq.
+      now apply fold_computation.
     Qed.
 
-    Lemma Universal_Property'_fold (e : Fix' F) :
-      forall (B : Set) (f : Algebra F B) (h : Fix' F -> B),
+    Lemma Universal_Property'_fold (e : Fix F) :
+      forall (B : Set) (f : Algebra F B) (h : Fix F -> B),
         (forall e, h (in_t e) = f (fmap h e)) ->
         h e = fold_ f e.
     Proof.
       intros.
-      apply fold_uniqueness.
-      assumption.
+      now apply fold_uniqueness.
     Qed.
 
-    Lemma in_t_inject {e e' : F (Fix' F)} :
+    Lemma in_t_inject {e e' : F (Fix F)} :
       in_t e = in_t e' -> e = e'.
     Proof.
       intros; apply (f_equal out_t) in H;
@@ -635,7 +604,7 @@ Section Folds.
       apply in_out_inverse.
     Qed.
 
-    Lemma ind {Q : Fix' F -> Prop} (step : PAlgebra in_t Q) (x : Fix' F) : Q x.
+    Lemma ind {Q : Fix F -> Prop} (step : PAlgebra in_t Q) (x : Fix F) : Q x.
     Proof.
       rewrite <- fold_reflection.
       apply (foldp step).
@@ -681,8 +650,8 @@ Section Folds.
     {WF_G : WF_Functor G H _}
     (Dist_FGH : Distinct_Sub_Functor F G H)
   : forall f g,
-      inject (subGF := sub_FH) f
-      <> inject (subGF := sub_GH) g.
+      inject _ _ (subFG := sub_FH) f
+      <> inject _ _ (subFG := sub_GH) g.
   Proof.
     unfold inject; intros; intro eq.
     apply (inj_discriminate f g).
@@ -973,19 +942,19 @@ Section PAlgebras.
 
   (* The key reasoning lemma. *)
   Lemma Ind {F : Set -> Set} `{spf_F : SPF F}
-        {P : Fix' F -> Prop} {Ind_Alg : FPAlgebra P in_t} :
-    forall (f : Fix' F), P f.
+        {P : Fix F -> Prop} {Ind_Alg : FPAlgebra P in_t} :
+    forall (f : Fix F), P f.
   Proof.
     apply ind.
     apply p_algebra.
   Qed.
 
-  Definition inject2 {F G G' : Set -> Set}
+  Definition inject2 (F G G' : Set -> Set)
     `{PFun_F : Functor F} `{spf_G : SPF G} `{spf_G' : SPF G'}
     {sub_F_G : F :<: G}
-    {sub_F_G' : F :<: G'} : Algebra F (Fix' G * Fix' G') :=
-    fun x => (inject (fmap (fst (B:=Fix' G')) x),
-              inject (fmap (snd (B:=Fix' G')) x)).
+    {sub_F_G' : F :<: G'} : Algebra F (Fix G * Fix G') :=
+    fun x => (inject _ _ (fmap (fst (B:=Fix G')) x),
+              inject _ _ (fmap (snd (B:=Fix G')) x)).
 
   (*
   Global Instance P2Algebra_Plus {F G H H'}
@@ -1014,20 +983,18 @@ Section PAlgebras.
 
   Lemma Ind2 {F : Set -> Set}
     `{spf_F : SPF F}
-    {P : (Fix' F) * (Fix' F) -> Prop}
-    {Ind_Alg : FPAlgebra P inject2}
+    {P : (Fix F) * (Fix F) -> Prop}
+    {Ind_Alg : FPAlgebra P (inject2 F F F)}
     :
-    forall (f : Fix' F), P (f, f).
+    forall (f : Fix F), P (f, f).
   Proof.
     apply ind with (Q := fun x => P (x, x)).
     intros xs Axs.
-    apply All_natural in Axs.
-    destruct Ind_Alg as [palg].
-    generalize (palg (fmap (fun x => (x , x)) xs) Axs).
+    apply All_fmap in Axs.
+    generalize (p_algebra (fmap (fun x => (x , x)) xs) Axs).
     unfold inject2, inject; simpl.
     unfold id.
-    repeat rewrite fmap_fusion, fmap_id.
-    auto.
+    now rewrite ?fmap_fusion, ?fmap_id.
   Qed.
 
   (*
@@ -1148,10 +1115,10 @@ Hint Extern 0 (WF_MAlgebra _) =>
               simpl; auto; fail : typeclass_instances.
 
 Hint Extern 0 (WF_FAlgebra _ _ _ _ _ _ _) =>
-  unfold WF_FAlgebra : typeclass_instances.
+  unfold WF_FAlgebra; simpl : typeclass_instances.
 
 Hint Extern 0 (FPAlgebra _ in_t) =>
-  rewrite <- inject'_in_t; eauto with typeclass_instances : typeclass_instances.
+  rewrite <- inject_in_t; eauto with typeclass_instances : typeclass_instances.
 
 Ltac discriminate_inject H :=
   first [ apply inj_prj in H | idtac ];
@@ -1164,7 +1131,7 @@ Ltac discriminate_inject H :=
 
 Ltac project_discriminate :=
   match goal with
-    | [ H : project _ = Some _ |- _ ] =>
+    | [ H : @project _ _ _ _ _ _ _ = Some _ |- _ ] =>
       apply inject_project in H; discriminate_inject H
   end.
 

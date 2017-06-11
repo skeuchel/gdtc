@@ -30,7 +30,7 @@ Section UnaryContainer.
   Inductive Ext (A : Set) : Set :=
   | ext: forall (s : S) (pf : P s -> A), Ext A.
 
-  Global Arguments ext [A] s pf.
+  Global Arguments ext {A} s pf.
 
   Definition gmap {A B : Set} (f : A -> B) (x : Ext A) : Ext B :=
     match x with
@@ -239,45 +239,44 @@ Section ContainerClass.
       intros.
       unfold GAll; simpl.
       rewrite from_to_inverse.
-      destruct (from xs).
-      apply H.
+      now destruct (from xs).
     Defined.
 
-    Global Instance ContainerSPF :
-      SPF F := {| Fix   := W Shape Position;
-                  in_t  := fun x     => sup _ _ (from x);
-                  out_t := fun x     => to (unsup _ _ x);
-                  fold_ := fun A alg => gfold Shape Position (fun x => alg (to x))
-               |}.
+    Global Instance ContainerSPF : SPF F :=
+      {| Fix   := W Shape Position;
+         in_t  := fun x     => sup _ _ (from x);
+         out_t := fun x     => to (unsup _ _ x);
+         fold_ := fun A alg => gfold Shape Position (fun x => alg (to x))
+      |}.
     Proof.
-      (* foldp *)
-      intros.
-      apply gfoldp.
-      intros e Hall.
-      apply H.
-      simpl.
-      rewrite from_to_inverse.
-      apply Hall.
-      (* in_out_inverse *)
-      intros.
-      rewrite from_to_inverse.
-      destruct e; reflexivity.
-      (* out_in_inverse *)
-      intros.
-      apply to_from_inverse.
-      (* fold_uniqueness *)
-      intros.
-      apply (gfold_uniqueness Shape Position (fun x => f (to x))).
-      intros.
-      rewrite <- (from_to_inverse e) at 1.
-      rewrite H.
-      destruct e; simpl.
-      rewrite from_to_inverse.
-      reflexivity.
-      (* fold_computation *)
-      intros.
-      apply (gfold_computation Shape Position A (fun x => f (to x))).
+      - (* foldp *)
+        intros.
+        apply gfoldp.
+        intros e Hall.
+        apply H.
+        simpl.
+        rewrite from_to_inverse.
+        apply Hall.
+      - (* in_out_inverse *)
+        intros.
+        rewrite from_to_inverse.
+        now destruct e.
+      - (* out_in_inverse *)
+        intros.
+        apply to_from_inverse.
+      - (* fold_uniqueness *)
+        intros.
+        apply (gfold_uniqueness Shape Position (fun x => f (to x))).
+        intros.
+        rewrite <- (from_to_inverse e) at 1.
+        rewrite H.
+        destruct e; simpl.
+        now rewrite from_to_inverse.
+      - (* fold_computation *)
+        intros.
+        apply (gfold_computation Shape Position A (fun x => f (to x))).
     Defined.
+
   End Instances.
 
   Section Constant.
@@ -311,14 +310,14 @@ Section ContainerClass.
                                     with end)
                           |}.
     Proof.
-      (* from_to_inverse *)
-      intros; simpl; rewrite fromTo; reflexivity.
-      (* to_from_inverse *)
-      destruct a as [[s] pf]; simpl.
-      rewrite toFrom.
-      apply f_equal.
-      extensionality p.
-      dependent destruction p.
+      - (* from_to_inverse *)
+        intros; simpl; rewrite fromTo; reflexivity.
+      - (* to_from_inverse *)
+        destruct a as [[s] pf]; simpl.
+        rewrite toFrom.
+        apply f_equal.
+        extensionality p.
+        dependent destruction p.
     Defined.
 
   End Constant.
@@ -345,21 +344,21 @@ Section ContainerClass.
 
       Definition Id (A : Set) : Set := A.
 
-      Global Instance ContainerId : Container Id.
-        refine ({| Shape := unit;
+      Global Instance ContainerId : Container Id :=
+        {| Shape := unit;
                    Position := fun s => unit;
                    to := fun A x => match x with
                                       | ext s pf => pf tt
                                     end;
                    from := fun A x => ext unit (fun s => unit) tt (fun p => x)
-        |}).
-        reflexivity.
-        intros.
-        destruct a as [[] pf].
-        f_equal.
-        extensionality p.
-        destruct p.
-        reflexivity.
+        |}.
+      Proof.
+        - reflexivity.
+        - intros.
+          destruct a as [[] pf].
+          f_equal.
+          extensionality p.
+          now destruct p.
       Defined.
 
       Global Opaque Id.
@@ -418,21 +417,19 @@ Section ContainerClass.
          from     := fromSum;
          to       := toSum |}.
       Proof.
-        (* to_from *)
-        intros.
-        destruct a as [x|x];
-          simpl;
-          remember (from x);
-          destruct e; simpl;
-          rewrite Heqe;
-          rewrite to_from_inverse;
-          reflexivity.
-        (* from_to *)
-        intros.
-        destruct a as [[s|s] pf];
-          simpl;
-          rewrite from_to_inverse;
-          reflexivity.
+        - (* to_from *)
+          intros.
+          destruct a as [x|x];
+            simpl;
+            remember (from x);
+            destruct e; simpl;
+              rewrite Heqe;
+              now rewrite to_from_inverse.
+        - (* from_to *)
+          intros.
+          destruct a as [[s|s] pf];
+            simpl;
+            now rewrite from_to_inverse.
       Defined.
 
     End Sums.
@@ -455,7 +452,8 @@ Section ContainerClass.
       Definition fromProd (A : Set) (x : (F :*: G) A) : Ext ProdS ProdP A :=
         match x with
           | (f, g) => match from f , from g with
-                        | ext s1 pf1 , ext s2 pf2 => ext _ _ (s1 , s2) (fold_sum' pf1 pf2)
+                        | ext s1 pf1 , ext s2 pf2 =>
+                        ext _ _ (s1 , s2) (fold_sum' pf1 pf2)
                       end
         end.
 
@@ -795,19 +793,18 @@ Section ContainerClass.
       FPAlgebra P (Algebra_Plus falg galg) | 6 :=
       {| p_algebra := PAlgebra_Plus_cont P p_algebra p_algebra |}.
 
-
     Global Instance FPAlgebra_Plus_cont_inject
       (H : Set -> Set) `{spf_H : SPF H} (sub_FG_H : (F :+: G) :<: H)
-      (P : Fix (F := H) -> Prop)
-      {fpalg: FPAlgebra P (inject' (subGF := Sub_Functor_inl' sub_FG_H) F)}
-      {gpalg: FPAlgebra P (inject' (subGF := Sub_Functor_inr' sub_FG_H) G)}
+      (P : Fix H -> Prop)
+      {fpalg: FPAlgebra P (inject _ _ (subFG := Sub_Functor_inl' sub_FG_H))}
+      {gpalg: FPAlgebra P (inject _ _ (subFG := Sub_Functor_inr' sub_FG_H))}
       :
-      FPAlgebra P (inject' (F :+: G)) | 6.
+      FPAlgebra P (inject (F :+: G) H) | 6.
     Proof.
-      assert (inject' (F := H) (F :+: G) =
+      assert (inject (F :+: G) H =
               Algebra_Plus
-                (inject' (subGF := Sub_Functor_inl' sub_FG_H) F)
-                (inject' (subGF := Sub_Functor_inr' sub_FG_H) G)).
+                (inject _ _ (subFG := Sub_Functor_inl' sub_FG_H))
+                (inject _ _ (subFG := Sub_Functor_inr' sub_FG_H))).
       extensionality x; destruct x; reflexivity; auto.
       rewrite H0.
       apply FPAlgebra_Plus_cont; auto.
@@ -819,16 +816,16 @@ Section ContainerClass.
       (sub_FG_H' : (F :+: G) :<: H')
       {WF_FG_H : WF_Functor _ _ sub_FG_H}
       {WF_FG_H' : WF_Functor _ _ sub_FG_H'}
-      (P : (Fix (F := H) * Fix (F := H')) -> Prop)
-      {fpalg: FPAlgebra P (inject2 (sub_F_G := Sub_Functor_inl' sub_FG_H) (sub_F_G' := Sub_Functor_inl' sub_FG_H'))}
-      {gpalg: FPAlgebra P (inject2 (sub_F_G := Sub_Functor_inr' sub_FG_H) (sub_F_G' := Sub_Functor_inr' sub_FG_H'))}
+      (P : (Fix H * Fix H') -> Prop)
+      {fpalg: FPAlgebra P (inject2 _ _ _ (sub_F_G := Sub_Functor_inl' sub_FG_H) (sub_F_G' := Sub_Functor_inl' sub_FG_H'))}
+      {gpalg: FPAlgebra P (inject2 _ _ _ (sub_F_G := Sub_Functor_inr' sub_FG_H) (sub_F_G' := Sub_Functor_inr' sub_FG_H'))}
       :
-      FPAlgebra P (inject2 (F := F :+: G)) | 6.
+      FPAlgebra P (inject2 (F :+: G) _ _) | 6.
     Proof.
-      assert (inject2 (sub_F_G := sub_FG_H) (sub_F_G' := sub_FG_H') =
+      assert (inject2 _ _ _ (sub_F_G := sub_FG_H) (sub_F_G' := sub_FG_H') =
               Algebra_Plus
-                (inject2 (sub_F_G := Sub_Functor_inl' sub_FG_H) (sub_F_G' := Sub_Functor_inl' sub_FG_H'))
-                (inject2 (sub_F_G := Sub_Functor_inr' sub_FG_H) (sub_F_G' := Sub_Functor_inr' sub_FG_H'))).
+                (inject2 _ _ _ (sub_F_G := Sub_Functor_inl' sub_FG_H) (sub_F_G' := Sub_Functor_inl' sub_FG_H'))
+                (inject2 _ _ _ (sub_F_G := Sub_Functor_inr' sub_FG_H) (sub_F_G' := Sub_Functor_inr' sub_FG_H'))).
       extensionality x; unfold inject2, inject, Algebra_Plus.
       destruct x; repeat rewrite <- wf_functor; reflexivity.
       rewrite H0.
@@ -865,13 +862,13 @@ Section Indexed.
   Variable P : forall {i : I}, S i -> Type.
   Variable R : forall {i : I} {s : S i}, P i s -> I.
 
-  Global Implicit Arguments P [[i]].
-  Global Implicit Arguments R [[i] [s]].
+  Arguments P {i} s.
+  Arguments R {i s} p.
 
   Inductive IExt (A : Fam) (i : I) : Prop :=
-  | iext: forall (s : S i) (pf : forall p : P s, A (R p)), IExt A i.
+  | iext (s : S i) (pf : forall p : P s, A (R p)).
 
-  Implicit Arguments iext [[A] [i]].
+  Arguments iext {A i} s pf.
 
   Definition igfmap
              {A B : Fam} (f : forall i : I, A i -> B i)
