@@ -9,9 +9,10 @@ Proceedings of the 9th ACM SIGPLAN workshop on Generic programming. ACM, 2013](h
 which include the GDTC framework and the case-study ported from MTC to GDTC. The
 code has been tested with Coq version 8.4pl6; later versions may not work.
 
+Framework
+---------
 
-Functors.v
-----------
+### Functors.v
 
 Contains the general infrastructure for modular datatypes, algebras and
 proof algebras.
@@ -25,10 +26,9 @@ proof algebras.
 * discrimination of distinct sub functors (Distinct_Sub_Functor)
 * algebra and mixin delegation (WF_Algebra, WF_Mixin)
 
-Containers.v
-------------
+### Containers.v
 
-Contains code for the universes of polynomal functors and container functors
+Contains code for the universes of container functors
 as well as generic implementation of
 
 * equality
@@ -38,17 +38,28 @@ as well as generic implementation of
 
 includings generic proofs about their properties.
 
-Names.v
--------
+### Polynomial.
+
+Contains code for the universe of polynomal functors and generic equality.
+
+
+Case Study
+----------
+
+### Names.v
 
 General infrastructure for evaluation and typing of expressions. Declarations
 for continuity and type-safety and final proofs for continuity and type-safety
 from the modular proof algebras.
 
-PNames.v
---------
+### PNames.v
+
 Infrastructure for the PHOAS representation.
 
-Arith.v, Lambda.v, ..
----------------------
+### Arith.v, Lambda.v, ..
+
 Feature specific declarations, algebras and proof algebras.
+
+### test_A.v, test_AB.v, ..
+
+Fully composed type-safety proofs.
