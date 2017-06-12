@@ -19,3 +19,7 @@ CaseStudy/test_AB.v
 CaseStudy/test_AL.v
 CaseStudy/test_A.v
 CaseStudy/test_BL.v
+Example/Base.v
+Example/Arith.v
+Example/Logic.v
+Example/Main.v
