@@ -1,16 +1,16 @@
 Require Import String.
-Require Import Names.
-Require Import PNames.
-Require Import Arith.
-Require Import Bool.
-Require Import Lambda.
-Require Import Arith_Lambda.
-Require Import Bool_Lambda.
-Require Import Polynomial.
-Require Import Containers.
-Require Import Functors.
-Require Import Mu.
-Require Import NatCase.
+Require Import GDTC.Polynomial.
+Require Import GDTC.Containers.
+Require Import GDTC.Functors.
+Require Import CaseStudy.Names.
+Require Import CaseStudy.PNames.
+Require Import CaseStudy.Arith.
+Require Import CaseStudy.Bool.
+Require Import CaseStudy.Lambda.
+Require Import CaseStudy.Arith_Lambda.
+Require Import CaseStudy.Bool_Lambda.
+Require Import CaseStudy.Mu.
+Require Import CaseStudy.NatCase.
 
 Section MiniML.
 

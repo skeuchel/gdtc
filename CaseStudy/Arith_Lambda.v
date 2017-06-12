@@ -1,14 +1,14 @@
 Require Import Coq.Program.Equality.
-Require Import FJ_tactics.
-Require Import List.
-Require Import Polynomial.
-Require Import Containers.
-Require Import Functors.
-Require Import Names.
 Require Import FunctionalExtensionality.
-Require Import Arith.
-Require Import Lambda.
-Require Import PNames.
+Require Import List.
+Require Import GDTC.FJ_tactics.
+Require Import GDTC.Polynomial.
+Require Import GDTC.Containers.
+Require Import GDTC.Functors.
+Require Import CaseStudy.Names.
+Require Import CaseStudy.Arith.
+Require Import CaseStudy.Lambda.
+Require Import CaseStudy.PNames.
 
 Section Lambda_Arith.
 

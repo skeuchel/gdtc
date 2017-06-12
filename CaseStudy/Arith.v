@@ -1,11 +1,11 @@
 Require Import Coq.Program.Equality.
-Require Import FJ_tactics.
 Require Import List.
-Require Import Containers.
-Require Import Functors.
-Require Import Polynomial.
-Require Import Names.
 Require Import FunctionalExtensionality.
+Require Import GDTC.FJ_tactics.
+Require Import GDTC.Containers.
+Require Import GDTC.Functors.
+Require Import GDTC.Polynomial.
+Require Import CaseStudy.Names.
 
 Section Arith.
 

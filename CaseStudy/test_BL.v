@@ -1,12 +1,12 @@
 Require Import String.
-Require Import Names.
-Require Import PNames.
-Require Import Bool.
-Require Import Lambda.
-Require Import Bool_Lambda.
-Require Import Polynomial.
-Require Import Containers.
-Require Import Functors.
+Require Import GDTC.Polynomial.
+Require Import GDTC.Containers.
+Require Import GDTC.Functors.
+Require Import CaseStudy.Names.
+Require Import CaseStudy.PNames.
+Require Import CaseStudy.Bool.
+Require Import CaseStudy.Lambda.
+Require Import CaseStudy.Bool_Lambda.
 (* Require Import MonadLib. *)
 
 Open Scope string_scope.

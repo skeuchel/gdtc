@@ -1,9 +1,9 @@
-Require Import Polynomial.
-Require Import Containers.
-Require Import Functors.
 Require Import List.
 Require Import FunctionalExtensionality.
 Require Import Coq.Program.Equality.
+Require Import GDTC.Polynomial.
+Require Import GDTC.Containers.
+Require Import GDTC.Functors.
 
 Section Names.
 

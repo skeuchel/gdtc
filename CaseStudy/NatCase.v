@@ -1,15 +1,14 @@
 Require Import String.
-Require Import Polynomial.
-Require Import Containers.
-Require Import Functors.
-Require Import Names.
-Require Import PNames.
-Require Import Arith.
 Require Import FunctionalExtensionality.
 Require Import Coq.Arith.EqNat.
 Require Import Coq.Bool.Bool.
 Require Import Coq.Program.Equality.
-(* Require Import MonadLib. *)
+Require Import GDTC.Polynomial.
+Require Import GDTC.Containers.
+Require Import GDTC.Functors.
+Require Import CaseStudy.Names.
+Require Import CaseStudy.PNames.
+Require Import CaseStudy.Arith.
 
 Section NatCase.
 

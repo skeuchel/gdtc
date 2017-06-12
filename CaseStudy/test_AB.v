@@ -1,10 +1,10 @@
 Require Import String.
-Require Import Names.
-Require Import Arith.
-Require Import Bool.
-Require Import Polynomial.
-Require Import Containers.
-Require Import Functors.
+Require Import GDTC.Polynomial.
+Require Import GDTC.Containers.
+Require Import GDTC.Functors.
+Require Import CaseStudy.Names.
+Require Import CaseStudy.Arith.
+Require Import CaseStudy.Bool.
 (* Require Import MonadLib. *)
 
 Open Scope string_scope.
