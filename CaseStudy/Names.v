@@ -150,8 +150,7 @@ Section Names.
   Inductive TypeofName : Set := typeofname.
   Context {Typeof_E : forall T,
     FAlgebra TypeofName T typeofR E}.
-  Definition typeof :=
-    fold_ (f_algebra (Name := TypeofName) id).
+  Definition typeof := fold_ (f_algebra TypeofName id).
 
   (** EVALUATION **)
 
@@ -160,7 +159,7 @@ Section Names.
   Inductive EvalName := evalname.
 
   Context {eval_E : forall T, FAlgebra EvalName T evalR E}.
-  Definition eval := fold_ (f_algebra (Name := EvalName) id).
+  Definition eval := fold_ (f_algebra EvalName id).
 
   Context {beval_E : FAlgebra EvalName Exp evalR E}.
 
@@ -188,17 +187,17 @@ Section Names.
   Definition DTypePrintR := string.
   Inductive DTypePrintName := dtypeprintname.
   Context {DTypePrint_DT : forall T, FAlgebra DTypePrintName T DTypePrintR DT}.
-  Definition DTypePrint := fold_ (f_algebra (Name := DTypePrintName) id).
+  Definition DTypePrint := fold_ (f_algebra DTypePrintName id).
 
   Definition ExpPrintR := nat -> string.
   Inductive ExpPrintName := expprintname.
   Context {ExpPrint_E : forall T, FAlgebra ExpPrintName T ExpPrintR E}.
-  Definition ExpPrint := fold_ (f_algebra (Name := ExpPrintName) id).
+  Definition ExpPrint := fold_ (f_algebra ExpPrintName id).
 
   Definition ValuePrintR := string.
   Inductive ValuePrintName := valueprintname.
   Context {ValuePrint_V : forall T, FAlgebra ValuePrintName T ValuePrintR V}.
-  Definition ValuePrint := fold_ (f_algebra (Name := ValuePrintName) id).
+  Definition ValuePrint := fold_ (f_algebra ValuePrintName id).
 
   (* Printers for Bot and Stuck *)
    Global Instance MAlgebra_ValuePrint_BotValue T : FAlgebra ValuePrintName T ValuePrintR BotValue :=
@@ -752,9 +751,8 @@ Section Names.
     Context {eval_Soundness_alg_F : forall typeof_rec eval_rec,
       FPAlgebra (eval_alg_Soundness_P unit (fun _ _ => True) _ tt
         typeof_rec eval_rec
-        (f_algebra (FAlgebra := Typeof_E _))
-        (f_algebra (FAlgebra := eval_E _))) (inject2 E E E)}.
-
+        (f_algebra TypeofName (FAlgebra := Typeof_E _))
+        (f_algebra EvalName (FAlgebra := eval_E _))) (inject2 E E E)}.
 
     Lemma eval_Soundness : forall (e : Exp),
       forall gamma'' T, typeof e = Some T ->

@@ -615,8 +615,8 @@ Section Bool.
     (typeof_rec : Fix E' -> typeofR D)
     :
     FPAlgebra (eval_alg_Soundness_P D V F WFV _ P
-      _ pb typeof_rec eval_rec (f_algebra (FAlgebra := Typeof_E' _))
-      (f_algebra (FAlgebra := eval_F))) (inject2 Bool E' F).
+      _ pb typeof_rec eval_rec (f_algebra TypeofName (FAlgebra := Typeof_E' _))
+      (f_algebra EvalName (FAlgebra := eval_F))) (inject2 Bool E' F).
   Proof.
     constructor.
     apply ind2_alg_Bool;

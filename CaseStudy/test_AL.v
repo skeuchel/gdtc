@@ -115,7 +115,7 @@ Section Test_Section.
       iPAlgebra soundness_XName
                 (soundness_X'_P D V E Eqv WFV
                                 (typeof D (E (typeofR D))) eval_rec
-                                f_algebra f_algebra)
+                                (f_algebra TypeofName) (f_algebra EvalName))
                 (Eqv (typeofR D) nat).
   Proof.
     assert (WF_FAlgebra_eval_Lambda :

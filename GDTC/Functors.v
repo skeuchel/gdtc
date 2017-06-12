@@ -749,6 +749,8 @@ Section FAlgebra.
 
 End FAlgebra.
 
+Arguments f_algebra _ {_ _ _ _} _ _.
+
   (* ============================================== *)
   (* INDUCTION PRINCIPLES INFRASTRUCTURE            *)
   (* ============================================== *)
@@ -900,8 +902,8 @@ Section PAlgebras.
     {wf_F_H: WF_FAlgebra Name T A (F :+: G) H (FAlgebra_Plus Name T A F G) halg}
     :
     WF_Mixin T A F H (Sub_Functor_inl' sub_F_G_H)
-             (f_algebra (FAlgebra := falg))
-             (f_algebra (FAlgebra := halg)).
+             (f_algebra Name (FAlgebra := falg))
+             (f_algebra Name (FAlgebra := halg)).
   Proof.
     unfold WF_FAlgebra in *; apply WF_Mixin_inl'.
   Defined.
@@ -918,8 +920,8 @@ Section PAlgebras.
     {wf_F_H: WF_FAlgebra Name T A (F :+: G) H (FAlgebra_Plus Name T A F G) halg}
     :
     WF_Mixin T A G H (Sub_Functor_inr' sub_F_G_H)
-             (f_algebra (FAlgebra := galg))
-             (f_algebra (FAlgebra := halg)).
+             (f_algebra Name (FAlgebra := galg))
+             (f_algebra Name (FAlgebra := halg)).
   Proof.
     unfold WF_FAlgebra in *; apply WF_Mixin_inr'.
   Defined.
@@ -1036,8 +1038,8 @@ Section WF_MAlgebras.
     {Fun_F : Functor F}(MAlg : forall R, FAlgebra Name R A F) :=
     { wf_malgebra :
         forall (T T' : Set) (f : T' -> T) (rec : T -> A) (ft : F T'),
-          f_algebra (FAlgebra := MAlg T) rec (fmap f ft) =
-          f_algebra (FAlgebra := MAlg T') (fun ft' => rec (f ft')) ft
+          f_algebra Name (FAlgebra := MAlg T) rec (fmap f ft) =
+          f_algebra Name (FAlgebra := MAlg T') (fun ft' => rec (f ft')) ft
     }.
 
   (*

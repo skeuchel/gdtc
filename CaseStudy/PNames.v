@@ -396,7 +396,7 @@ Section PNames.
 
     Context {eval_Soundness_alg_NP : forall pb typeof_rec eval_rec,
       FPAlgebra (eval_alg_Soundness_P D V (E nat) WFV _ WF_eqv_environment_P (E (typeofR D)) pb typeof_rec eval_rec
-        (f_algebra (FAlgebra := Typeof_E _)) (f_algebra (FAlgebra := beval_E))) (inject2 NP _ _)}.
+        (f_algebra TypeofName (FAlgebra := Typeof_E _)) (f_algebra EvalName (FAlgebra := beval_E))) (inject2 NP _ _)}.
 
     Variable WF_WFV_Bot_WFV : Sub_iFunctor (WFValue_Bot D V) WFV.
 
@@ -412,8 +412,8 @@ Section PNames.
     Global Instance eqv_eval_Soundness typeof_rec eval_rec :
       iPAlgebra eqv_eval_SoundnessName
       (eqv_eval_alg_Soundness'_P typeof_rec eval_rec
-        (f_algebra (FAlgebra := Typeof_E _))
-        (f_algebra (FAlgebra := beval_E))) (NP_Functor_eqv _ _ _).
+        (f_algebra TypeofName (FAlgebra := Typeof_E _))
+        (f_algebra EvalName (FAlgebra := beval_E))) (NP_Functor_eqv _ _ _).
     Proof.
       constructor; unfold iAlgebra; intros.
       apply (ind_alg_NP_Functor_eqv NP); try eassumption;
@@ -470,8 +470,8 @@ Section PNames.
       iPAlgebra eqv_eval_SoundnessName
       (eqv_eval_alg_Soundness'_P
         typeof_rec eval_rec
-        (f_algebra (FAlgebra := Typeof_E _))
-        (f_algebra (FAlgebra := eval_E _))) (EQV_E _ _)}.
+        (f_algebra TypeofName (FAlgebra := Typeof_E _))
+        (f_algebra EvalName (FAlgebra := eval_E _))) (EQV_E _ _)}.
 
     Definition eqv_eval_soundness_P (i : eqv_i (typeofR D) nat) :=
       forall (gamma'' : Env _)
@@ -581,8 +581,8 @@ Section PNames.
       iPAlgebra soundness_XName
       (soundness_X'_P
         (typeof _ _) eval_rec
-        (f_algebra (FAlgebra := Typeof_E _))
-        (f_algebra (FAlgebra := beval_E))) (EQV_E _ _)}.
+        (f_algebra TypeofName (FAlgebra := Typeof_E _))
+        (f_algebra EvalName (FAlgebra := beval_E))) (EQV_E _ _)}.
     Variable Sub_WFV_Bot_WFV : Sub_iFunctor (WFValue_Bot _ _) WFV.
 
     Definition soundness_X_P (i : eqv_i (typeofR D) nat) :=
@@ -600,8 +600,8 @@ Section PNames.
       forall eval_rec gamma gamma' e' e'',
         E_eqvC EQV_E gamma gamma' e' e'' ->
         soundness_X'_P (typeof _ _) eval_rec
-        (f_algebra (FAlgebra := Typeof_E _))
-        (f_algebra (FAlgebra := beval_E)) (mk_eqv_i _ _ gamma gamma' e' e'').
+        (f_algebra TypeofName (FAlgebra := Typeof_E _))
+        (f_algebra EvalName (FAlgebra := beval_E)) (mk_eqv_i _ _ gamma gamma' e' e'').
     Proof.
       intros; apply (ifold_); try assumption.
       apply if_algebra.

@@ -273,8 +273,8 @@ Section Mu.
     iPAlgebra soundness_XName
     (soundness_X'_P D V F EQV_E WFV
       (typeof _ _) eval_rec
-      (f_algebra (FAlgebra := Typeof_F _))
-      (f_algebra (FAlgebra := eval_F))) (Fix_eqv _ _).
+      (f_algebra TypeofName (FAlgebra := Typeof_F _))
+      (f_algebra EvalName (FAlgebra := eval_F))) (Fix_eqv _ _).
   Proof.
     constructor; unfold iAlgebra; intros.
     apply ind_alg_Fix_eqv; try eassumption;

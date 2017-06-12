@@ -377,8 +377,8 @@ Section NatCase.
     (typeof_rec : Exp _ -> typeofR D) :
     iPAlgebra eqv_eval_SoundnessName
     (eqv_eval_alg_Soundness'_P D V F EQV_E WFV typeof_rec eval_rec
-      (f_algebra (FAlgebra := Typeof_F _ ))
-      (f_algebra (FAlgebra := eval_F'))) (NatCase_eqv _ _).
+      (f_algebra TypeofName (FAlgebra := Typeof_F _ ))
+      (f_algebra EvalName (FAlgebra := eval_F'))) (NatCase_eqv _ _).
   Proof.
     econstructor; unfold iAlgebra; intros.
     eapply ind_alg_NatCase_eqv; unfold eqv_eval_alg_Soundness'_P,

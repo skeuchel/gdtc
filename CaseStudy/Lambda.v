@@ -612,7 +612,7 @@ Section Lambda.
     generalize (H e1 _ _ _ H0 H1) as Sub_e1_m_e1_n; intro.
     fold (Exp nat).
     caseEq (project ClosValue V
-      (boundedFix m (f_algebra (FAlgebra := eval_F))
+      (boundedFix m (f_algebra EvalName (FAlgebra := eval_F))
         (fun _ : Env (Names.Value V) => Names.bot V) e1 gamma)).
     apply inject_project in H2; rename H2 into Eval_m.
     destruct c.
@@ -627,13 +627,13 @@ Section Lambda.
     eapply P2_Env_insert; eauto.
     unfold isBot.
     caseEq (project BotValue V
-      (boundedFix m (f_algebra (FAlgebra := eval_F))
+      (boundedFix m (f_algebra EvalName (FAlgebra := eval_F))
         (fun _ : Env (Names.Value V) => Names.bot V) e1 gamma)).
     destruct b.
     apply (inject_i (subGF := Sub_SV_Bot_SV)); constructor.
     eauto.
     caseEq (project ClosValue V
-      (boundedFix n (f_algebra (FAlgebra := eval_F))
+      (boundedFix n (f_algebra EvalName (FAlgebra := eval_F))
         (fun _ : Env (Names.Value V) => Names.bot V) e1 gamma')).
     destruct c.
     apply inject_project in H4; rename H4 into Eval_n.
@@ -649,7 +649,7 @@ Section Lambda.
     rewrite project_inject in H2.
     discriminate.
     caseEq (project BotValue V
-      (boundedFix n (f_algebra (FAlgebra := eval_F))
+      (boundedFix n (f_algebra EvalName (FAlgebra := eval_F))
         (fun _ : Env (Names.Value V) => Names.bot V) e1 gamma')).
     destruct b.
     apply inject_project in H5; rename H5 into Eval_n.
@@ -1096,8 +1096,8 @@ Section Lambda.
     iPAlgebra soundness_XName
     (soundness_X'_P D V F EQV_E WFV
       typeof_rec eval_rec
-      (f_algebra (FAlgebra := Typeof_F _))
-      (f_algebra (FAlgebra := eval_F))) (Lambda_eqv _ _).
+      (f_algebra TypeofName (FAlgebra := Typeof_F _))
+      (f_algebra EvalName (FAlgebra := eval_F))) (Lambda_eqv _ _).
   Proof.
     constructor; unfold iAlgebra; intros.
     apply ind_alg_Lambda_eqv; try eassumption;

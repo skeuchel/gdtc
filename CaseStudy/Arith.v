@@ -726,21 +726,21 @@ Section Arith.
     (typeof_rec : Fix E' -> typeofR D)
     :
     FPAlgebra (eval_alg_Soundness_P D V F WFV _ P
-      _ pb typeof_rec eval_rec (f_algebra (FAlgebra := Typeof_E' _))
-      (f_algebra (FAlgebra := eval_F))) (inject2 Arith E' F).
+      _ pb typeof_rec eval_rec (f_algebra TypeofName (FAlgebra := Typeof_E' _))
+      (f_algebra EvalName (FAlgebra := eval_F))) (inject2 Arith E' F).
   Proof.
     constructor.
-      apply ind2_alg_Arith;
+    apply ind2_alg_Arith;
       unfold eval_alg_Soundness_P, inject2, inject; simpl; intros;
       rewrite out_in_inverse; rewrite out_in_inverse in H;
       rewrite (@wf_mixin _ _ _ _ _ _ _ WF_eval_F); simpl;
       rewrite (@wf_mixin _ _ _ _ _ _ _ (WF_typeof_E' _)) in H; simpl in H.
-      (* Lit Case *)
+    - (* Lit Case *)
       apply Arith_eval_Soundness_H with
         (typeof_R := Fix E') (eval_R := Exp)
         (typeof_rec := typeof_rec) (eval_rec := eval_rec)
         (eval_F' := eval_F) (gamma'' := gamma''); auto.
-      (* Add Case *)
+    - (* Add Case *)
       apply Arith_eval_Soundness_H0 with
         (typeof_R := Fix E') (typeof_rec := typeof_rec)
         (eval_F' := eval_F) (a := fst m) (b := fst n); auto.
