@@ -1,13 +1,8 @@
 Require Import Coq.Program.Equality.
-Require Import FunctionalExtensionality.
-Require Import List.
-Require Import GDTC.FJ_tactics.
-Require Import GDTC.Polynomial.
-Require Import GDTC.Containers.
-Require Import GDTC.Functors.
-Require Import CaseStudy.Names.
+Require Import GDTC.
 Require Import CaseStudy.Arith.
 Require Import CaseStudy.Lambda.
+Require Import CaseStudy.Names.
 Require Import CaseStudy.PNames.
 
 Section Lambda_Arith.
@@ -24,7 +19,6 @@ Section Lambda_Arith.
   Context {pfun_E: forall A, PFunctor (E A)}.
   Context {spf_E : forall A, SPF (E A)}.
   Context {Sub_Arith_E : forall A, Arith :<: (E A)}.
-  Context {WF_Sub_Arith_E : forall A, WF_Functor _ _ (Sub_Arith_E A)}.
 
   Variable EQV_E : forall A B, (eqv_i E A B -> Prop) -> eqv_i E A B -> Prop.
   Context {ifun_EQV_E : forall A B, iFunctor (EQV_E A B)}.
@@ -33,9 +27,9 @@ Section Lambda_Arith.
   Variable V : Set -> Set.
   Context `{spf_V : SPF V}.
   Context {Sub_NatValue_V : NatValue :<: V}.
-  Context {Sub_StuckValue_V : StuckValue :<: V}.
   Context {Sub_BotValue_V : BotValue :<: V}.
   Context {Sub_ClosValue_V : ClosValue E :<: V}.
+
   Variable WFV : (WFValue_i D V -> Prop) -> WFValue_i D V -> Prop.
   Context `{spfWFV : iSPF _ WFV}.
 
@@ -44,34 +38,25 @@ Section Lambda_Arith.
   Context {WF_Sub_NatValue_V : WF_Functor NatValue V Sub_NatValue_V}.
 
   Context {Sub_WFV_VI_WFV : Sub_iFunctor (WFValue_VI D V) WFV}.
-  Context {Sub_WFV_Bot_WFV : Sub_iFunctor (WFValue_Bot D V) WFV}.
   Context {Dis_LType_AType : Distinct_Sub_Functor LType AType D}.
-
-  Context {Typeof_E : forall T, FAlgebra TypeofName T (typeofR D) (E (typeofR _))}.
-  Context {WF_typeof_E : forall T, WF_FAlgebra TypeofName T _ _ _
-    (MAlgebra_typeof_Arith _ T) (Typeof_E _)}.
 
   Global Instance PAlgebra_WF_invertClos_VI typeof_rec :
     iPAlgebra WF_invertClos_Name (WF_invertClos_P D E V EQV_E WFV typeof_rec) (WFValue_VI D V).
   Proof.
-    econstructor; intros.
-    unfold iAlgebra; intros; unfold WF_invertClos_P.
-    inversion H; subst; simpl; intros.
-    split.
-    apply (inject_i (subGF := Sub_WFV_VI_WFV)); econstructor; eauto.
-    intros; discriminate_inject H0.
-  Defined.
+    constructor; unfold iAlgebra, WF_invertClos_P.
+    inversion 1; subst; simpl; split.
+    - apply (inject_i (subGF := Sub_WFV_VI_WFV)); constructor.
+    - intros ? ? Heq; discriminate_inject Heq.
+  Qed.
 
   Global Instance PAlgebra_WF_invertClos'_VI typeof_rec :
     iPAlgebra WF_invertClos'_Name (WF_invertClos'_P D E V EQV_E WFV typeof_rec) (WFValue_VI D V).
   Proof.
-    econstructor; intros.
-    unfold iAlgebra; intros; unfold WF_invertClos_P.
-    inversion H; subst; simpl; intros.
-    split.
-    apply (inject_i (subGF := Sub_WFV_VI_WFV)); econstructor; eauto.
-    intros; discriminate_inject H0.
-  Defined.
+    constructor; unfold iAlgebra, WF_invertClos_P.
+    inversion 1; subst; simpl; split.
+    - apply (inject_i (subGF := Sub_WFV_VI_WFV)); constructor.
+    - intros ? Heq; discriminate_inject Heq.
+  Qed.
 
   (* ============================================== *)
   (* EQUIVALENCE OF ARITHMETIC EXPRESSIONS          *)
@@ -85,8 +70,8 @@ Section Lambda_Arith.
     C (mk_eqv_i _ _ _ gamma gamma' b b') ->
     Arith_eqv A B C (mk_eqv_i _ _ _ gamma gamma' (add (E _) a b) (add (E _) a' b')).
 
-  Lemma Arith_eqv_impl_NP_eqv : forall A B C i,
-    Arith_eqv A B C i -> NP_Functor_eqv E  Arith A B C i.
+  Lemma Arith_eqv_impl_NP_eqv A B C i :
+    Arith_eqv A B C i -> NP_Functor_eqv E Arith A B C i.
   Proof.
     intros; destruct H.
     unfold lit in *; simpl in *.
@@ -95,6 +80,6 @@ Section Lambda_Arith.
     constructor 3 with (a := a) (a' := a') (b := b) (b' := b') (np := Add); auto.
     simpl; intros; dependent destruction p; auto.
     simpl; congruence.
-  Defined.
+  Qed.
 
 End Lambda_Arith.

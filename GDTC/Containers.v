@@ -1,12 +1,10 @@
-
 Require Import Coq.Bool.Bool.
 Require Import Coq.Logic.Eqdep.
+Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Program.Equality.
 
-Require Import FunctionalExtensionality.
-Require Import Functors.
 Require Import FJ_tactics.
-Require Import Sum.
+Require Import Functors.
 
 Section UnaryContainer.
 

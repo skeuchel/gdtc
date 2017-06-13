@@ -1,9 +1,10 @@
 -R . Top
+GDTC.v
 GDTC/Containers.v
 GDTC/FJ_tactics.v
+GDTC/Equality.v
 GDTC/Functors.v
 GDTC/Polynomial.v
-GDTC/Sum.v
 CaseStudy/Arith_Lambda.v
 CaseStudy/Arith.v
 CaseStudy/Bool_Lambda.v

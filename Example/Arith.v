@@ -1,7 +1,7 @@
 Require Import Coq.Program.Equality.
 Require Import Coq.omega.Omega.
 Require Import FJ_tactics.
-Require Import List.
+Require Import Coq.Lists.List.
 Require Import Containers.
 Require Import Functors.
 Require Import Polynomial.
@@ -10,8 +10,29 @@ Require Import Base.
 Section Arith.
 
   Inductive Arith (a : Set) : Set :=
-  | Lit : nat -> Arith a
-  | Add : a -> a -> Arith a.
+  | Lit (n : nat)
+  | Add (a1 a2 : a).
+
+  (* Global Instance FunctorArith : Functor Arith := *)
+  (*   {| fmap := fun a b f e => match e with *)
+  (*                             | Lit n => Lit b n *)
+  (*                             | Add a1 a2 => Add b (f a1) (f a2) *)
+  (*                             end *)
+  (*   |}. *)
+  (* Proof. *)
+  (*   - now destruct a. *)
+  (*   - now destruct a. *)
+  (* Defined. *)
+
+  (* Inductive AllArith (a : Set) (p : a -> Prop) : Arith a -> Prop := *)
+  (* | ALit {n : nat} : AllArith a p (Lit a n) *)
+  (* | AAdd {a1 a2 : a} : p a1 -> p a2 -> AllArith a p (Add a a1 a2). *)
+
+  (* Global Instance PFunctorArith : PFunctor Arith := *)
+  (*   {| All := AllArith |}. *)
+  (* Proof. *)
+  (*   intros ? ? ? ? xs; destruct xs; split; inversion 1; now constructor. *)
+  (* Defined. *)
 
   Global Instance Arith_Iso : Iso Arith (K nat :+: Id :*: Id) :=
     {| fromIso := fun A x => match x with
@@ -39,6 +60,19 @@ Section Arith.
   (* Constructor + Universal Property. *)
   Definition lit (n : nat) : Exp := inject Arith F (Lit _ n).
   Definition add (m n : Exp) : Exp :=  inject Arith F (Add _ m n).
+
+  (* (* Induction Principles for Arith. *) *)
+  (* Definition ind_alg_Arith *)
+  (*   (P : Fix F -> Prop) *)
+  (*   (Hlit : forall n, P (lit n)) *)
+  (*   (Hadd : forall m n, P m -> P n -> P (add m n)) *)
+  (*   : PAlgebra (inject Arith F) P := *)
+  (*   fun xs Axs => *)
+  (*     match Axs in AllArith _ _ xs *)
+  (*           return P (inject Arith F xs) with *)
+  (*     | ALit n           => Hlit n *)
+  (*     | AAdd a1 a2 p1 p2 => Hadd a1 a2 p1 p2 *)
+  (*     end. *)
 
   (* Induction Principles for Arith. *)
   Definition ind_alg_Arith

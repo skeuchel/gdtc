@@ -1,10 +1,8 @@
-Require Import List.
-Require Import FunctionalExtensionality.
 Require Import Coq.Arith.EqNat.
 Require Import Coq.Bool.Bool.
-Require Import GDTC.FJ_tactics.
-Require Import GDTC.Containers.
-Require Import GDTC.Functors.
+Require Import Coq.Lists.List.
+Require Import Coq.Logic.FunctionalExtensionality.
+Require Import GDTC.
 Require Import CaseStudy.Names.
 
 Section PNames.
@@ -50,7 +48,7 @@ Section PNames.
     FAlgebra TypeofName T (typeofR D) (E (typeofR D))}.
 
   Context {eval_E : forall T, FAlgebra EvalName T (evalR V) (E nat)}.
-  Context {beval_E : FAlgebra EvalName (Exp (E nat)) (evalR V) (E nat)}.
+  Context {beval_E : FAlgebra EvalName (Fix (E nat)) (evalR V) (E nat)}.
 
   (* ============================================== *)
   (* EXPRESSION EQUIVALENCE RELATION                *)
@@ -321,10 +319,10 @@ Section PNames.
      WF_Environment _ _ WFV gamma'' (fst env_A_B).
 
     Definition eqv_eval_alg_Soundness'_P
-      (typeof_rec : Exp (E (typeofR D)) -> typeofR D)
-      (eval_rec : Exp (E nat) -> evalR V)
-      (typeof_F : Mixin (Exp (E (typeofR D))) (E (typeofR D)) (typeofR D))
-      (eval_F : Mixin (Exp (E nat)) (E nat) (evalR V))
+      (typeof_rec : Fix (E (typeofR D)) -> typeofR D)
+      (eval_rec : Fix (E nat) -> evalR V)
+      (typeof_F : Mixin (Fix (E (typeofR D))) (E (typeofR D)) (typeofR D))
+      (eval_F : Mixin (Fix (E nat)) (E nat) (evalR V))
       (i : eqv_i (typeofR D) nat) :=
       E_eqv EQV_E _ _ i /\
       eval_alg_Soundness_P D V (E nat) WFV
@@ -403,7 +401,7 @@ Section PNames.
     Inductive eqv_eval_SoundnessName : Set := eqv_eval_soundnessname.
 
     Context {Typeof_NP : forall T, FAlgebra TypeofName T (typeofR D) NP}.
-    Context {beval_NP : FAlgebra EvalName (Exp (E nat)) (evalR V) NP}.
+    Context {beval_NP : FAlgebra EvalName (Fix (E nat)) (evalR V) NP}.
     Context {WF_eval_F : @WF_FAlgebra EvalName _ _ NP (E _)
       (sub_NP_F _) beval_NP (eval_E _)}.
     Context {WF_typeof_F : @WF_FAlgebra TypeofName _ _ NP (E _)
@@ -514,8 +512,8 @@ Section PNames.
       rewrite fold_computation, wf_malgebra.
       unfold id at 1; simpl.
       intros.
-      destruct a; simpl.
-      rewrite <- (in_out_inverse e).
+      destruct a as [a1 a2]; simpl.
+      rewrite <- (in_out_inverse a2).
       rewrite fold_computation, wf_malgebra.
       unfold id at 1; simpl.
       apply H2.
@@ -541,12 +539,12 @@ Section PNames.
     Qed.
 
     Definition soundness_X'_P
-      (typeof_rec : Exp (E (typeofR D)) -> typeofR D)
-      (eval_rec : Exp (E nat) -> evalR V)
-      (typeof_F : Mixin (Exp (E (typeofR D))) (E (typeofR D)) (typeofR D))
-      (eval_F : Mixin (Exp (E nat)) (E nat) (evalR V))
+      (typeof_rec : Fix (E (typeofR D)) -> typeofR D)
+      (eval_rec : Fix (E nat) -> evalR V)
+      (typeof_F : Mixin (Fix (E (typeofR D))) (E (typeofR D)) (typeofR D))
+      (eval_F : Mixin (Fix (E nat)) (E nat) (evalR V))
       i :=
-      forall (IH : forall (e : Exp _) (e' : Exp _)
+      forall (IH : forall (e : Fix _) (e' : Fix _)
         pb gamma'' (WF_gamma'' : WF_eqv_environment_P pb gamma'')
         T,
         E_eqvC EQV_E (fst pb) (snd pb) e e' ->

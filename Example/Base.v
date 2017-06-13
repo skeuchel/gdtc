@@ -1,9 +1,7 @@
-Require Import Polynomial.
-Require Import Containers.
-Require Import Functors.
-Require Import List.
-Require Import FunctionalExtensionality.
+Require Import Coq.Lists.List.
+Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Program.Equality.
+Require Import GDTC.
 
 Section DepthSize.
 
@@ -29,7 +27,7 @@ Section DepthSize.
 
   (** DepthSize *)
   Definition DepthSizeP (e : Exp) : Prop :=
-    depthOf e <= sizeOf e.
+    depthOf e < sizeOf e.
 
   Context {depthSizePAlg : FPAlgebra DepthSizeP in_t}.
   Lemma depthSize : forall (e : Exp), DepthSizeP e.

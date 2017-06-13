@@ -1,10 +1,7 @@
+Require Import Coq.Lists.List.
+Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Program.Equality.
-Require Import FunctionalExtensionality.
-Require Import List.
-Require Import GDTC.FJ_tactics.
-Require Import GDTC.Functors.
-Require Import GDTC.Containers.
-Require Import GDTC.Polynomial.
+Require Import GDTC.
 Require Import CaseStudy.Names.
 
 Section Bool.
@@ -109,7 +106,7 @@ Section Bool.
 
   Variable F : Set -> Set.
   Context `{spf_F : SPF F}.
-  Definition Exp := Exp F.
+  Let Exp := Fix F.
   Context {Sub_Bool_F : Bool :<: F}.
 
   (* Constructor + Universal Property. *)
@@ -714,15 +711,11 @@ End Bool.
 
 Hint Extern 1 (iPAlgebra SV_invertVB_Name (SV_invertVB_P _) _) =>
     constructor; unfold iAlgebra; unfold SV_invertVB_P; intros i H n H0;
-      inversion H; subst; simpl in H0; revert H0;
-        match goal with H : ?v = _ |- ?v = _ -> _ => rewrite H end; intros;
-          discriminate_inject H0.
+      inversion H; subst; discriminate_inject H0.
 
 Hint Extern 1 (iPAlgebra SV_invertVB'_Name (SV_invertVB'_P _) _) =>
     constructor; unfold iAlgebra; unfold SV_invertVB'_P; intros i H n H0;
-      inversion H; subst; simpl in H0; revert H0;
-        match goal with H : ?v = _ |- ?v = _ -> _ => rewrite H end; intros;
-          discriminate_inject H0.
+      inversion H; subst; discriminate_inject H0.
 
 Ltac WF_invertVB_default :=
   constructor; unfold iAlgebra; intros i H; unfold WF_invertVB_P;

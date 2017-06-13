@@ -1,10 +1,7 @@
+Require Import Coq.Lists.List.
+Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Program.Equality.
-Require Import List.
-Require Import FunctionalExtensionality.
-Require Import GDTC.FJ_tactics.
-Require Import GDTC.Containers.
-Require Import GDTC.Functors.
-Require Import GDTC.Polynomial.
+Require Import GDTC.
 Require Import CaseStudy.Names.
 
 Section Arith.
@@ -44,12 +41,11 @@ Section Arith.
 
   Variable D : Set -> Set.
   Context `{spf_D : SPF D}.
-  Definition DType := DType D.
+  Let DType := DType D.
   Context {Sub_AType_D  : AType :<: D}.
-
-  (* Constructor . *)
   Context {WF_Sub_AType_D : WF_Functor _ _ Sub_AType_D}.
 
+  (* Constructor . *)
   Definition tnat : DType := inject AType D (TNat _).
 
   (* Induction Principle for Nat Types. *)
@@ -137,11 +133,11 @@ Section Arith.
 
   Variable F : Set -> Set.
   Context `{spf_F : SPF F}.
-  Definition Exp := Exp F.
+  Let Exp := Fix F.
   Context {Sub_Arith_F : Arith :<: F}.
-
-  (* Constructor + Universal Property. *)
   Context {WF_Sub_Arith_F : WF_Functor _ _ Sub_Arith_F}.
+
+  (* Constructor. *)
   Definition lit (n : nat) : Exp := inject Arith F (Lit _ n).
   Definition add (m n : Exp) : Exp :=  inject Arith F (Add _ m n).
 
@@ -149,8 +145,8 @@ Section Arith.
   Definition ind_alg_Arith
     (P : Fix F -> Prop)
     (Hlit : forall n, P (lit n))
-    (Hadd : forall m n, P m -> P n -> P (add m n))
-      : PAlgebra (inject Arith F) P :=
+    (Hadd : forall m n, P m -> P n -> P (add m n)) :
+      PAlgebra (inject Arith F) P :=
     fun xs => match xs return (All P xs -> P (inject Arith F xs)) with
                 | Lit n => fun Axs => Hlit n
                 | Add m n => fun Axs => Hadd m n (Axs (inl _ tt)) (Axs (inr _ tt))
@@ -166,8 +162,8 @@ Section Arith.
     (P : (Fix E) * (Fix E') -> Prop)
     (Hlit : forall n, P (inject2 Arith E E' (Lit _ n)))
     (Hadd : forall m n (IHm : P m) (IHn : P n),
-      P (inject2 Arith E E' (Add _ m n)))
-  : PAlgebra (inject2 Arith E E') P :=
+        P (inject2 Arith E E' (Add _ m n))) :
+      PAlgebra (inject2 Arith E E') P :=
     fun xs => match xs return (All P xs -> P (inject2 Arith E E' xs)) with
                 | Lit n => fun Axs => Hlit n
                 | Add m n => fun Axs => Hadd m n (Axs (inl _ tt)) (Axs (inr _ tt))
@@ -241,14 +237,13 @@ Section Arith.
         | None        => None
       end.
 
-   Context {Sub_StuckValue_V : StuckValue :<: V}.
-   Definition stuck : nat -> Value := stuck _.
+  Context {Sub_StuckValue_V : StuckValue :<: V}.
+  Definition stuck : nat -> Value := stuck _.
 
   Lemma isVI_vi (n : nat) : isVI (vi n) = Some n.
   Proof.
     unfold isVI, vi.
-    rewrite project_inject.
-    reflexivity.
+    now rewrite project_inject.
   Qed.
 
   Context {Sub_BotValue_V : BotValue :<: V}.
@@ -268,7 +263,6 @@ Section Arith.
   (* ============================================== *)
   (* EVALUATION                                     *)
   (* ============================================== *)
-
 
   (* Evaluation Algebra for Arithemetic Expressions. *)
 
@@ -371,24 +365,24 @@ Section Arith.
     econstructor; intros.
     unfold iAlgebra; intros; unfold SV_invertVI_P.
     inversion H; subst; simpl; congruence.
-  Defined.
+  Qed.
 
-  Lemma SV_invertVI_default : forall V'
+  Lemma SV_invertVI_default V'
     (Fun_V' : Functor V')
     (SV' : (SubValue_i V -> Prop) -> SubValue_i V -> Prop)
     (sub_V'_V : V' :<: V)
-    (WF_V' : WF_Functor V' V sub_V'_V),
+    (WF_V' : WF_Functor V' V sub_V'_V)
+    (Dis_NatValue_V' : Distinct_Sub_Functor NatValue V' V) :
     (forall (i : SubValue_i V) (H : SV' SV_invertVI_P i),
       exists v', sv_a _ i = inject V' V v') ->
-    Distinct_Sub_Functor NatValue V' V ->
     iPAlgebra SV_invertVI_Name SV_invertVI_P SV'.
   Proof.
-    econstructor; intros.
-    unfold iAlgebra; intros; unfold SV_invertVI_P.
-    destruct (H _ H1) as [v' eq_v'].
-    intros; rewrite eq_v' in H2.
-    discriminate_inject H2.
-  Defined.
+    constructor; unfold iAlgebra, SV_invertVI_P.
+    intros ? Hsv ? Heq.
+    destruct (H _ Hsv) as [v' eq_v'].
+    intros; rewrite eq_v' in Heq.
+    discriminate_inject Heq.
+  Qed.
 
   Global Instance SV_invertVI_Bot :
     iPAlgebra SV_invertVI_Name SV_invertVI_P (SubValue_Bot V).
@@ -397,7 +391,7 @@ Section Arith.
     unfold iAlgebra; intros; unfold SV_invertVI_P.
     inversion H; subst; simpl; intros.
     discriminate_inject H0.
-  Defined.
+  Qed.
 
   Definition SV_invertVI := ifold_ (if_algebra (iPAlgebra := SV_invertVI_SV)).
 
@@ -414,14 +408,14 @@ Section Arith.
   Proof.
     constructor; unfold iAlgebra, SV_invertVI'_P; intros.
     inversion H; subst; auto.
-  Defined.
+  Qed.
 
   Global Instance SV_invertVI'_Bot :
     iPAlgebra SV_invertVI'_Name SV_invertVI'_P (SubValue_Bot V).
   Proof.
     constructor; unfold iAlgebra, SV_invertVI'_P; intros.
     inversion H; subst; auto.
-  Defined.
+  Qed.
 
   Definition SV_invertVI' := ifold_ (if_algebra (iPAlgebra := SV_invertVI'_SV)).
 
@@ -542,7 +536,7 @@ Section Arith.
     eapply ind_alg_Arith.
     apply eval_continuous_Exp_H.
     apply eval_continuous_Exp_H0.
-  Defined.
+  Qed.
 
   Context {eval_continuous_Exp_E : FPAlgebra (eval_continuous_Exp_P V F SV) (inject F F)}.
 
@@ -625,7 +619,7 @@ Section Arith.
     unfold iAlgebra; intros; unfold WF_invertVI_P.
     inversion H; subst; simpl; intros.
     left; econstructor; auto.
-  Defined.
+  Qed.
 
   Global Instance WF_invertVI_Bot :
     iPAlgebra WF_invertVI_Name WF_invertVI_P (WFValue_Bot _ _).
@@ -634,7 +628,7 @@ Section Arith.
     unfold iAlgebra; intros; unfold WF_invertVI_P.
     inversion H; subst; simpl; intros.
     right; reflexivity.
-  Defined.
+  Qed.
 
   Definition WF_invertVI := ifold_ (if_algebra (iPAlgebra := WF_invertVI_WFV)).
 
@@ -652,7 +646,7 @@ Section Arith.
     intros n gamma'' T H4; intros.
     injection H4; intros; subst.
     apply (inject_i (subGF := Sub_WFV_VI_WFV)); constructor.
-  Defined.
+  Qed.
 
   Lemma Arith_eval_Soundness_H0
     (typeof_R eval_R : Set) typeof_rec eval_rec
@@ -703,7 +697,7 @@ Section Arith.
     assumption.
     rewrite H0, isVI_bot, isBot_bot in *.
     assumption.
-  Defined.
+  Qed.
 
   Context {Typeof_F : forall T, FAlgebra TypeofName T (typeofR D) F}.
   Context {WF_typeof_F : forall T, WF_FAlgebra TypeofName T _ _ _
@@ -725,9 +719,9 @@ Section Arith.
     (eval_rec : Exp -> evalR V)
     (typeof_rec : Fix E' -> typeofR D)
     :
-    FPAlgebra (eval_alg_Soundness_P D V F WFV _ P
-      _ pb typeof_rec eval_rec (f_algebra TypeofName (FAlgebra := Typeof_E' _))
-      (f_algebra EvalName (FAlgebra := eval_F))) (inject2 Arith E' F).
+    FPAlgebra (eval_alg_Soundness_P D V F WFV P_bind P
+      E' pb typeof_rec eval_rec (f_algebra TypeofName)
+      (f_algebra EvalName)) (inject2 Arith E' F).
   Proof.
     constructor.
     apply ind2_alg_Arith;
@@ -748,21 +742,17 @@ Section Arith.
         intros; apply (IHm _ WF_gamma'' IHa); auto.
       apply (IHa _ _ WF_gamma'' n); simpl; auto;
         intros; apply (IHn _ WF_gamma'' IHa); auto.
-    Defined.
+  Qed.
 
 End Arith.
 
 Hint Extern 1 (iPAlgebra SV_invertVI_Name (SV_invertVI_P _) _) =>
     constructor; unfold iAlgebra; unfold SV_invertVI_P; intros i H n H0;
-      inversion H; subst; simpl in H0; revert H0;
-        match goal with H : ?v = _ |- ?v = _ -> _ => rewrite H end; intros;
-          discriminate_inject H0.
+      inversion H; subst; discriminate_inject H0.
 
 Hint Extern 1 (iPAlgebra SV_invertVI'_Name (SV_invertVI'_P _) _) =>
     constructor; unfold iAlgebra; unfold SV_invertVI'_P; intros i H n H0;
-      inversion H; subst; simpl in H0; revert H0;
-        match goal with H : ?v = _ |- ?v = _ -> _ => rewrite H end; intros;
-          discriminate_inject H0.
+      inversion H; subst; discriminate_inject H0.
 
 Hint Extern 5 (iPAlgebra WF_invertVI_Name (WF_invertVI_P _ _ _) _) =>
   constructor; intros i H; unfold WF_invertVI_P;

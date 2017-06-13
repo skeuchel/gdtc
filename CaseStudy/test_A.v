@@ -1,15 +1,11 @@
-Require Import String.
-Require Import FunctionalExtensionality.
-Require Import GDTC.Polynomial.
-Require Import GDTC.Containers.
-Require Import GDTC.Functors.
+Require Import Coq.Strings.String.
+Require Import GDTC.
 Require Import CaseStudy.Names.
 Require Import CaseStudy.Arith.
 
 Open Scope string_scope.
 
 Section Type_Test_Section.
-
   (* Type Testing, of course. *)
   Definition D := AType.
 
@@ -26,15 +22,16 @@ End Type_Test_Section.
 Section Test_Section.
 
   Definition E := Arith.
+  Let Exp := Fix E.
 
-  Definition ex_1 : Exp E :=
+  Definition ex_1 : Exp :=
     (add _ (lit _ 1) (lit _ 2)).
-  Definition ex_2  : Exp E :=
+  Definition ex_2  : Exp :=
     (add _ (lit _ 5) (lit _ 0)).
-  Definition ex_3  : Exp E :=
+  Definition ex_3  : Exp :=
       (add _ ex_1 ex_2).
 
-  Definition test_typeof (e : Exp E) :=
+  Definition test_typeof (e : Exp) :=
     match (typeof D E e) with
       | Some t1 => DTypePrint _ t1
       | None => "Type Error!"
@@ -66,12 +63,12 @@ Section Test_Section.
 
   Definition WFV := (WFValue_VI D V).
 
-  Lemma soundness : forall (e : Exp E),
+  Lemma soundness : forall (e : Exp),
     forall T, typeof D E e = Some T ->
       WFValueC D V WFV (eval V E e nil) T.
   Proof.
-    intro; apply eval_Soundness; eauto 100 with typeclass_instances.
-  Defined.
+    intro; apply eval_Soundness; eauto 150 with typeclass_instances.
+  Qed.
 
   Eval compute in ("Type Soundness for Arith Proven!").
 

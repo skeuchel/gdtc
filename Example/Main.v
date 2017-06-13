@@ -2,9 +2,7 @@ Require Import String.
 Require Import Example.Base.
 Require Import Example.Arith.
 Require Import Example.Logic.
-Require Import GDTC.Polynomial.
-Require Import GDTC.Containers.
-Require Import GDTC.Functors.
+Require Import GDTC.
 
 Open Scope string_scope.
 

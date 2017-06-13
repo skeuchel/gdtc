@@ -1,11 +1,8 @@
-Require Import String.
-Require Import GDTC.Polynomial.
-Require Import GDTC.Containers.
-Require Import GDTC.Functors.
+Require Import Coq.Strings.String.
+Require Import GDTC.
 Require Import CaseStudy.Names.
 Require Import CaseStudy.Arith.
 Require Import CaseStudy.Bool.
-(* Require Import MonadLib. *)
 
 Open Scope string_scope.
 
@@ -31,14 +28,19 @@ End Type_Test_Section.
 Section Test_Section.
 
   Definition E := Arith :+: Bool.
+  Let Exp := Fix E.
 
-  Definition ex_1 : Exp E :=
+  Global Instance Container_E : Container E.
+    eauto with typeclass_instances.
+  Defined.
+
+  Definition ex_1 : Exp :=
     (add E (lit _ 1) (lit _ 2)).
-  Definition ex_2 : Names.Exp E :=
+  Definition ex_2 : Exp :=
     (add E (lit _ 5) (lit _ 0)).
-  Definition ex_3 : Names.Exp E :=
+  Definition ex_3 : Exp :=
     (cond E (blit _ true) ex_1 ex_2).
-  Definition ex_4 : Names.Exp E :=
+  Definition ex_4 : Exp :=
     (cond E (blit _ false) ex_1 ex_2).
 
   Definition test_typeof e :=
@@ -81,7 +83,7 @@ Section Test_Section.
   Definition WFV := (WFValue_Bot D V) ::+:: (WFValue_VI D V) ::+:: (WFValue_VB D V).
 
   Global Instance Container_WFV : IContainer WFV.
-    repeat apply IContainerSum; eauto with typeclass_instances.
+    eauto with typeclass_instances.
   Defined.
 
   Instance typeof_alg : forall T, FAlgebra TypeofName T (typeofR D) E.
@@ -92,23 +94,11 @@ Section Test_Section.
     eauto 500 with typeclass_instances.
   Defined.
 
-  (*
-  Instance Soundness_Alg typeof_rec eval_rec :
-    FPAlgebra
-      (eval_alg_Soundness_P D V E WFV unit
-        (fun (_ : unit) (_ : Env (Names.Value V)) => True) E tt typeof_rec
-        eval_rec f_algebra f_algebra) inject2.
-  Proof.
-    eauto 100 with typeclass_instances.
-  Defined.
-  *)
-
-  Lemma soundness : forall (e : Exp E),
+  Lemma soundness : forall (e : Exp),
     forall T, typeof D E e = Some T ->
       WFValueC D V WFV (eval V E e nil) T.
   Proof.
-    intro; apply eval_Soundness;
-      eauto 200 with typeclass_instances.
+    intro; apply eval_Soundness; eauto 150 with typeclass_instances.
   Qed.
 
   Eval compute in ("Type Soundness for Arith :+: Bool Proven!").

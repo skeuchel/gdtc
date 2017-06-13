@@ -1,4 +1,4 @@
-Require Import List.
+Require Import Coq.Lists.List.
 
 Ltac caseEq x := generalize (refl_equal x); pattern x at -1; case x; intros.
 

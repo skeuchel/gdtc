@@ -1,11 +1,9 @@
-Require Import String.
-Require Import FunctionalExtensionality.
 Require Import Coq.Arith.EqNat.
 Require Import Coq.Bool.Bool.
+Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Program.Equality.
-Require Import GDTC.Polynomial.
-Require Import GDTC.Containers.
-Require Import GDTC.Functors.
+Require Import Coq.Strings.String.
+Require Import GDTC.
 Require Import CaseStudy.Names.
 Require Import CaseStudy.PNames.
 Require Import CaseStudy.Arith.
@@ -49,7 +47,7 @@ Section NatCase.
   Context {Fun_F : forall A, Functor (F A)}.
   Context {PFun_F : forall A, PFunctor (F A)}.
   Context {SPF_F : forall A, SPF (F A)}.
-  Definition Exp A := Exp (F A).
+  Let Exp A := Fix (F A).
   Context {Sub_NatCase_F : forall A, NatCase A :<: F A}.
   Context {WF_Sub_NatCase_F : forall A, WF_Functor _ _ (Sub_NatCase_F A)}.
 

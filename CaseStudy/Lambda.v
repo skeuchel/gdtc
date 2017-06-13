@@ -1,12 +1,9 @@
-Require Import FunctionalExtensionality.
 Require Import Coq.Arith.EqNat.
 Require Import Coq.Bool.Bool.
+Require Import Coq.Lists.List.
+Require Import Coq.Logic.FunctionalExtensionality.
 Require Import Coq.Program.Equality.
-Require Import List.
-Require Import GDTC.FJ_tactics.
-Require Import GDTC.Polynomial.
-Require Import GDTC.Containers.
-Require Import GDTC.Functors.
+Require Import GDTC.
 Require Import CaseStudy.Names.
 Require Import CaseStudy.PNames.
 
@@ -173,7 +170,7 @@ Section Lambda.
   Context {fun_F : forall A, Functor (F A)}.
   Context {pfun_F: forall A, PFunctor (F A)}.
   Context {spf_F : forall A, SPF (F A)}.
-  Definition Exp (A : Set) := Exp (F A).
+  Definition Exp (A : Set) := Fix (F A).
 
   (* Constructors + Universal Property. *)
 
@@ -803,7 +800,7 @@ Section Lambda.
 
   Inductive WFValue_Clos
     (WFV : WFValue_i D V -> Prop) : WFValue_i D V -> Prop :=
-  | WFV_Clos : forall (f : option DType -> Names.Exp _) f' env gamma gamma'
+  | WFV_Clos : forall (f : option DType -> Exp _) f' env gamma gamma'
     (t1 t2 : DType) v T,
     v = closure (f' (List.length gamma)) env ->
     T = tarrow t1 t2 ->
@@ -820,7 +817,7 @@ Section Lambda.
     WFValue_Clos  WFV (mk_WFValue_i D V v T).
 
   Inductive WFValue_Clos_S : WFValue_i D V -> Set :=
-  | SWFV_Clos : forall (f : option DType -> Names.Exp _) f' env gamma gamma'
+  | SWFV_Clos : forall (f : option DType -> Exp _) f' env gamma gamma'
     (t1 t2 : DType) v T,
     v = closure (f' (List.length gamma)) env ->
     T = tarrow t1 t2 ->

@@ -1,0 +1,37 @@
+GDTC                                             MTC
+----------------------                           ----------------------
+FRAMEWORK         2476                           FRAMEWORK         1225
+     spec    proof comments                           spec    proof comments
+      758      105       61 Containers.v               193       99        2 FJ_tactics.v
+       63       53       10 Equality.v                 756      177       72 Functors.v
+      193       99        2 FJ_tactics.v               949      276       74 total
+      675       83      226 Functors.v
+      249      198      139 Polynomial.v
+     1938      538      438 total
+
+TYPESAFETY        1204                           TYPESAFETY        1197
+     spec    proof comments                           spec    proof comments
+      480      145       57 Names.v                    479       92       65 Names.v
+      399      180       25 PNames.v                   507      119       30 PNames.v
+      879      325       82 total                      986      211       95 total
+
+FEATURES          2915 (/6)                      FEATURES          4155 (/6)
+     spec    proof comments                           spec    proof comments
+       59        9        3 Arith_Lambda.v             103        7        6 Arith_Lambda.v
+      415      150       99 Arith.v                    522      492       49 Arith.v
+       60       11        3 Bool_Lambda.v              112        7        6 Bool_Lambda.v
+      441      151       50 Bool.v                     560      169       48 Bool.v
+      779      171       95 Lambda.v                  1223      159       53 Lambda.v
+      401       31       20 NatCase.v                  481       26       27 NatCase.v
+      212       25       27 Mu.v                       282       12       32 Mu.v
+     2367      548      297 total                     3283      872      221 total
+
+COMPOSITION       503  (/5)                      COMPOSITION       468 (/5)
+     spec    proof comments                           spec    proof comments
+       52        3        2 test_A.v                    47        3        5 test_A.v
+       76        5        1 test_AL.v                   49        9        5 test_AL.v
+       76        5        1 test_BL.v                   57        9        5 test_BL.v
+       79        3        3 test_AB.v                   73        6        7 test_AB.v
+      103        5       40 test_ABL.v                 129        9       14 test_ABL.v
+       91        5        0 MiniML.v                    67       10        3 MiniML.v
+      477       26       47 total                      422       46       39 total

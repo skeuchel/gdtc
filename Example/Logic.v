@@ -1,7 +1,7 @@
 Require Import Coq.Program.Equality.
 Require Import Coq.omega.Omega.
 Require Import FJ_tactics.
-Require Import List.
+Require Import Coq.Lists.List.
 Require Import Containers.
 Require Import Functors.
 Require Import Polynomial.

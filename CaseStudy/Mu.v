@@ -1,11 +1,8 @@
-Require Import FunctionalExtensionality.
 Require Import Coq.Arith.EqNat.
 Require Import Coq.Bool.Bool.
-Require Import List.
-Require Import GDTC.FJ_tactics.
-Require Import GDTC.Polynomial.
-Require Import GDTC.Containers.
-Require Import GDTC.Functors.
+Require Import Coq.Lists.List.
+Require Import Coq.Logic.FunctionalExtensionality.
+Require Import GDTC.
 Require Import CaseStudy.Names.
 Require Import CaseStudy.PNames.
 
@@ -49,7 +46,7 @@ Section Mu.
   Context {PFun_F: forall A, PFunctor (F A)}.
   Context {SPF_F : forall A, SPF (F A)}.
 
-  Definition Exp (A : Set) := Exp (F A).
+  Let Exp A := Fix (F A).
 
   (* Constructors + Universal Property. *)
 
